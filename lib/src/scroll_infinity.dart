@@ -1,35 +1,21 @@
 import 'package:flutter/material.dart';
 
-class ScrollInfinityController extends ValueNotifier<bool> {
-  ScrollInfinityController() : super(false);
-
-  bool _isListEnd = false;
-
-  bool get isListEnd => _isListEnd;
-
-  set isListEnd(bool value) {
-    _isListEnd = value;
-
-    notifyListeners();
-  }
-}
-
 class ScrollInfinity<T> extends StatefulWidget {
   const ScrollInfinity({
     super.key,
-    this.controller,
     this.scrollDirection = Axis.vertical,
     this.padding,
     this.loadingWidget,
+    required this.maxItems,
     required this.loadData,
     this.separatorBuilder,
     required this.itemBuilder,
   });
 
-  final ScrollInfinityController? controller;
   final Axis scrollDirection;
   final EdgeInsetsGeometry? padding;
   final Widget? loadingWidget;
+  final int maxItems;
   final Future<List<T>> Function(
     int pageKey,
   ) loadData;
@@ -69,6 +55,8 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     _pageKey++;
 
     _removeLoadingWidget();
+
+    _isListEnd = newItems.length < widget.maxItems;
 
     final items = _generateItems(newItems);
     _items.addAll(items);
@@ -116,12 +104,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
   @override
   void initState() {
-    widget.controller?.addListener(() {
-      if (widget.controller?.isListEnd ?? false) {
-        _isListEnd = !_isListEnd;
-      }
-    });
-
     _addItems();
     _scrollController.addListener(_onScroll);
 
