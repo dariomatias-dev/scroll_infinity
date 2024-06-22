@@ -42,16 +42,16 @@ class ScrollInfinity<T> extends StatefulWidget {
   ) itemBuilder;
 
   @override
-  State<ScrollInfinity> createState() => _ScrollInfinityState();
+  State<ScrollInfinity<T>> createState() => _ScrollInfinityState<T>();
 }
 
-class _ScrollInfinityState<T> extends State<ScrollInfinity> {
+class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   int _pageKey = 0;
   bool _isLoading = false;
   bool _isListEnd = false;
 
   final _scrollController = ScrollController();
-  final _items = [];
+  final _items = <Widget>[];
 
   void _onScroll() {
     if (!_isListEnd && !_isLoading && _scrollController.position.atEdge) {
@@ -77,10 +77,10 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity> {
   }
 
   List<Widget> _generateItems(
-    List<dynamic> newItems,
+    List<T> newItems,
   ) {
     final items = <Widget>[];
-    for (dynamic newItem in newItems) {
+    for (T newItem in newItems) {
       items.add(
         widget.itemBuilder(newItem),
       );
