@@ -1,35 +1,38 @@
 import 'package:flutter/material.dart';
 
-class ScrollInfinityController extends ValueNotifier<bool> {
-  ScrollInfinityController() : super(false);
+class LoadingStyle {
+  const LoadingStyle({
+    this.color,
+    this.strokeAlign,
+    this.strokeWidth,
+  });
 
-  bool _isListEnd = false;
-
-  bool get isListEnd => _isListEnd;
-
-  set isListEnd(bool value) {
-    _isListEnd = value;
-
-    notifyListeners();
-  }
+  final Color? color;
+  final double? strokeAlign;
+  final double? strokeWidth;
 }
 
 class ScrollInfinity<T> extends StatefulWidget {
   const ScrollInfinity({
     super.key,
-    this.controller,
     this.scrollDirection = Axis.vertical,
     this.padding,
+    this.loadingStyle,
     this.loadingWidget,
+    required this.maxItems,
     required this.loadData,
     this.separatorBuilder,
     required this.itemBuilder,
-  });
+  }) : assert(
+          !(loadingStyle != null && loadingWidget != null),
+          "The properties 'loadingStyle' and 'loadingWidget' cannot be used together. Please define only one of these properties.",
+        );
 
-  final ScrollInfinityController? controller;
   final Axis scrollDirection;
   final EdgeInsetsGeometry? padding;
+  final LoadingStyle? loadingStyle;
   final Widget? loadingWidget;
+  final int maxItems;
   final Future<List<T>> Function(
     int pageKey,
   ) loadData;
@@ -70,6 +73,8 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
     _removeLoadingWidget();
 
+    _isListEnd = newItems.length < widget.maxItems;
+
     final items = _generateItems(newItems);
     _items.addAll(items);
 
@@ -92,12 +97,17 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   void _addLoadingWidget() {
     _items.add(
       widget.loadingWidget ??
-          const Padding(
-            padding: EdgeInsets.all(16.0),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                CircularProgressIndicator(),
+                CircularProgressIndicator(
+                  color: widget.loadingStyle?.color,
+                  strokeAlign: widget.loadingStyle?.strokeAlign ??
+                      BorderSide.strokeAlignCenter,
+                  strokeWidth: widget.loadingStyle?.strokeWidth ?? 4.0,
+                ),
               ],
             ),
           ),
@@ -116,12 +126,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
   @override
   void initState() {
-    widget.controller?.addListener(() {
-      if (widget.controller?.isListEnd ?? false) {
-        _isListEnd = !_isListEnd;
-      }
-    });
-
     _addItems();
     _scrollController.addListener(_onScroll);
 

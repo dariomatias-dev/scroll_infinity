@@ -27,8 +27,6 @@ class ScrollInfinityExample extends StatefulWidget {
 }
 
 class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
-  final _controller = ScrollInfinityController();
-
   void navigateTo(
     Widget screen,
   ) {
@@ -52,18 +50,25 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
       ),
     );
 
-    _controller.isListEnd = random.nextInt(4) == 0;
+    final isListEnd = random.nextInt(3) == 0;
 
     final isVertical = scrollDirection == Axis.vertical;
 
-    return List.generate(isVertical ? 10 : 6, (index) {
-      return Color.fromARGB(
-        255,
-        random.nextInt(255),
-        random.nextInt(255),
-        random.nextInt(255),
-      );
-    });
+    return List.generate(
+      isListEnd
+          ? 3
+          : isVertical
+              ? 10
+              : 8,
+      (index) {
+        return Color.fromARGB(
+          255,
+          random.nextInt(255),
+          random.nextInt(255),
+          random.nextInt(255),
+        );
+      },
+    );
   }
 
   @override
@@ -77,7 +82,6 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
               onPressed: () {
                 navigateTo(
                   InfiniteListingVerticallyScreen(
-                    controller: _controller,
                     loadData: _loadData,
                   ),
                 );
@@ -89,7 +93,6 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
               onPressed: () {
                 navigateTo(
                   InfiniteListingHorizontallyScreen(
-                    controller: _controller,
                     loadData: _loadData,
                   ),
                 );
@@ -106,40 +109,33 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
 class InfiniteListingVerticallyScreen extends StatelessWidget {
   const InfiniteListingVerticallyScreen({
     super.key,
-    required this.controller,
     required this.loadData,
   });
 
-  final ScrollInfinityController controller;
   final LoadDatatype loadData;
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: Theme.of(context).brightness == Brightness.light
-          ? ThemeData.light()
-          : ThemeData.dark(),
-      child: Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-            ),
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
           ),
         ),
-        body: ScrollInfinity<Color>(
-          controller: controller,
-          loadData: loadData,
-          itemBuilder: (value) {
-            return Container(
-              height: 100.0,
-              color: value,
-            );
-          },
-        ),
+      ),
+      body: ScrollInfinity(
+        maxItems: 10,
+        loadData: loadData,
+        itemBuilder: (value) {
+          return Container(
+            height: 100.0,
+            color: value,
+          );
+        },
       ),
     );
   }
@@ -148,49 +144,42 @@ class InfiniteListingVerticallyScreen extends StatelessWidget {
 class InfiniteListingHorizontallyScreen extends StatelessWidget {
   const InfiniteListingHorizontallyScreen({
     super.key,
-    required this.controller,
     required this.loadData,
   });
 
-  final ScrollInfinityController controller;
   final LoadDatatype loadData;
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: Theme.of(context).brightness == Brightness.light
-          ? ThemeData.light()
-          : ThemeData.dark(),
-      child: Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            icon: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-            ),
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
           ),
         ),
-        body: Center(
-          child: SizedBox(
-            height: 100.0,
-            child: ScrollInfinity(
-              controller: controller,
-              scrollDirection: Axis.horizontal,
-              loadData: (pageKey) {
-                return loadData(
-                  pageKey,
-                  scrollDirection: Axis.horizontal,
-                );
-              },
-              itemBuilder: (value) {
-                return Container(
-                  height: 100.0,
-                  color: value,
-                );
-              },
-            ),
+      ),
+      body: Center(
+        child: SizedBox(
+          height: 100.0,
+          child: ScrollInfinity(
+            scrollDirection: Axis.horizontal,
+            maxItems: 8,
+            loadData: (pageKey) {
+              return loadData(
+                pageKey,
+                scrollDirection: Axis.horizontal,
+              );
+            },
+            itemBuilder: (value) {
+              return Container(
+                width: 200.0,
+                color: value,
+              );
+            },
           ),
         ),
       ),
