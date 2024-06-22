@@ -8,6 +8,104 @@ typedef LoadDatatype = Future<List<Color>> Function(
   Axis scrollDirection,
 });
 
+class LoadingStyleModel<T> {
+  const LoadingStyleModel({
+    required this.name,
+    this.value,
+  });
+
+  final String name;
+  final T? value;
+}
+
+const loadingColors = <LoadingStyleModel<Color>>[
+  LoadingStyleModel(
+    name: 'Default',
+  ),
+  LoadingStyleModel(
+    name: 'Red',
+    value: Colors.red,
+  ),
+  LoadingStyleModel(
+    name: 'Blue',
+    value: Colors.blue,
+  ),
+  LoadingStyleModel(
+    name: 'Yellow',
+    value: Colors.yellow,
+  ),
+  LoadingStyleModel(
+    name: 'Green',
+    value: Colors.green,
+  ),
+  LoadingStyleModel(
+    name: 'Purple',
+    value: Colors.purple,
+  ),
+];
+
+const loadingStrokeAligns = <LoadingStyleModel<double>>[
+  LoadingStyleModel(
+    name: 'Center',
+    value: BorderSide.strokeAlignCenter,
+  ),
+  LoadingStyleModel(
+    name: 'Inside',
+    value: BorderSide.strokeAlignInside,
+  ),
+  LoadingStyleModel(
+    name: 'Outside',
+    value: BorderSide.strokeAlignOutside,
+  ),
+];
+
+const loadingStrokeWidths = <LoadingStyleModel<double>>[
+  LoadingStyleModel(
+    name: 'Default',
+  ),
+  LoadingStyleModel(
+    name: '2',
+    value: 2.0,
+  ),
+  LoadingStyleModel(
+    name: '6',
+    value: 6.0,
+  ),
+  LoadingStyleModel(
+    name: '8',
+    value: 8.0,
+  ),
+  LoadingStyleModel(
+    name: '10',
+    value: 10.0,
+  ),
+];
+
+class LoadingStyleTypeModel<T> {
+  const LoadingStyleTypeModel({
+    required this.title,
+    required this.value,
+  });
+
+  final String title;
+  final List<LoadingStyleModel> value;
+}
+
+const loadingTypeStyles = <LoadingStyleTypeModel>[
+  LoadingStyleTypeModel(
+    title: 'Color',
+    value: loadingColors,
+  ),
+  LoadingStyleTypeModel(
+    title: 'Align',
+    value: loadingStrokeAligns,
+  ),
+  LoadingStyleTypeModel(
+    title: 'Width',
+    value: loadingStrokeWidths,
+  ),
+];
+
 void main() {
   runApp(
     const MaterialApp(
@@ -27,6 +125,12 @@ class ScrollInfinityExample extends StatefulWidget {
 }
 
 class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
+  final _loadingStyles = <LoadingStyleModel>[
+    loadingColors.first,
+    loadingStrokeAligns.first,
+    loadingStrokeWidths.first,
+  ];
+
   void navigateTo(
     Widget screen,
   ) {
@@ -73,16 +177,65 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
 
   @override
   Widget build(BuildContext context) {
+    final loadingStyle = LoadingStyle(
+      color: _loadingStyles[0].value,
+      strokeAlign: _loadingStyles[1].value,
+      strokeWidth: _loadingStyles[2].value,
+    );
+
     return Scaffold(
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            ...List.generate(loadingTypeStyles.length, (index) {
+              final loadingTypeStyle = loadingTypeStyles[index];
+
+              return Column(
+                children: <Widget>[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Text(
+                        loadingTypeStyle.title,
+                        style: const TextStyle(
+                          fontSize: 16.0,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 12.0),
+                      DropdownButtonHideUnderline(
+                        child: DropdownButton(
+                          value: _loadingStyles[index],
+                          items: List.generate(loadingTypeStyle.value.length, (index) {
+                            final style = loadingTypeStyle.value[index];
+
+                            return DropdownMenuItem(
+                              value: style,
+                              child: Text(
+                                style.name,
+                              ),
+                            );
+                          }),
+                          onChanged: (value) {
+                            setState(() {
+                              _loadingStyles[index] = value!;
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20.0),
+                ],
+              );
+            }),
             ElevatedButton(
               onPressed: () {
                 navigateTo(
                   InfiniteListingVerticallyScreen(
                     loadData: _loadData,
+                    loadingStyle: loadingStyle,
                   ),
                 );
               },
@@ -94,6 +247,7 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
                 navigateTo(
                   InfiniteListingHorizontallyScreen(
                     loadData: _loadData,
+                    loadingStyle: loadingStyle,
                   ),
                 );
               },
@@ -110,9 +264,11 @@ class InfiniteListingVerticallyScreen extends StatelessWidget {
   const InfiniteListingVerticallyScreen({
     super.key,
     required this.loadData,
+    required this.loadingStyle,
   });
 
   final LoadDatatype loadData;
+  final LoadingStyle loadingStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -129,6 +285,7 @@ class InfiniteListingVerticallyScreen extends StatelessWidget {
       ),
       body: ScrollInfinity(
         maxItems: 10,
+        loadingStyle: loadingStyle,
         loadData: loadData,
         itemBuilder: (value) {
           return Container(
@@ -145,9 +302,11 @@ class InfiniteListingHorizontallyScreen extends StatelessWidget {
   const InfiniteListingHorizontallyScreen({
     super.key,
     required this.loadData,
+    required this.loadingStyle,
   });
 
   final LoadDatatype loadData;
+  final LoadingStyle loadingStyle;
 
   @override
   Widget build(BuildContext context) {
@@ -167,6 +326,7 @@ class InfiniteListingHorizontallyScreen extends StatelessWidget {
           height: 100.0,
           child: ScrollInfinity(
             scrollDirection: Axis.horizontal,
+            loadingStyle: loadingStyle,
             maxItems: 8,
             loadData: (pageKey) {
               return loadData(
