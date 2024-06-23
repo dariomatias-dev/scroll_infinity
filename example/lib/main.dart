@@ -283,7 +283,7 @@ class InfiniteListingVerticallyScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: ScrollInfinity(
+      body: ScrollInfinity<Color>(
         maxItems: 10,
         loadingStyle: loadingStyle,
         loadData: loadData,
@@ -324,7 +324,7 @@ class InfiniteListingHorizontallyScreen extends StatelessWidget {
       body: Center(
         child: SizedBox(
           height: 100.0,
-          child: ScrollInfinity(
+          child: ScrollInfinity<Color>(
             scrollDirection: Axis.horizontal,
             loadingStyle: loadingStyle,
             maxItems: 8,

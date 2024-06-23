@@ -19,9 +19,11 @@ class ScrollInfinity<T> extends StatefulWidget {
     super.key,
     this.scrollDirection = Axis.vertical,
     this.padding,
+    this.initialItems,
     this.loading,
     this.loadingStyle,
     required this.maxItems,
+    this.disableInitialRequest = false,
     required this.loadData,
     this.separatorBuilder,
     required this.itemBuilder,
@@ -32,9 +34,11 @@ class ScrollInfinity<T> extends StatefulWidget {
 
   final Axis scrollDirection;
   final EdgeInsetsGeometry? padding;
+  final List<T>? initialItems;
   final Widget? loading;
   final LoadingStyle? loadingStyle;
   final int maxItems;
+  final bool disableInitialRequest;
   final Future<List<T>> Function(
     int pageKey,
   ) loadData;
@@ -130,7 +134,18 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
   @override
   void initState() {
-    _addItems();
+    if (widget.initialItems != null) {
+      _items.addAll(
+        _generateItems(
+          widget.initialItems!,
+        ),
+      );
+    }
+
+    if (!widget.disableInitialRequest) {
+      _addItems();
+    }
+
     _scrollController.addListener(_onScroll);
 
     super.initState();
