@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 class LoadingStyle {
@@ -17,21 +19,21 @@ class ScrollInfinity<T> extends StatefulWidget {
     super.key,
     this.scrollDirection = Axis.vertical,
     this.padding,
+    this.loading,
     this.loadingStyle,
-    this.loadingWidget,
     required this.maxItems,
     required this.loadData,
     this.separatorBuilder,
     required this.itemBuilder,
   }) : assert(
-          !(loadingStyle != null && loadingWidget != null),
-          "The properties 'loadingStyle' and 'loadingWidget' cannot be used together. Please define only one of these properties.",
+          !(loadingStyle != null && loading != null),
+          "The properties 'loading' and 'loadingStyle' cannot be used together. Please define only one of these properties.",
         );
 
   final Axis scrollDirection;
   final EdgeInsetsGeometry? padding;
+  final Widget? loading;
   final LoadingStyle? loadingStyle;
-  final Widget? loadingWidget;
   final int maxItems;
   final Future<List<T>> Function(
     int pageKey,
@@ -65,13 +67,13 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   }
 
   Future<void> _addItems() async {
-    _addLoadingWidget();
+    _addLoading();
     _updateIsLoading();
 
     final newItems = await widget.loadData(_pageKey);
     _pageKey++;
 
-    _removeLoadingWidget();
+    _removeLoading();
 
     _isListEnd = newItems.length < widget.maxItems;
 
@@ -94,9 +96,9 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     return items;
   }
 
-  void _addLoadingWidget() {
+  void _addLoading() {
     _items.add(
-      widget.loadingWidget ??
+      widget.loading ??
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Row(
@@ -114,14 +116,16 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     );
   }
 
-  void _removeLoadingWidget() {
+  void _removeLoading() {
     _items.removeLast();
   }
 
   void _updateIsLoading() {
-    setState(() {
-      _isLoading = !_isLoading;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = !_isLoading;
+      });
+    }
   }
 
   @override
