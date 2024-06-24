@@ -32,20 +32,39 @@ class ScrollInfinity<T> extends StatefulWidget {
           "The properties 'loading' and 'loadingStyle' cannot be used together. Please define only one of these properties.",
         );
 
+  /// Defines the scrolling direction of the list. Can be `Axis.vertical` or `Axis.horizontal`
   final Axis scrollDirection;
+
+  /// Specifies the internal padding of the list.
   final EdgeInsetsGeometry? padding;
+
+  /// Specifies the initial items to be displayed in the list.
   final List<T>? initialItems;
+
+  /// Allows passing a custom loading component.
   final Widget? loading;
+
+  /// Defines the style of the `CircularProgressIndicator`. Use this property to customize the appearance of the default loading indicator.
   final LoadingStyle? loadingStyle;
+
+  /// Specifies the maximum number of items per request. This will be used to determine when the list reaches the end.
   final int maxItems;
+
+  /// Disables the initial data request if set to `true`.
   final bool disableInitialRequest;
+
+  /// Function responsible for loading the data. It should return a list of items.
   final Future<List<T>> Function(
     int pageKey,
   ) loadData;
+
+  /// Builds the separator component between the items in the list. Use this property to add custom dividers between the items.
   final Widget Function(
     BuildContext context,
     int index,
   )? separatorBuilder;
+
+  /// Builds the items in the list. This function should return the widget that represents each item in the list.
   final Widget Function(
     T value,
   ) itemBuilder;

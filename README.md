@@ -62,6 +62,13 @@ scrollDirection: Axis.vertical,
 padding: EdgeInsets(8.0),
 ```
 
+- **initialItems**: Specifies the initial items to be displayed in the list.
+```dart
+initialItems: [
+  // items
+],
+```
+
 - **loading**: Allows passing a custom loading component.
 ```dart
 loading: CustomLoadingWidget(),
@@ -78,6 +85,11 @@ loadingStyle: CircularProgressIndicator(
 - **maxItems**: Specifies the maximum number of items per request. This will be used to determine when the list reaches the end.
 ```dart
 maxItems: 20,
+```
+
+- **disableInitialRequest**: Disables the initial data request if set to `true`.
+```dart
+disableInitialRequest: true,
 ```
 
 - **loadData**: Function responsible for loading the data. It should return a list of items.
