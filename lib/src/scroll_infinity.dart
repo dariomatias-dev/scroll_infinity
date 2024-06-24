@@ -2,17 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-class LoadingStyle {
-  const LoadingStyle({
-    this.color,
-    this.strokeAlign,
-    this.strokeWidth,
-  });
-
-  final Color? color;
-  final double? strokeAlign;
-  final double? strokeWidth;
-}
+part 'loading_style.dart';
 
 class ScrollInfinity<T> extends StatefulWidget {
   const ScrollInfinity({
@@ -81,6 +71,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   final _scrollController = ScrollController();
   final _items = <Widget>[];
 
+  /// Method called during scrolling.
   void _onScroll() {
     if (!_isListEnd && !_isLoading && _scrollController.position.atEdge) {
       if (_scrollController.position.pixels != 0) {
@@ -89,6 +80,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     }
   }
 
+  /// Handles the process of adding new items.
   Future<void> _addItems() async {
     _addLoading();
     _updateIsLoading();
@@ -106,6 +98,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     _updateIsLoading();
   }
 
+  /// Generates new items by calling `itemBuilder`.
   List<Widget> _generateItems(
     List<T> newItems,
   ) {
@@ -119,6 +112,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     return items;
   }
 
+  /// Adds the loading indicator component.
   void _addLoading() {
     _items.add(
       widget.loading ??
@@ -139,10 +133,12 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     );
   }
 
+  /// Removes the loading indicator component.
   void _removeLoading() {
     _items.removeLast();
   }
 
+  /// Updates the state of the loading indicator component.
   void _updateIsLoading() {
     if (mounted) {
       setState(() {
