@@ -1,8 +1,15 @@
 # Scroll Infinity
 
-## Usage Example
-Here is an example of how to use the package to create a list with infinite scrolling:
+## Installation
+Run this command:
+```bash
+flutter pub add scroll_infinity
+```
 
+## Usage Example
+Here are some examples of how to use the package to create a list with infinite scrolling:
+
+Vertical:
 ```dart
 import 'dart:math';
 
@@ -44,6 +51,67 @@ class _ExampleState extends State<Example> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+```
+
+Horizontal:
+```dart
+import 'dart:math';
+
+import 'package:flutter/material.dart';
+import 'package:scroll_infinity/scroll_infinity.dart';
+
+
+class Example extends StatefulWidget {
+  const Example({super.key});
+
+  @override
+  State<Example> createState() => _ExampleState();
+}
+
+class _ExampleState extends State<Example> {
+  static const maxItems = 6;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: SizedBox(
+          height: 64.0,
+          child: ScrollInfinity(
+            scrollDirection: Axis.horizontal,
+            maxItems: maxItems,
+            loadData: (pageKey) async {
+              await Future.delayed(
+                const Duration(
+                  seconds: 2,
+                ),
+              );
+        
+              return List.generate(maxItems, (index) {
+                return maxItems * pageKey + index + 1;
+              });
+            },
+            itemBuilder: (value) {
+              return Center(
+                child: SizedBox(
+                  width: MediaQuery.sizeOf(context).width * 0.5,
+                  child: ListTile(
+                    onTap: () {},
+                    title: Text('Item $value'),
+                    subtitle: const Text('Subtitle'),
+                    trailing: const Icon(
+                      Icons.keyboard_arrow_right_rounded,
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }
@@ -120,6 +188,9 @@ itemBuilder: (context, index) {
   );
 },
 ```
+
+# Author
+This Flutter package was developed by [Dário Matias](https://github.com/dariomatias-dev).
 
 # Donations
 
