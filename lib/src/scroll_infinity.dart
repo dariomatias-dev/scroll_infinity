@@ -8,6 +8,7 @@ class ScrollInfinity<T> extends StatefulWidget {
   const ScrollInfinity({
     super.key,
     this.scrollDirection = Axis.vertical,
+    this.scrollbars = false,
     this.padding,
     this.initialItems,
     this.loading,
@@ -17,13 +18,20 @@ class ScrollInfinity<T> extends StatefulWidget {
     required this.loadData,
     this.separatorBuilder,
     required this.itemBuilder,
-  }) : assert(
+  })  : assert(
           !(loadingStyle != null && loading != null),
-          "The properties 'loading' and 'loadingStyle' cannot be used together. Please define only one of these properties.",
+          'The properties `loading` and `loadingStyle` cannot be used together. Please define only one of these properties.',
+        ),
+        assert(
+          !(initialItems == null && disableInitialRequest),
+          '`initialItems` must not be `null` when `disableInitialRequest` is `true`.',
         );
 
   /// Defines the scrolling direction of the list. Can be `Axis.vertical` or `Axis.horizontal`
   final Axis scrollDirection;
+
+  /// Show scrollbar if `true`. Default is `false`.
+  final bool scrollbars;
 
   /// Specifies the internal padding of the list.
   final EdgeInsetsGeometry? padding;
@@ -40,7 +48,7 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// Specifies the maximum number of items per request. This will be used to determine when the list reaches the end.
   final int maxItems;
 
-  /// Disables the initial data request if set to `true`.
+  /// Disables the initial data request if set to `true`. Default is `false`.
   final bool disableInitialRequest;
 
   /// Function responsible for loading the data. It should return a list of items.
@@ -213,7 +221,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   Widget build(BuildContext context) {
     return ScrollConfiguration(
       behavior: ScrollConfiguration.of(context).copyWith(
-        scrollbars: false,
+        scrollbars: widget.scrollbars,
       ),
       child: ListView.separated(
         controller: _scrollController,

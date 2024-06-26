@@ -367,6 +367,7 @@ class _InfiniteListingVerticallyScreenState
           const SizedBox(height: 20.0),
           Expanded(
             child: ScrollInfinity<Color>(
+              scrollbars: true,
               loadingStyle: widget.loadingStyle,
               maxItems: 10,
               initialItems: widget.initialItems,

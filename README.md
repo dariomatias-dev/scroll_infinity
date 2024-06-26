@@ -125,6 +125,11 @@ class _ExampleState extends State<Example> {
 scrollDirection: Axis.vertical,
 ```
 
+- **scrollbars**: Shows scrollbars if `true`. Default is `false`.
+```dart
+scrollbars: true,
+```
+
 - **padding**: Specifies the internal padding of the list.
 ```dart
 padding: EdgeInsets(8.0),
@@ -155,7 +160,7 @@ loadingStyle: CircularProgressIndicator(
 maxItems: 20,
 ```
 
-- **disableInitialRequest**: Disables the initial data request if set to `true`.
+- **disableInitialRequest**: Disables the initial data request if set to `true`. Default is `false`.
 ```dart
 disableInitialRequest: true,
 ```
