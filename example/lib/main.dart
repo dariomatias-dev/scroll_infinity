@@ -131,6 +131,12 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
     loadingStrokeWidths.first,
   ];
 
+  LoadingStyle get loadingStyle => LoadingStyle(
+        color: _loadingStyles[0].value,
+        strokeAlign: _loadingStyles[1].value,
+        strokeWidth: _loadingStyles[2].value,
+      );
+
   void navigateTo(
     Widget screen,
   ) {
@@ -158,12 +164,20 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
 
     final isVertical = scrollDirection == Axis.vertical;
 
-    return List.generate(
+    return _generateColors(
       isListEnd
           ? 3
           : isVertical
               ? 10
               : 8,
+    );
+  }
+
+  List<Color> _generateColors(
+    int amount,
+  ) {
+    return List.generate(
+      amount,
       (index) {
         return Color.fromARGB(
           255,
@@ -175,14 +189,32 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
     );
   }
 
+  void navigateToInfiniteListingVerticallyScreen({
+    List<Color>? initialItems,
+  }) {
+    navigateTo(
+      InfiniteListingVerticallyScreen(
+        initialItems: initialItems,
+        loadData: _loadData,
+        loadingStyle: loadingStyle,
+      ),
+    );
+  }
+
+  void navigateToInfiniteListingHorizontallyScreen({
+    List<Color>? initialItems,
+  }) {
+    navigateTo(
+      InfiniteListingHorizontallyScreen(
+        initialItems: initialItems,
+        loadData: _loadData,
+        loadingStyle: loadingStyle,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final loadingStyle = LoadingStyle(
-      color: _loadingStyles[0].value,
-      strokeAlign: _loadingStyles[1].value,
-      strokeWidth: _loadingStyles[2].value,
-    );
-
     return Scaffold(
       body: Center(
         child: Column(
@@ -207,7 +239,8 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
                       DropdownButtonHideUnderline(
                         child: DropdownButton(
                           value: _loadingStyles[index],
-                          items: List.generate(loadingTypeStyle.value.length, (index) {
+                          items: List.generate(loadingTypeStyle.value.length,
+                              (index) {
                             final style = loadingTypeStyle.value[index];
 
                             return DropdownMenuItem(
@@ -230,13 +263,47 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
                 ],
               );
             }),
+            const Text(
+              'With initial items',
+              style: TextStyle(
+                fontSize: 16.0,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 12.0),
             ElevatedButton(
               onPressed: () {
-                navigateTo(
-                  InfiniteListingVerticallyScreen(
-                    loadData: _loadData,
-                    loadingStyle: loadingStyle,
-                  ),
+                navigateToInfiniteListingVerticallyScreen();
+              },
+              child: const Text('Show Infinite Listing Vertically'),
+            ),
+            const SizedBox(height: 12.0),
+            ElevatedButton(
+              onPressed: () {
+                navigateToInfiniteListingHorizontallyScreen();
+              },
+              child: const Text('Show Infinite Listing Horizontally'),
+            ),
+            ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: 320.0,
+              ),
+              child: const Divider(
+                height: 20.0,
+              ),
+            ),
+            const Text(
+              'Without initial items',
+              style: TextStyle(
+                fontSize: 16.0,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 12.0),
+            ElevatedButton(
+              onPressed: () {
+                navigateToInfiniteListingVerticallyScreen(
+                  initialItems: _generateColors(10),
                 );
               },
               child: const Text('Show Infinite Listing Vertically'),
@@ -244,11 +311,8 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
             const SizedBox(height: 12.0),
             ElevatedButton(
               onPressed: () {
-                navigateTo(
-                  InfiniteListingHorizontallyScreen(
-                    loadData: _loadData,
-                    loadingStyle: loadingStyle,
-                  ),
+                navigateToInfiniteListingHorizontallyScreen(
+                  initialItems: _generateColors(8),
                 );
               },
               child: const Text('Show Infinite Listing Horizontally'),
@@ -260,16 +324,25 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
   }
 }
 
-class InfiniteListingVerticallyScreen extends StatelessWidget {
+class InfiniteListingVerticallyScreen extends StatefulWidget {
   const InfiniteListingVerticallyScreen({
     super.key,
+    this.initialItems,
     required this.loadData,
     required this.loadingStyle,
   });
 
+  final List<Color>? initialItems;
   final LoadDatatype loadData;
   final LoadingStyle loadingStyle;
 
+  @override
+  State<InfiniteListingVerticallyScreen> createState() =>
+      _InfiniteListingVerticallyScreenState();
+}
+
+class _InfiniteListingVerticallyScreenState
+    extends State<InfiniteListingVerticallyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -283,31 +356,55 @@ class InfiniteListingVerticallyScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: ScrollInfinity<Color>(
-        maxItems: 10,
-        loadingStyle: loadingStyle,
-        loadData: loadData,
-        itemBuilder: (value) {
-          return Container(
-            height: 100.0,
-            color: value,
-          );
-        },
+      body: Column(
+        children: <Widget>[
+          ElevatedButton(
+            onPressed: () {
+              setState(() {});
+            },
+            child: const Text('Reset'),
+          ),
+          const SizedBox(height: 20.0),
+          Expanded(
+            child: ScrollInfinity<Color>(
+              loadingStyle: widget.loadingStyle,
+              maxItems: 10,
+              initialItems: widget.initialItems,
+              disableInitialRequest: widget.initialItems != null,
+              loadData: widget.loadData,
+              itemBuilder: (value) {
+                return Container(
+                  height: 100.0,
+                  color: value,
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class InfiniteListingHorizontallyScreen extends StatelessWidget {
+class InfiniteListingHorizontallyScreen extends StatefulWidget {
   const InfiniteListingHorizontallyScreen({
     super.key,
+    this.initialItems,
     required this.loadData,
     required this.loadingStyle,
   });
 
+  final List<Color>? initialItems;
   final LoadDatatype loadData;
   final LoadingStyle loadingStyle;
 
+  @override
+  State<InfiniteListingHorizontallyScreen> createState() =>
+      _InfiniteListingHorizontallyScreenState();
+}
+
+class _InfiniteListingHorizontallyScreenState
+    extends State<InfiniteListingHorizontallyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -321,27 +418,42 @@ class InfiniteListingHorizontallyScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: Center(
-        child: SizedBox(
-          height: 100.0,
-          child: ScrollInfinity<Color>(
-            scrollDirection: Axis.horizontal,
-            loadingStyle: loadingStyle,
-            maxItems: 8,
-            loadData: (pageKey) {
-              return loadData(
-                pageKey,
-                scrollDirection: Axis.horizontal,
-              );
+      body: Column(
+        children: <Widget>[
+          ElevatedButton(
+            onPressed: () {
+              setState(() {});
             },
-            itemBuilder: (value) {
-              return Container(
-                width: 200.0,
-                color: value,
-              );
-            },
+            child: const Text('Reset'),
           ),
-        ),
+          const SizedBox(height: 20.0),
+          Expanded(
+            child: Center(
+              child: SizedBox(
+                height: 100.0,
+                child: ScrollInfinity<Color>(
+                  scrollDirection: Axis.horizontal,
+                  loadingStyle: widget.loadingStyle,
+                  maxItems: 8,
+                  initialItems: widget.initialItems,
+                  disableInitialRequest: widget.initialItems != null,
+                  loadData: (pageKey) {
+                    return widget.loadData(
+                      pageKey,
+                      scrollDirection: Axis.horizontal,
+                    );
+                  },
+                  itemBuilder: (value) {
+                    return Container(
+                      width: 200.0,
+                      color: value,
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

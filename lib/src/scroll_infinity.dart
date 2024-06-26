@@ -133,11 +133,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     );
   }
 
-  /// Removes the loading indicator component.
-  void _removeLoading() {
-    _items.removeLast();
-  }
-
   /// Updates the state of the loading indicator component.
   void _updateIsLoading() {
     if (mounted) {
@@ -147,15 +142,22 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     }
   }
 
+  /// Removes the loading indicator component.
+  void _removeLoading() {
+    _items.removeLast();
+  }
+
   /// Reset the component to its initial settings.
-  void _reset() {
-    _scrollController.animateTo(
-      0.0,
-      duration: const Duration(
-        milliseconds: 600,
-      ),
-      curve: Curves.linear,
-    );
+  Future<void> _reset() async {
+    if (widget.initialItems != null) {
+      await _scrollController.animateTo(
+        0.0,
+        duration: const Duration(
+          milliseconds: 600,
+        ),
+        curve: Curves.linear,
+      );
+    }
     _items.clear();
     _isListEnd = false;
     _pageKey = 0;
@@ -166,6 +168,8 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
           widget.initialItems!,
         ),
       );
+
+      setState(() {});
     } else {
       _addItems();
     }
