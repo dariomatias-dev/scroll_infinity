@@ -147,6 +147,30 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     }
   }
 
+  /// Reset the component to its initial settings.
+  void _reset() {
+    _scrollController.animateTo(
+      0.0,
+      duration: const Duration(
+        milliseconds: 600,
+      ),
+      curve: Curves.linear,
+    );
+    _items.clear();
+    _isListEnd = false;
+    _pageKey = 0;
+
+    if (widget.initialItems != null && widget.disableInitialRequest) {
+      _items.addAll(
+        _generateItems(
+          widget.initialItems!,
+        ),
+      );
+    } else {
+      _addItems();
+    }
+  }
+
   @override
   void initState() {
     if (widget.initialItems != null) {
@@ -164,6 +188,13 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     _scrollController.addListener(_onScroll);
 
     super.initState();
+  }
+
+  @override
+  void didUpdateWidget(covariant ScrollInfinity<T> oldWidget) {
+    _reset();
+
+    super.didUpdateWidget(oldWidget);
   }
 
   @override
