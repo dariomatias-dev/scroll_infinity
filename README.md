@@ -135,6 +135,16 @@ scrollbars: true,
 padding: EdgeInsets(8.0),
 ```
 
+- **disableInitialRequest**: Disables the initial data request if set to `true`. Default is `false`.
+```dart
+disableInitialRequest: true,
+```
+
+- **initialPageIndex**: Initial page index. Default is `0`.
+```dart
+initialPageIndex: 1,
+```
+
 - **initialItems**: Specifies the initial items to be displayed in the list.
 ```dart
 initialItems: [
@@ -158,11 +168,6 @@ loadingStyle: CircularProgressIndicator(
 - **maxItems**: Specifies the maximum number of items per request. This will be used to determine when the list reaches the end.
 ```dart
 maxItems: 20,
-```
-
-- **disableInitialRequest**: Disables the initial data request if set to `true`. Default is `false`.
-```dart
-disableInitialRequest: true,
 ```
 
 - **loadData**: Function responsible for loading the data. It should return a list of items.

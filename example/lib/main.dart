@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:scroll_infinity/scroll_infinity.dart';
 
 typedef LoadDatatype = Future<List<Color>> Function(
-  int pageKey, {
+  int pageIndex, {
   Axis scrollDirection,
 });
 
@@ -151,7 +151,7 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
   }
 
   Future<List<Color>> _loadData(
-    int pageKey, {
+    int pageIndex, {
     Axis scrollDirection = Axis.vertical,
   }) async {
     await Future.delayed(
@@ -369,6 +369,7 @@ class _InfiniteListingVerticallyScreenState
             child: ScrollInfinity<Color>(
               scrollbars: true,
               loadingStyle: widget.loadingStyle,
+              initialPageIndex: widget.initialItems != null ? 1 : 0,
               maxItems: 10,
               initialItems: widget.initialItems,
               disableInitialRequest: widget.initialItems != null,
@@ -435,12 +436,13 @@ class _InfiniteListingHorizontallyScreenState
                 child: ScrollInfinity<Color>(
                   scrollDirection: Axis.horizontal,
                   loadingStyle: widget.loadingStyle,
+                  initialPageIndex: widget.initialItems != null ? 1 : 0,
                   maxItems: 8,
                   initialItems: widget.initialItems,
                   disableInitialRequest: widget.initialItems != null,
-                  loadData: (pageKey) {
+                  loadData: (pageIndex) {
                     return widget.loadData(
-                      pageKey,
+                      pageIndex,
                       scrollDirection: Axis.horizontal,
                     );
                   },

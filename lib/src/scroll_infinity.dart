@@ -10,11 +10,12 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.scrollDirection = Axis.vertical,
     this.scrollbars = false,
     this.padding,
+    this.disableInitialRequest = false,
+    this.initialPageIndex = 0,
     this.initialItems,
     this.loading,
     this.loadingStyle,
     required this.maxItems,
-    this.disableInitialRequest = false,
     required this.loadData,
     this.separatorBuilder,
     required this.itemBuilder,
@@ -36,6 +37,12 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// Specifies the internal padding of the list.
   final EdgeInsetsGeometry? padding;
 
+  /// Disables the initial data request if set to `true`. Default is `false`.
+  final bool disableInitialRequest;
+
+  /// Initial page index. Default is `0`.
+  final int initialPageIndex;
+
   /// Specifies the initial items to be displayed in the list.
   final List<T>? initialItems;
 
@@ -48,12 +55,9 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// Specifies the maximum number of items per request. This will be used to determine when the list reaches the end.
   final int maxItems;
 
-  /// Disables the initial data request if set to `true`. Default is `false`.
-  final bool disableInitialRequest;
-
   /// Function responsible for loading the data. It should return a list of items.
   final Future<List<T>> Function(
-    int pageKey,
+    int pageIndex,
   ) loadData;
 
   /// Builds the separator component between the items in the list. Use this property to add custom dividers between the items.
@@ -72,7 +76,7 @@ class ScrollInfinity<T> extends StatefulWidget {
 }
 
 class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
-  int _pageKey = 0;
+  late int _pageIndex;
   bool _isLoading = false;
   bool _isListEnd = false;
 
@@ -93,8 +97,8 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     _addLoading();
     _updateIsLoading();
 
-    final newItems = await widget.loadData(_pageKey);
-    _pageKey++;
+    final newItems = await widget.loadData(_pageIndex);
+    _pageIndex++;
 
     _removeLoading();
 
@@ -168,7 +172,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     }
     _items.clear();
     _isListEnd = false;
-    _pageKey = 0;
+    _pageIndex = 0;
 
     if (widget.initialItems != null && widget.disableInitialRequest) {
       _items.addAll(
@@ -185,6 +189,8 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
   @override
   void initState() {
+    _pageIndex = widget.initialPageIndex;
+
     if (widget.initialItems != null) {
       _items.addAll(
         _generateItems(

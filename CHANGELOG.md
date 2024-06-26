@@ -1,3 +1,8 @@
+## [0.1.1] - 2024-06-26
+- Added `initialPageIndex` property to define the initial page index.
+- Renamed `pageKey` to `pageIndex`.
+- Reorganized the order of properties.
+
 ## [0.1.0] - 2024-06-26
 - Added reset feature.
 - Improved documentation.
