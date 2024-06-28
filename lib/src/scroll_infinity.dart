@@ -13,6 +13,7 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.disableInitialRequest = false,
     this.initialPageIndex = 0,
     this.initialItems,
+    this.interval,
     this.loading,
     this.loadingStyle,
     required this.maxItems,
@@ -46,6 +47,9 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// Specifies the initial items to be displayed in the list.
   final List<T>? initialItems;
 
+  /// Specifies the range in which the `null` value is passed.
+  final int? interval;
+
   /// Allows passing a custom loading component.
   final Widget? loading;
 
@@ -68,7 +72,8 @@ class ScrollInfinity<T> extends StatefulWidget {
 
   /// Builds the items in the list. This function should return the widget that represents each item in the list.
   final Widget Function(
-    T value,
+    T? value,
+    int index,
   ) itemBuilder;
 
   @override
@@ -115,13 +120,54 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     List<T> newItems,
   ) {
     final items = <Widget>[];
-    for (T newItem in newItems) {
-      items.add(
-        widget.itemBuilder(newItem),
-      );
+
+    if (widget.interval != null) {
+      final interval = widget.interval!;
+      final quantityOfItems = newItems.length + (newItems.length ~/ interval);
+
+      for (int i = 0; i < quantityOfItems; i++) {
+        if (i != 0 && i % interval == 0) {
+          items.add(
+            widget.itemBuilder(
+              null,
+              i + _items.length,
+            ),
+          );
+
+          continue;
+        }
+
+        final newItem = newItems[i - (i ~/ interval)];
+
+        items.add(
+          widget.itemBuilder(
+            newItem,
+            i + _items.length,
+          ),
+        );
+      }
+    } else {
+      for (int i = 0; i < newItems.length; i++) {
+        items.add(
+          widget.itemBuilder(
+            newItems[i],
+            i + _items.length,
+          ),
+        );
+      }
     }
 
     return items;
+  }
+
+  Widget setItem(
+    T value,
+    int index,
+  ) {
+    return widget.itemBuilder(
+      value,
+      index + _items.length,
+    );
   }
 
   /// Adds the loading indicator component.

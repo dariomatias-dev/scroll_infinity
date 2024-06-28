@@ -317,6 +317,17 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
               },
               child: const Text('Show Infinite Listing Horizontally'),
             ),
+            const SizedBox(height: 20.0),
+            ElevatedButton(
+              onPressed: () {
+                navigateTo(
+                  const InfiniteListingVerticallyWithIntervalScreen(),
+                );
+              },
+              child: const Text(
+                'Infinite Listing Vertically With Tnterval Screen',
+              ),
+            ),
           ],
         ),
       ),
@@ -367,14 +378,13 @@ class _InfiniteListingVerticallyScreenState
           const SizedBox(height: 20.0),
           Expanded(
             child: ScrollInfinity<Color>(
-              scrollbars: true,
               loadingStyle: widget.loadingStyle,
               initialPageIndex: widget.initialItems != null ? 1 : 0,
               maxItems: 10,
               initialItems: widget.initialItems,
               disableInitialRequest: widget.initialItems != null,
               loadData: widget.loadData,
-              itemBuilder: (value) {
+              itemBuilder: (value, index) {
                 return Container(
                   height: 100.0,
                   color: value,
@@ -446,7 +456,7 @@ class _InfiniteListingHorizontallyScreenState
                       scrollDirection: Axis.horizontal,
                     );
                   },
-                  itemBuilder: (value) {
+                  itemBuilder: (value, index) {
                     return Container(
                       width: 200.0,
                       color: value,
@@ -457,6 +467,66 @@ class _InfiniteListingHorizontallyScreenState
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class InfiniteListingVerticallyWithIntervalScreen extends StatelessWidget {
+  const InfiniteListingVerticallyWithIntervalScreen({super.key});
+
+  Future<List<Color>> _loadData(
+    int pageIndex,
+  ) async {
+    await Future.delayed(
+      const Duration(
+        seconds: 2,
+      ),
+    );
+
+    return List.generate(
+      10,
+      (index) {
+        return Color.fromARGB(
+          255,
+          random.nextInt(255),
+          random.nextInt(255),
+          random.nextInt(255),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+          ),
+        ),
+      ),
+      body: ScrollInfinity<Color>(
+        maxItems: 10,
+        interval: 10,
+        loadData: _loadData,
+        itemBuilder: (value, index) {
+          if (value == null) {
+            return const SizedBox(
+              height: 100.0,
+              child: Placeholder(),
+            );
+          }
+
+          return Container(
+            height: 100.0,
+            color: value,
+          );
+        },
       ),
     );
   }

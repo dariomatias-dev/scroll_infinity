@@ -152,6 +152,11 @@ initialItems: [
 ],
 ```
 
+- **interval**: Specifies the range in which the `null` value is passed.
+```dart
+interval: 20,
+```
+
 - **loading**: Allows passing a custom loading component.
 ```dart
 loading: CustomLoadingWidget(),
