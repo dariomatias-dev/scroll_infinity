@@ -84,8 +84,10 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   late int _pageIndex;
   bool _isLoading = false;
   bool _isListEnd = false;
+  int _itemsCount = 0;
 
   final _scrollController = ScrollController();
+  final _values = <T>[];
   final _items = <Widget>[];
 
   /// Method called during scrolling.
@@ -102,55 +104,64 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     _addLoading();
     _updateIsLoading();
 
-    final newItems = await widget.loadData(_pageIndex);
-    _pageIndex++;
+    if (_values.length != widget.maxItems) {
+      final newItems = await widget.loadData(_pageIndex);
+      _pageIndex++;
+
+      _values.addAll(newItems);
+
+      _isListEnd = newItems.length < widget.maxItems;
+    }
 
     _removeLoading();
 
-    _isListEnd = newItems.length < widget.maxItems;
-
-    final items = _generateItems(newItems);
+    final items = _generateItems();
     _items.addAll(items);
 
     _updateIsLoading();
   }
 
   /// Generates new items by calling `itemBuilder`.
-  List<Widget> _generateItems(
-    List<T> newItems,
-  ) {
+  List<Widget> _generateItems() {
     final items = <Widget>[];
 
     if (widget.interval != null) {
-      final interval = widget.interval!;
-      final quantityOfItems = newItems.length + (newItems.length ~/ interval);
+      int index = 0;
 
-      for (int i = 0; i < quantityOfItems; i++) {
-        if (i != 0 && i % interval == 0) {
+      while (items.length != widget.maxItems && _values.isNotEmpty) {
+        if (_itemsCount == widget.interval) {
+          _itemsCount = 0;
+
           items.add(
             widget.itemBuilder(
               null,
-              i + _items.length,
+              index + _items.length,
             ),
           );
+
+          index--;
 
           continue;
         }
 
-        final newItem = newItems[i - (i ~/ interval)];
+        _itemsCount++;
 
         items.add(
           widget.itemBuilder(
-            newItem,
-            i + _items.length,
+            _values[0],
+            index + _items.length,
           ),
         );
+
+        index--;
+
+        _values.removeAt(0);
       }
     } else {
-      for (int i = 0; i < newItems.length; i++) {
+      for (int i = 0; i < _values.length; i++) {
         items.add(
           widget.itemBuilder(
-            newItems[i],
+            _values[i],
             i + _items.length,
           ),
         );
@@ -221,10 +232,12 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     _pageIndex = 0;
 
     if (widget.initialItems != null && widget.disableInitialRequest) {
+      _values.addAll(
+        widget.initialItems!,
+      );
+
       _items.addAll(
-        _generateItems(
-          widget.initialItems!,
-        ),
+        _generateItems(),
       );
 
       setState(() {});
@@ -238,10 +251,12 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     _pageIndex = widget.initialPageIndex;
 
     if (widget.initialItems != null) {
+      _values.addAll(
+        widget.initialItems!,
+      );
+
       _items.addAll(
-        _generateItems(
-          widget.initialItems!,
-        ),
+        _generateItems(),
       );
     }
 

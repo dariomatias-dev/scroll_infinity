@@ -325,7 +325,7 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
                 );
               },
               child: const Text(
-                'Infinite Listing Vertically With Tnterval Screen',
+                'Infinite Listing Vertically With Interval Screen',
               ),
             ),
           ],
@@ -381,10 +381,18 @@ class _InfiniteListingVerticallyScreenState
               loadingStyle: widget.loadingStyle,
               initialPageIndex: widget.initialItems != null ? 1 : 0,
               maxItems: 10,
+              interval: 2,
               initialItems: widget.initialItems,
               disableInitialRequest: widget.initialItems != null,
               loadData: widget.loadData,
               itemBuilder: (value, index) {
+                if (value == null) {
+                  return const SizedBox(
+                    height: 100.0,
+                    child: Placeholder(),
+                  );
+                }
+
                 return Container(
                   height: 100.0,
                   color: value,
@@ -475,6 +483,8 @@ class _InfiniteListingHorizontallyScreenState
 class InfiniteListingVerticallyWithIntervalScreen extends StatelessWidget {
   const InfiniteListingVerticallyWithIntervalScreen({super.key});
 
+  final _maxItems = 8;
+
   Future<List<Color>> _loadData(
     int pageIndex,
   ) async {
@@ -485,7 +495,7 @@ class InfiniteListingVerticallyWithIntervalScreen extends StatelessWidget {
     );
 
     return List.generate(
-      10,
+      _maxItems,
       (index) {
         return Color.fromARGB(
           255,
@@ -511,8 +521,8 @@ class InfiniteListingVerticallyWithIntervalScreen extends StatelessWidget {
         ),
       ),
       body: ScrollInfinity<Color>(
-        maxItems: 10,
-        interval: 10,
+        maxItems: _maxItems,
+        interval: 2,
         loadData: _loadData,
         itemBuilder: (value, index) {
           if (value == null) {
