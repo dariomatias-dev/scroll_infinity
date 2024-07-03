@@ -1,3 +1,6 @@
+## [0.2.1] - 2024-07-03
+- Fixed item duplication bug when no interval is used.
+
 ## [0.2.0] - 2024-07-02
 - Added interval feature to allow adding a specific element within a certain interval.
 - Added item index to `itemBuilder` for accessing the item's position in the list.

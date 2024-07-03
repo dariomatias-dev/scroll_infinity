@@ -166,6 +166,8 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
           ),
         );
       }
+
+      _values.clear();
     }
 
     return items;

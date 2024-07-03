@@ -381,7 +381,6 @@ class _InfiniteListingVerticallyScreenState
               loadingStyle: widget.loadingStyle,
               initialPageIndex: widget.initialItems != null ? 1 : 0,
               maxItems: 10,
-              interval: 2,
               initialItems: widget.initialItems,
               disableInitialRequest: widget.initialItems != null,
               loadData: widget.loadData,
