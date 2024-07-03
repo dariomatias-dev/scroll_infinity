@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 part 'loading_style.dart';
+part 'default_error_component.dart';
 
 class ScrollInfinity<T> extends StatefulWidget {
   const ScrollInfinity({
@@ -12,6 +13,8 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.padding,
     this.disableInitialRequest = false,
     this.initialPageIndex = 0,
+    this.enableRetryOnError = true,
+    this.error,
     this.initialItems,
     this.interval,
     this.loading,
@@ -44,6 +47,12 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// Initial page index. Default is `0`.
   final int initialPageIndex;
 
+  /// Determines if retrying to load data after an error is enabled. Default is `true`.
+  final bool enableRetryOnError;
+
+  /// Widget used to display custom content when an error occurs.
+  final Widget? error;
+
   /// Specifies the initial items to be displayed in the list.
   final List<T>? initialItems;
 
@@ -60,7 +69,7 @@ class ScrollInfinity<T> extends StatefulWidget {
   final int maxItems;
 
   /// Function responsible for loading the data. It should return a list of items.
-  final Future<List<T>> Function(
+  final Future<List<T>?> Function(
     int pageIndex,
   ) loadData;
 
@@ -85,6 +94,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   bool _isLoading = false;
   bool _isListEnd = false;
   int _itemsCount = 0;
+  bool _hasError = false;
 
   final _scrollController = ScrollController();
   final _values = <T>[];
@@ -101,22 +111,37 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
   /// Handles the process of adding new items.
   Future<void> _addItems() async {
+    if (_hasError) {
+      _hasError = false;
+      _items.removeLast();
+    }
     _addLoading();
     _updateIsLoading();
 
     if (_values.length != widget.maxItems) {
       final newItems = await widget.loadData(_pageIndex);
-      _pageIndex++;
 
-      _values.addAll(newItems);
+      if (newItems != null) {
+        _values.addAll(newItems);
+        _pageIndex++;
 
-      _isListEnd = newItems.length < widget.maxItems;
+        _isListEnd = newItems.length < widget.maxItems;
+      } else {
+        _hasError = true;
+      }
     }
 
     _removeLoading();
 
-    final items = _generateItems();
-    _items.addAll(items);
+    if (_hasError) {
+      _items.add(
+        widget.error ?? const _DefaultErrorComponent(),
+      );
+      _isListEnd = !widget.enableRetryOnError;
+    } else {
+      final items = _generateItems();
+      _items.addAll(items);
+    }
 
     _updateIsLoading();
   }
@@ -173,16 +198,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     return items;
   }
 
-  Widget setItem(
-    T value,
-    int index,
-  ) {
-    return widget.itemBuilder(
-      value,
-      index + _items.length,
-    );
-  }
-
   /// Adds the loading indicator component.
   void _addLoading() {
     _items.add(
@@ -229,9 +244,14 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
         curve: Curves.linear,
       );
     }
-    _items.clear();
+
+    _pageIndex = widget.initialPageIndex;
     _isListEnd = false;
-    _pageIndex = 0;
+    _itemsCount = 0;
+    _hasError = false;
+
+    _values.clear();
+    _items.clear();
 
     if (widget.initialItems != null && widget.disableInitialRequest) {
       _values.addAll(
