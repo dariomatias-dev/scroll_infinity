@@ -131,6 +131,8 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
     loadingStrokeWidths.first,
   ];
 
+  final _random = Random();
+
   LoadingStyle get loadingStyle => LoadingStyle(
         color: _loadingStyles[0].value,
         strokeAlign: _loadingStyles[1].value,
@@ -160,7 +162,7 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
       ),
     );
 
-    if (pageIndex == 2) {
+    if (_random.nextInt(3) == 0) {
       return null;
     }
 
@@ -399,13 +401,6 @@ class _InfiniteListingVerticallyScreenState
               disableInitialRequest: widget.initialItems != null,
               loadData: widget.loadData,
               itemBuilder: (value, index) {
-                if (value == null) {
-                  return const SizedBox(
-                    height: 100.0,
-                    child: Placeholder(),
-                  );
-                }
-
                 return Container(
                   height: 100.0,
                   color: value,
@@ -533,7 +528,7 @@ class InfiniteListingVerticallyWithIntervalScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: ScrollInfinity<Color>(
+      body: ScrollInfinity<Color?>(
         maxItems: _maxItems,
         interval: 2,
         loadData: _loadData,
@@ -567,6 +562,8 @@ class _InfiniteScrollLoaderExampleState
     extends State<InfiniteScrollLoaderExample> {
   final _notifier = ScrollInfinityInitialItemsNotifier<Color>(null);
 
+  final _random = Random();
+
   static const maxItems = 10;
 
   Future<void> _initLoader() async {
@@ -587,7 +584,7 @@ class _InfiniteScrollLoaderExampleState
       ),
     );
 
-    if (pageIndex == 2) {
+    if (_random.nextInt(3) == 0) {
       return null;
     }
 
@@ -625,8 +622,16 @@ class _InfiniteScrollLoaderExampleState
                   disableInitialRequest: true,
                   initialPageIndex: 0,
                   initialItems: items,
+                  interval: 2,
                   loadData: _loadData,
                   itemBuilder: (value, index) {
+                    if (value == null) {
+                      return const SizedBox(
+                        height: 100.0,
+                        child: Placeholder(),
+                      );
+                    }
+
                     return Container(
                       height: 100.0,
                       color: value,

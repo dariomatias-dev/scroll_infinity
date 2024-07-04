@@ -33,6 +33,10 @@ class ScrollInfinity<T> extends StatefulWidget {
         assert(
           !(initialItems == null && disableInitialRequest),
           '`initialItems` must not be `null` when `disableInitialRequest` is `true`.',
+        ),
+        assert(
+          interval != null ? null is T : true,
+          'The generic type `T` must be nullable when `interval` is not null.',
         );
 
   /// Defines the scrolling direction of the list. Can be `Axis.vertical` or `Axis.horizontal`
@@ -87,7 +91,7 @@ class ScrollInfinity<T> extends StatefulWidget {
 
   /// Builds the items in the list. This function should return the widget that represents each item in the list.
   final Widget Function(
-    T? value,
+    T value,
     int index,
   ) itemBuilder;
 
@@ -165,7 +169,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
           items.add(
             widget.itemBuilder(
-              null,
+              null as T,
               index + _items.length,
             ),
           );
