@@ -1,5 +1,6 @@
 part of 'scroll_infinity.dart';
 
+/// Style configuration for loading indicator.
 class LoadingStyle {
   const LoadingStyle({
     this.color,

@@ -3,8 +3,6 @@ part of 'scroll_infinity.dart';
 class ScrollInfinityLoader<T> extends StatelessWidget {
   const ScrollInfinityLoader({
     super.key,
-    required this.notifier,
-    required this.scrollInfinityBuilder,
     this.error,
     this.errorMessage,
     this.errorMessageStyle,
@@ -14,22 +12,44 @@ class ScrollInfinityLoader<T> extends StatelessWidget {
     this.empty,
     this.emptyMessage,
     this.emptyMessageStyle,
+    required this.notifier,
+    required this.scrollInfinityBuilder,
   });
 
+  /// Widget to display in case of error.
+  final Widget? error;
+
+  /// Error message to display in case of failure.
+  final String? errorMessage;
+
+  /// Style for the error message text.
+  final TextStyle? errorMessageStyle;
+
+  /// Widget to display during loading.
+  final Widget? loading;
+
+  /// Message to display during loading.
+  final String? loadingMessage;
+
+  /// Style for the loading message text.
+  final TextStyle? loadingMessageStyle;
+
+  /// Widget to display when there are no items to show.
+  final Widget? empty;
+
+  /// Message to display when there are no items to show.
+  final String? emptyMessage;
+
+  /// Style for the empty list message text.
+  final TextStyle? emptyMessageStyle;
+
+  /// Notifier for initial items of infinite scroll.
   final ScrollInfinityInitialItemsNotifier<T> notifier;
+
+  /// Builder for infinite scroll that takes a list of `items`.
   final ScrollInfinity Function(
     List<T> items,
   ) scrollInfinityBuilder;
-
-  final Widget? error;
-  final String? errorMessage;
-  final TextStyle? errorMessageStyle;
-  final Widget? loading;
-  final String? loadingMessage;
-  final TextStyle? loadingMessageStyle;
-  final Widget? empty;
-  final String? emptyMessage;
-  final TextStyle? emptyMessageStyle;
 
   @override
   Widget build(BuildContext context) {
