@@ -27,16 +27,24 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.separatorBuilder,
     required this.itemBuilder,
   })  : assert(
-          !(loadingStyle != null && loading != null),
-          'The properties `loading` and `loadingStyle` cannot be used together. Please define only one of these properties.',
+          !(initialPageIndex < 0),
+          'The initial index cannot be less than zero.',
         ),
         assert(
           !(initialItems == null && disableInitialRequest),
           '`initialItems` must not be `null` when `disableInitialRequest` is `true`.',
         ),
         assert(
+          !(interval != null && interval <= 0),
+          'The interval should not be equal to or less than zero.',
+        ),
+        assert(
           interval != null ? null is T : true,
           'The generic type `T` must be nullable when `interval` is not null.',
+        ),
+        assert(
+          !(loadingStyle != null && loading != null),
+          'The properties `loading` and `loadingStyle` cannot be used together. Please define only one of these properties.',
         );
 
   /// Defines the scrolling direction of the list. Can be `Axis.vertical` or `Axis.horizontal`
