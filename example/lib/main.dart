@@ -131,8 +131,6 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
     loadingStrokeWidths.first,
   ];
 
-  final _random = Random();
-
   LoadingStyle get loadingStyle => LoadingStyle(
         color: _loadingStyles[0].value,
         strokeAlign: _loadingStyles[1].value,
@@ -162,7 +160,7 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
       ),
     );
 
-    if (_random.nextInt(3) == 0) {
+    if (random.nextInt(3) == 0) {
       return null;
     }
 
@@ -371,17 +369,7 @@ class _InfiniteListingVerticallyScreenState
     extends State<InfiniteListingVerticallyScreen> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-          ),
-        ),
-      ),
+    return CustomScaffold(
       body: Column(
         children: <Widget>[
           ElevatedButton(
@@ -396,7 +384,6 @@ class _InfiniteListingVerticallyScreenState
               loadingStyle: widget.loadingStyle,
               initialPageIndex: widget.initialItems != null ? 1 : 0,
               maxItems: 10,
-              enableRetryOnError: false,
               initialItems: widget.initialItems,
               disableInitialRequest: widget.initialItems != null,
               loadData: widget.loadData,
@@ -435,17 +422,7 @@ class _InfiniteListingHorizontallyScreenState
     extends State<InfiniteListingHorizontallyScreen> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-          ),
-        ),
-      ),
+    return CustomScaffold(
       body: Column(
         children: <Widget>[
           ElevatedButton(
@@ -562,8 +539,6 @@ class _InfiniteScrollLoaderExampleState
     extends State<InfiniteScrollLoaderExample> {
   final _notifier = ScrollInfinityInitialItemsNotifier<Color>(null);
 
-  final _random = Random();
-
   static const maxItems = 10;
 
   Future<void> _initLoader() async {
@@ -584,7 +559,7 @@ class _InfiniteScrollLoaderExampleState
       ),
     );
 
-    if (_random.nextInt(3) == 0) {
+    if (random.nextInt(3) == 0) {
       return null;
     }
 
