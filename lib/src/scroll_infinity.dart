@@ -17,6 +17,7 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.initialPageIndex = 0,
     this.enableRetryOnError = true,
     this.error,
+    this.header,
     this.initialItems,
     this.interval,
     this.loading,
@@ -54,6 +55,9 @@ class ScrollInfinity<T> extends StatefulWidget {
 
   /// Widget used to display custom content when an error occurs.
   final Widget? error;
+
+  /// Listing header.
+  final Widget? header;
 
   /// Specifies the initial items to be displayed in the list.
   final List<T>? initialItems;
@@ -237,6 +241,10 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
   /// Reset the component to its initial settings.
   Future<void> _reset() async {
+    if (widget.header != null) {
+      _items.add(widget.header!);
+    }
+
     if (widget.initialItems != null) {
       await _scrollController.animateTo(
         0.0,
@@ -273,6 +281,10 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   @override
   void initState() {
     _pageIndex = widget.initialPageIndex;
+
+    if (widget.header != null) {
+      _items.add(widget.header!);
+    }
 
     if (widget.initialItems != null) {
       _values.addAll(
