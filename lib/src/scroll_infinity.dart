@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+part 'scroll_infinity_loader.dart';
 part 'loading_style.dart';
 part 'default_error_component.dart';
 

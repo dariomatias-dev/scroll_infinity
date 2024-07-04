@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:scroll_infinity/scroll_infinity.dart';
 
-typedef LoadDatatype = Future<List<Color>> Function(
+typedef LoadDatatype = Future<List<Color>?> Function(
   int pageIndex, {
   Axis scrollDirection,
 });
@@ -150,7 +150,7 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
     );
   }
 
-  Future<List<Color>> _loadData(
+  Future<List<Color>?> _loadData(
     int pageIndex, {
     Axis scrollDirection = Axis.vertical,
   }) async {
@@ -160,7 +160,11 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
       ),
     );
 
-    final isListEnd = random.nextInt(3) == 0;
+    if (pageIndex == 2) {
+      return null;
+    }
+
+    final isListEnd = random.nextInt(5) == 0;
 
     final isVertical = scrollDirection == Axis.vertical;
 
@@ -328,6 +332,15 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
                 'Infinite Listing Vertically With Interval Screen',
               ),
             ),
+            const SizedBox(height: 20.0),
+            ElevatedButton(
+              onPressed: () {
+                navigateTo(
+                  const InfiniteScrollLoaderExample(),
+                );
+              },
+              child: const Text('Infinite Scroll With Loader'),
+            ),
           ],
         ),
       ),
@@ -381,6 +394,7 @@ class _InfiniteListingVerticallyScreenState
               loadingStyle: widget.loadingStyle,
               initialPageIndex: widget.initialItems != null ? 1 : 0,
               maxItems: 10,
+              enableRetryOnError: false,
               initialItems: widget.initialItems,
               disableInitialRequest: widget.initialItems != null,
               loadData: widget.loadData,
@@ -537,6 +551,119 @@ class InfiniteListingVerticallyWithIntervalScreen extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class InfiniteScrollLoaderExample extends StatefulWidget {
+  const InfiniteScrollLoaderExample({super.key});
+
+  @override
+  State<InfiniteScrollLoaderExample> createState() =>
+      _InfiniteScrollLoaderExampleState();
+}
+
+class _InfiniteScrollLoaderExampleState
+    extends State<InfiniteScrollLoaderExample> {
+  final _notifier = ScrollInfinityInitialItemsNotifier<Color>(null);
+
+  static const maxItems = 10;
+
+  Future<void> _initLoader() async {
+    final items = await _loadData(0);
+
+    _notifier.update(
+      items: items,
+      hasError: items == null,
+    );
+  }
+
+  Future<List<Color>?> _loadData(
+    int pageIndex,
+  ) async {
+    await Future.delayed(
+      const Duration(
+        seconds: 2,
+      ),
+    );
+
+    if (pageIndex == 2) {
+      return null;
+    }
+
+    return List.generate(
+      maxItems,
+      (index) {
+        return Color.fromARGB(
+          255,
+          random.nextInt(255),
+          random.nextInt(255),
+          random.nextInt(255),
+        );
+      },
+    );
+  }
+
+  @override
+  void initState() {
+    _initLoader();
+
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomScaffold(
+      body: Column(
+        children: <Widget>[
+          Expanded(
+            child: ScrollInfinityLoader(
+              notifier: _notifier,
+              scrollInfinityBuilder: (items) {
+                return ScrollInfinity(
+                  maxItems: 10,
+                  disableInitialRequest: true,
+                  initialPageIndex: 0,
+                  initialItems: items,
+                  loadData: _loadData,
+                  itemBuilder: (value, index) {
+                    return Container(
+                      height: 100.0,
+                      color: value,
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class CustomScaffold extends StatelessWidget {
+  const CustomScaffold({
+    super.key,
+    required this.body,
+  });
+
+  final Widget body;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+          ),
+        ),
+      ),
+      body: body,
     );
   }
 }
