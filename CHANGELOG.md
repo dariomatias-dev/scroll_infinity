@@ -1,3 +1,9 @@
+## [0.3.0] - 2024-07-04
+- Added `header` property to allow the addition of a header to the listing.
+- Created `ScrollInfinityInitialItemsNotifier` to notify about the initial items.
+- Introduced `ScrollInfinityLoader` for custom loading dynamics of initial items.
+- Added `enableRetryOnError` and `error` properties for error handling and retry logic.
+
 ## [0.2.1] - 2024-07-03
 - Fixed item duplication bug when no interval is used.
 
