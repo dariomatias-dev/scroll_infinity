@@ -11,8 +11,6 @@ Here are some examples of how to use the package to create a list with infinite 
 
 Vertical:
 ```dart
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:scroll_infinity/scroll_infinity.dart';
 
@@ -24,13 +22,13 @@ class Example extends StatefulWidget {
 }
 
 class _ExampleState extends State<Example> {
-  static const maxItems = 20;
+  static const _maxItems = 20;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: ScrollInfinity(
-        maxItems: maxItems,
+        maxItems: _maxItems,
         loadData: (pageKey) async {
           await Future.delayed(
             const Duration(
@@ -38,11 +36,11 @@ class _ExampleState extends State<Example> {
             ),
           );
 
-          return List.generate(maxItems, (index) {
-            return maxItems * pageKey + index + 1;
+          return List.generate(_maxItems, (index) {
+            return _maxItems * pageKey + index + 1;
           });
         },
-        itemBuilder: (value) {
+        itemBuilder: (value, index) {
           return ListTile(
             title: Text('Item $value'),
             subtitle: const Text('Subtitle'),
@@ -59,11 +57,8 @@ class _ExampleState extends State<Example> {
 
 Horizontal:
 ```dart
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:scroll_infinity/scroll_infinity.dart';
-
 
 class Example extends StatefulWidget {
   const Example({super.key});
@@ -73,7 +68,7 @@ class Example extends StatefulWidget {
 }
 
 class _ExampleState extends State<Example> {
-  static const maxItems = 6;
+  static const _maxItems = 6;
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +78,7 @@ class _ExampleState extends State<Example> {
           height: 64.0,
           child: ScrollInfinity(
             scrollDirection: Axis.horizontal,
-            maxItems: maxItems,
+            maxItems: _maxItems,
             loadData: (pageKey) async {
               await Future.delayed(
                 const Duration(
@@ -91,11 +86,11 @@ class _ExampleState extends State<Example> {
                 ),
               );
         
-              return List.generate(maxItems, (index) {
-                return maxItems * pageKey + index + 1;
+              return List.generate(_maxItems, (index) {
+                return _maxItems * pageKey + index + 1;
               });
             },
-            itemBuilder: (value) {
+            itemBuilder: (value, index) {
               return Center(
                 child: SizedBox(
                   width: MediaQuery.sizeOf(context).width * 0.5,
@@ -117,6 +112,8 @@ class _ExampleState extends State<Example> {
   }
 }
 ```
+
+### With Interval
 
 ## Properties
 
@@ -145,9 +142,24 @@ disableInitialRequest: true,
 initialPageIndex: 1,
 ```
 
+- **enableRetryOnError**: Determines if retrying to load data after an error is enabled. Default is `true`.
+```dart
+enableRetryOnError = false,
+```
+
+- **error**: Widget used to display custom content when an error occurs.
+```dart
+error: Text('Error message'),
+```
+
+- **header**: Listing header.
+```dart
+header: HeaderWidget(),
+```
+
 - **initialItems**: Specifies the initial items to be displayed in the list.
 ```dart
-initialItems: [
+initialItems: <Widget>[
   // items
 ],
 ```
@@ -159,7 +171,7 @@ interval: 20,
 
 - **loading**: Allows passing a custom loading component.
 ```dart
-loading: CustomLoadingWidget(),
+loading: LoadingWidget(),
 ```
 
 - **loadingStyle**: Defines the style of the `CircularProgressIndicator`. Use this property to customize the appearance of the default loading indicator.
@@ -177,7 +189,7 @@ maxItems: 20,
 
 - **loadData**: Function responsible for loading the data. It should return a list of items.
 ```dart
-loadData: (pageKey) async {
+loadData: (pageIndex) async {
   // Logic to load the data
 },
 ```
@@ -194,7 +206,7 @@ separatorBuilder: (context, index) {
 
 - **itemBuilder**: Builds the items in the list. This function should return the widget that represents each item in the list.
 ```dart
-itemBuilder: (context, index) {
+itemBuilder: (value, index) {
   final item = items[index];
 
   return ListTile(
