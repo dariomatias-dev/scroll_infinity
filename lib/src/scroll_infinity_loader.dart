@@ -44,7 +44,7 @@ class ScrollInfinityLoader<T> extends StatelessWidget {
   final TextStyle? emptyMessageStyle;
 
   /// Notifier for initial items of infinite scroll.
-  final ScrollInfinityInitialItemsNotifier<T> notifier;
+  final InitialItemsNotifier<T> notifier;
 
   /// Builder for infinite scroll that takes a list of `items`.
   final ScrollInfinity Function(

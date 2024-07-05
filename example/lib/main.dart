@@ -160,7 +160,7 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
       ),
     );
 
-    if (random.nextInt(3) == 0) {
+    if (random.nextInt(4) == 0) {
       return null;
     }
 
@@ -384,6 +384,10 @@ class _InfiniteListingVerticallyScreenState
               loadingStyle: widget.loadingStyle,
               initialPageIndex: widget.initialItems != null ? 1 : 0,
               maxItems: 10,
+              header: Container(
+                height: 40.0,
+                color: Colors.red,
+              ),
               initialItems: widget.initialItems,
               disableInitialRequest: widget.initialItems != null,
               loadData: widget.loadData,
@@ -537,7 +541,7 @@ class InfiniteScrollLoaderExample extends StatefulWidget {
 
 class _InfiniteScrollLoaderExampleState
     extends State<InfiniteScrollLoaderExample> {
-  final _notifier = ScrollInfinityInitialItemsNotifier<Color>(null);
+  final _notifier = InitialItemsNotifier<Color>(null);
 
   static const maxItems = 10;
 

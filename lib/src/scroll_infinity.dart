@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-part 'scroll_infinity_initial_items_notifier.dart';
+part 'initial_items_notifier.dart';
 part 'scroll_infinity_loader.dart';
 part 'loading_style.dart';
 part 'default_error_component.dart';
@@ -13,11 +13,11 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.scrollDirection = Axis.vertical,
     this.scrollbars = false,
     this.padding,
+    this.header,
     this.disableInitialRequest = false,
     this.initialPageIndex = 0,
     this.enableRetryOnError = true,
     this.error,
-    this.header,
     this.initialItems,
     this.interval,
     this.loading,
@@ -56,6 +56,9 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// Specifies the internal padding of the list.
   final EdgeInsetsGeometry? padding;
 
+  /// Listing header.
+  final Widget? header;
+
   /// Disables the initial data request if set to `true`. Default is `false`.
   final bool disableInitialRequest;
 
@@ -67,9 +70,6 @@ class ScrollInfinity<T> extends StatefulWidget {
 
   /// Widget used to display custom content when an error occurs.
   final Widget? error;
-
-  /// Listing header.
-  final Widget? header;
 
   /// Specifies the initial items to be displayed in the list.
   final List<T>? initialItems;
@@ -253,10 +253,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
   /// Reset the component to its initial settings.
   Future<void> _reset() async {
-    if (widget.header != null) {
-      _items.add(widget.header!);
-    }
-
     if (widget.initialItems != null) {
       await _scrollController.animateTo(
         0.0,
@@ -274,6 +270,10 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
     _values.clear();
     _items.clear();
+
+    if (widget.header != null) {
+      _items.add(widget.header!);
+    }
 
     if (widget.initialItems != null && widget.disableInitialRequest) {
       _values.addAll(

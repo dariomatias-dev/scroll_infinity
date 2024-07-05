@@ -1,8 +1,8 @@
 part of 'scroll_infinity.dart';
 
 /// Notifier for initial items of infinite scroll.
-class ScrollInfinityInitialItemsNotifier<T> extends ValueNotifier<List<T>?> {
-  ScrollInfinityInitialItemsNotifier(
+class InitialItemsNotifier<T> extends ValueNotifier<List<T>?> {
+  InitialItemsNotifier(
     super.value,
   );
 
