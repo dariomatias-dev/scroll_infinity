@@ -113,7 +113,159 @@ class _ExampleState extends State<Example> {
 }
 ```
 
+</br>
+
 ### With Interval
+
+Intervals are identified when the `value` of `itemBuilder` is `null`.
+To allow the `value` of `itemBuilder` to be nullable, facilitating the verification of the `value`, use `ScrollInfinity` with the expected value type followed by `?`.
+
+```dart
+import 'dart:math';
+
+import 'package:flutter/material.dart';
+import 'package:scroll_infinity/scroll_infinity.dart';
+
+class Example extends StatefulWidget {
+  const Example({super.key});
+
+  @override
+  State<Example> createState() => _ExampleState();
+}
+
+class _ExampleState extends State<Example> {
+  static const _maxItems = 20;
+  final _random = Random();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: ScrollInfinity<int?>(
+        maxItems: _maxItems,
+        interval: 2,
+        loadData: (pageKey) async {
+          await Future.delayed(
+            const Duration(
+              seconds: 2,
+            ),
+          );
+
+          if (_random.nextInt(4) == 0) {
+            return null;
+          }
+
+          return List.generate(_maxItems, (index) {
+            return _maxItems * pageKey + index + 1;
+          });
+        },
+        itemBuilder: (value, index) {
+          if (value == null) {
+            return const SizedBox(
+              height: 60.0,
+              child: Placeholder(),
+            );
+          }
+
+          return ListTile(
+            title: Text('Item $value'),
+            subtitle: const Text('Subtitle'),
+            trailing: const Icon(
+              Icons.keyboard_arrow_right_rounded,
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+```
+
+### With Loader
+
+Add custom loading for initial items.
+
+```dart
+import 'dart:math';
+
+import 'package:flutter/material.dart';
+import 'package:scroll_infinity/scroll_infinity.dart';
+
+class Example extends StatefulWidget {
+  const Example({super.key});
+
+  @override
+  State<Example> createState() => _ExampleState();
+}
+
+class _ExampleState extends State<Example> {
+  final _notifier = ScrollInfinityInitialItemsNotifier<int?>(null);
+
+  static const _maxItems = 20;
+  final _random = Random();
+
+  Future<void> _initLoader() async {
+    _notifier.value = await _loadData(0);
+  }
+
+  Future<List<int>?> _loadData(int pageIndex) async {
+    await Future.delayed(
+      const Duration(
+        seconds: 2,
+      ),
+    );
+
+    if (_random.nextInt(4) == 0) {
+      return null;
+    }
+
+    return List.generate(_maxItems, (index) {
+      return _maxItems * pageIndex + index + 1;
+    });
+  }
+
+  @override
+  void initState() {
+    _initLoader();
+
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: ScrollInfinityLoader(
+        notifier: _notifier,
+        scrollInfinityBuilder: (items) {
+          return ScrollInfinity<int?>(
+            maxItems: _maxItems,
+            disableInitialRequest: true,
+            initialPageIndex: 1,
+            initialItems: items,
+            interval: 2,
+            loadData: _loadData,
+            itemBuilder: (value, index) {
+              if (value == null) {
+                return const SizedBox(
+                  height: 60.0,
+                  child: Placeholder(),
+                );
+              }
+
+              return ListTile(
+                title: Text('Item $value'),
+                subtitle: const Text('Subtitle'),
+                trailing: const Icon(
+                  Icons.keyboard_arrow_right_rounded,
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+```
 
 ## Properties
 
