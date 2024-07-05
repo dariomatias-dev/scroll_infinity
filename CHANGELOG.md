@@ -1,3 +1,13 @@
+## [0.3.1] - 2024-07-05
+
+### Added
+- Added explanations on how to use interval and loader, aiming to facilitate the implementation of these features.
+- Added and organized `assert` statements.
+
+### Fixed
+- Corrected the typing of the value sent to `itemBuilder`.
+- Removed `?` from the definition of the `itemBuilder` property.
+
 ## [0.3.0] - 2024-07-04
 - Added `header` property to allow the addition of a header to the listing.
 - Created `ScrollInfinityInitialItemsNotifier` to notify about the initial items.
