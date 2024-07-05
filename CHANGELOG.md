@@ -1,5 +1,8 @@
-## [0.3.1] - 2024-07-05
+## [0.3.2] - 2024-07-05
+- Added `header` reset when not null in the `reset` method.
+- Renamed `ScrollInfinityInitialItemsNotifier` class to `InitialItemsNotifier`.
 
+## [0.3.1] - 2024-07-05
 ### Added
 - Added explanations on how to use interval and loader, aiming to facilitate the implementation of these features.
 - Added and organized `assert` statements.
