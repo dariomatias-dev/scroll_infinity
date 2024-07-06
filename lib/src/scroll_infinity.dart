@@ -264,7 +264,12 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     }
 
     _pageIndex = widget.initialPageIndex;
+
     _isListEnd = false;
+    if (widget.initialItems != null) {
+      _isListEnd = widget.initialItems!.length < widget.maxItems;
+    }
+
     _itemsCount = 0;
     _hasError = false;
 
@@ -293,6 +298,10 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   @override
   void initState() {
     _pageIndex = widget.initialPageIndex;
+
+    if (widget.initialItems != null) {
+      _isListEnd = widget.initialItems!.length < widget.maxItems;
+    }
 
     if (widget.header != null) {
       _items.add(widget.header!);
