@@ -1,3 +1,7 @@
+## [0.3.3] - 2024-07-06
+
+- Added verification for `initialItems` to determine if the listing has reached the end, avoiding unnecessary loads.
+
 ## [0.3.2] - 2024-07-05
 - Added `header` reset when not null in the `reset` method.
 - Renamed `ScrollInfinityInitialItemsNotifier` class to `InitialItemsNotifier`.
