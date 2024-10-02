@@ -131,13 +131,25 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   Future<void> _addItems() async {
     if (_hasError) {
       _hasError = false;
+      final loadingWidget = _items.removeLast();
+
       _items.removeLast();
+      _items.add(
+        loadingWidget,
+      );
     }
-    _addLoading();
-    _updateIsLoading();
+
+    if (_pageIndex == 0) {
+      _addLoading();
+      _updateIsLoading();
+    } else {
+      _isLoading = !_isLoading;
+    }
 
     if (_values.length != widget.maxItems) {
-      final newItems = await widget.loadData(_pageIndex);
+      final newItems = await widget.loadData(
+        _pageIndex,
+      );
 
       if (newItems != null) {
         _values.addAll(newItems);
@@ -155,10 +167,16 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
       _items.add(
         widget.error ?? const _DefaultErrorComponent(),
       );
+
       _isListEnd = !widget.enableRetryOnError;
     } else {
       final items = _generateItems();
+
       _items.addAll(items);
+    }
+
+    if (!_isListEnd) {
+      _addLoading();
     }
 
     _updateIsLoading();
@@ -304,7 +322,9 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     }
 
     if (widget.header != null) {
-      _items.add(widget.header!);
+      _items.add(
+        widget.header!,
+      );
     }
 
     if (widget.initialItems != null) {
@@ -321,7 +341,9 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
       _addItems();
     }
 
-    _scrollController.addListener(_onScroll);
+    _scrollController.addListener(
+      _onScroll,
+    );
 
     super.initState();
   }
