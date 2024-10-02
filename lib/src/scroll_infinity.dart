@@ -269,6 +269,39 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     _items.removeLast();
   }
 
+  /// Initializes resources.
+  void _start() {
+    _pageIndex = widget.initialPageIndex;
+
+    if (widget.initialItems != null) {
+      _isListEnd = widget.initialItems!.length < widget.maxItems;
+    }
+
+    if (widget.header != null) {
+      _items.add(
+        widget.header!,
+      );
+    }
+
+    if (widget.initialItems != null) {
+      _values.addAll(
+        widget.initialItems!,
+      );
+
+      _items.addAll(
+        _generateItems(),
+      );
+    }
+
+    if (!widget.disableInitialRequest) {
+      _addItems();
+    }
+
+    _scrollController.addListener(
+      _onScroll,
+    );
+  }
+
   /// Reset the component to its initial settings.
   Future<void> _reset() async {
     if (widget.initialItems != null) {
@@ -315,35 +348,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
   @override
   void initState() {
-    _pageIndex = widget.initialPageIndex;
-
-    if (widget.initialItems != null) {
-      _isListEnd = widget.initialItems!.length < widget.maxItems;
-    }
-
-    if (widget.header != null) {
-      _items.add(
-        widget.header!,
-      );
-    }
-
-    if (widget.initialItems != null) {
-      _values.addAll(
-        widget.initialItems!,
-      );
-
-      _items.addAll(
-        _generateItems(),
-      );
-    }
-
-    if (!widget.disableInitialRequest) {
-      _addItems();
-    }
-
-    _scrollController.addListener(
-      _onScroll,
-    );
+    _start();
 
     super.initState();
   }
