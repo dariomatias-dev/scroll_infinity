@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:scroll_infinity/src/try_again_button.dart';
 
 part 'initial_items_notifier.dart';
 part 'scroll_infinity_loader.dart';
@@ -23,6 +24,7 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.interval,
     this.loading,
     this.loadingStyle,
+    this.tryAgainButtonBuilder,
     required this.maxItems,
     required this.loadData,
     this.separatorBuilder,
@@ -86,6 +88,11 @@ class ScrollInfinity<T> extends StatefulWidget {
 
   /// Defines the style of the `CircularProgressIndicator`. Use this property to customize the appearance of the default loading indicator.
   final LoadingStyle? loadingStyle;
+
+  /// Allows passing a custom loading component.
+  final Widget Function(
+    VoidCallback action,
+  )? tryAgainButtonBuilder;
 
   /// Specifies the maximum number of items per request. This will be used to determine when the list reaches the end.
   final int maxItems;
@@ -172,10 +179,26 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
     _removeLoading();
 
+    final enableScroll = _itemKeys.isNotEmpty
+        ? _itemKeys.first.currentContext?.size?.height == null
+        : false;
+
     if (_hasError) {
-      _items.add(
-        widget.error ?? const _DefaultErrorComponent(),
-      );
+      if (!enableScroll) {
+        _items.add(
+          widget.tryAgainButtonBuilder != null
+              ? widget.tryAgainButtonBuilder!(
+                  () {},
+                )
+              : TryAgainButton(
+                  action: () {},
+                ),
+        );
+      } else {
+        _items.add(
+          widget.error ?? const _DefaultErrorComponent(),
+        );
+      }
 
       _isListEnd = !widget.enableRetryOnError;
     } else {
@@ -184,7 +207,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
       _items.addAll(items);
     }
 
-    if (!_isListEnd) {
+    if (!_isListEnd && enableScroll) {
       _addLoading();
     }
 
