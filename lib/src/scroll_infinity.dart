@@ -330,6 +330,10 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
       _items.addAll(
         _generateItems(),
       );
+
+      if (!_isListEnd) {
+        _addLoading();
+      }
     }
 
     if (!widget.disableInitialRequest) {
@@ -381,6 +385,10 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
       _items.addAll(
         _generateItems(),
       );
+
+      if (!_isListEnd) {
+        _addLoading();
+      }
 
       setState(() {});
     } else {

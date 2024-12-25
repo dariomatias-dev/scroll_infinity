@@ -3,6 +3,109 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:scroll_infinity/scroll_infinity.dart';
 
+typedef LoadDatatype = Future<List<Color>?> Function(
+  int pageIndex, {
+  Axis scrollDirection,
+});
+
+class LoadingStyleModel<T> {
+  const LoadingStyleModel({
+    required this.name,
+    this.value,
+  });
+
+  final String name;
+  final T? value;
+}
+
+const loadingColors = <LoadingStyleModel<Color>>[
+  LoadingStyleModel(
+    name: 'Default',
+  ),
+  LoadingStyleModel(
+    name: 'Red',
+    value: Colors.red,
+  ),
+  LoadingStyleModel(
+    name: 'Blue',
+    value: Colors.blue,
+  ),
+  LoadingStyleModel(
+    name: 'Yellow',
+    value: Colors.yellow,
+  ),
+  LoadingStyleModel(
+    name: 'Green',
+    value: Colors.green,
+  ),
+  LoadingStyleModel(
+    name: 'Purple',
+    value: Colors.purple,
+  ),
+];
+
+const loadingStrokeAligns = <LoadingStyleModel<double>>[
+  LoadingStyleModel(
+    name: 'Center',
+    value: BorderSide.strokeAlignCenter,
+  ),
+  LoadingStyleModel(
+    name: 'Inside',
+    value: BorderSide.strokeAlignInside,
+  ),
+  LoadingStyleModel(
+    name: 'Outside',
+    value: BorderSide.strokeAlignOutside,
+  ),
+];
+
+const loadingStrokeWidths = <LoadingStyleModel<double>>[
+  LoadingStyleModel(
+    name: 'Default',
+  ),
+  LoadingStyleModel(
+    name: '2',
+    value: 2.0,
+  ),
+  LoadingStyleModel(
+    name: '6',
+    value: 6.0,
+  ),
+  LoadingStyleModel(
+    name: '8',
+    value: 8.0,
+  ),
+  LoadingStyleModel(
+    name: '10',
+    value: 10.0,
+  ),
+];
+
+class LoadingStyleTypeModel<T> {
+  const LoadingStyleTypeModel({
+    required this.title,
+    required this.value,
+  });
+
+  final String title;
+  final List<LoadingStyleModel> value;
+}
+
+const loadingTypeStyles = <LoadingStyleTypeModel>[
+  LoadingStyleTypeModel(
+    title: 'Color',
+    value: loadingColors,
+  ),
+  LoadingStyleTypeModel(
+    title: 'Align',
+    value: loadingStrokeAligns,
+  ),
+  LoadingStyleTypeModel(
+    title: 'Width',
+    value: loadingStrokeWidths,
+  ),
+];
+
 final _random = Random();
 
 void main() {
@@ -24,11 +127,25 @@ class ScrollInfinityExample extends StatefulWidget {
 class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
   static final _enableTitles = <String>[
     'Header',
-    'Interval',
+    'Intervals',
     'Initial Items',
     'Custom Loader',
   ];
   final _enables = List.filled(_enableTitles.length, false);
+
+  final _loadingStyles = <LoadingStyleModel>[
+    loadingColors.first,
+    loadingStrokeAligns.first,
+    loadingStrokeWidths.first,
+  ];
+
+  LoadingStyle get loadingStyle {
+    return LoadingStyle(
+      color: _loadingStyles[0].value,
+      strokeAlign: _loadingStyles[1].value,
+      strokeWidth: _loadingStyles[2].value,
+    );
+  }
 
   void _navigateToExample() {
     Navigator.push(
@@ -40,6 +157,7 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
             enableInterval: _enables[1],
             enableInitialItems: _enables[2],
             enableCustomLoader: _enables[3],
+            loadingStyle: loadingStyle,
           );
         },
       ),
@@ -54,17 +172,8 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              const Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                ),
-                child: Text(
-                  'Enable:',
-                  style: TextStyle(
-                    fontSize: 18.0,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
+              const FieldWidget(
+                title: 'Enable',
               ),
               const Divider(),
               ...List.generate(
@@ -86,16 +195,94 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
                   );
                 },
               ),
+              const SizedBox(height: 40.0),
+              const FieldWidget(
+                title: 'Customize default loader',
+              ),
               const Divider(),
+              ...List.generate(loadingTypeStyles.length, (index) {
+                final loadingTypeStyle = loadingTypeStyles[index];
+
+                return GestureDetector(
+                  onTap: () {},
+                  child: Container(
+                    color: Colors.transparent,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        Text(
+                          '${loadingTypeStyle.title}:',
+                          style: const TextStyle(
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(width: 12.0),
+                        DropdownButtonHideUnderline(
+                          child: DropdownButton(
+                            value: _loadingStyles[index],
+                            items: List.generate(loadingTypeStyle.value.length,
+                                (index) {
+                              final style = loadingTypeStyle.value[index];
+
+                              return DropdownMenuItem(
+                                value: style,
+                                child: Text(
+                                  style.name,
+                                ),
+                              );
+                            }),
+                            onChanged: (value) {
+                              setState(() {
+                                _loadingStyles[index] = value!;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+              const Divider(),
+              const SizedBox(height: 8.0),
               Align(
                 alignment: Alignment.center,
                 child: ElevatedButton(
                   onPressed: _navigateToExample,
-                  child: const Text('Access'),
+                  child: const Text('Access Example'),
                 ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class FieldWidget extends StatelessWidget {
+  const FieldWidget({
+    super.key,
+    required this.title,
+  });
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16.0,
+      ),
+      child: Text(
+        '$title:',
+        style: const TextStyle(
+          fontSize: 18.0,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );
@@ -109,12 +296,14 @@ class InfiniteScrollExample extends StatefulWidget {
     required this.enableInterval,
     required this.enableInitialItems,
     required this.enableCustomLoader,
+    required this.loadingStyle,
   });
 
   final bool enableHeader;
   final bool enableInterval;
   final bool enableInitialItems;
   final bool enableCustomLoader;
+  final LoadingStyle loadingStyle;
 
   @override
   State<InfiniteScrollExample> createState() => _InfiniteScrollExampleState();
@@ -187,7 +376,9 @@ class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
       maxItems: maxItems,
       interval: widget.enableInterval ? 2 : null,
       loadData: _loadData,
+      loadingStyle: widget.loadingStyle,
       disableInitialRequest: widget.enableInitialItems,
+      initialPageIndex: widget.enableInitialItems ? 1 : 0,
       initialItems: widget.enableInitialItems ? initialItems : null,
       loading: widget.enableCustomLoader
           ? Container(
