@@ -141,7 +141,7 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
     loadingStrokeWidths.first,
   ];
 
-  LoadingStyle get loadingStyle {
+  LoadingStyle get _loadingStyle {
     return LoadingStyle(
       color: _loadingStyles[0].value,
       strokeAlign: _loadingStyles[1].value,
@@ -156,11 +156,12 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
         builder: (context) {
           return InfiniteScrollExample(
             selectedScrollDirection: _selectedScrollDirection,
+            maxItems: _maxItems,
             enableHeader: _enables[0],
             enableInterval: _enables[1],
             enableInitialItems: _enables[2],
             enableCustomLoader: _enables[3],
-            loadingStyle: loadingStyle,
+            loadingStyle: _loadingStyle,
           );
         },
       ),
@@ -369,6 +370,7 @@ class InfiniteScrollExample extends StatefulWidget {
   const InfiniteScrollExample({
     super.key,
     required this.selectedScrollDirection,
+    required this.maxItems,
     required this.enableHeader,
     required this.enableInterval,
     required this.enableInitialItems,
@@ -377,6 +379,7 @@ class InfiniteScrollExample extends StatefulWidget {
   });
 
   final Axis selectedScrollDirection;
+  final int maxItems;
   final bool enableHeader;
   final bool enableInterval;
   final bool enableInitialItems;
@@ -388,18 +391,18 @@ class InfiniteScrollExample extends StatefulWidget {
 }
 
 class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
-  late final int maxItems;
-  final _notifier = InitialItemsNotifier<Color>(null);
+  late final int _maxItems;
+  final _initialItemsNotifier = InitialItemsNotifier<Color>(null);
 
   Future<void> _initLoader() async {
-    _notifier.update(
+    _initialItemsNotifier.update(
       items: null,
       hasError: false,
     );
 
     final items = await _loadData(0);
 
-    _notifier.update(
+    _initialItemsNotifier.update(
       items: items,
       hasError: items == null,
     );
@@ -421,7 +424,7 @@ class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
     final isListEnd = _random.nextInt(5) == 0;
 
     return _generateColors(
-      isListEnd ? 3 : maxItems,
+      isListEnd ? _random.nextInt(widget.maxItems - 1) : _maxItems,
     );
   }
 
@@ -455,7 +458,7 @@ class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
               color: Colors.red,
             )
           : null,
-      maxItems: maxItems,
+      maxItems: _maxItems,
       interval: widget.enableInterval ? 2 : null,
       loadData: _loadData,
       loadingStyle: widget.loadingStyle,
@@ -505,7 +508,7 @@ class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
 
   @override
   void initState() {
-    maxItems = widget.selectedScrollDirection == Axis.vertical ? 10 : 4;
+    _maxItems = widget.maxItems;
 
     if (widget.enableInitialItems) {
       _initLoader();
@@ -518,7 +521,7 @@ class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
   Widget build(BuildContext context) {
     final scrollInfinity = widget.enableInitialItems
         ? ScrollInfinityLoader(
-            notifier: _notifier,
+            notifier: _initialItemsNotifier,
             scrollInfinityBuilder: (items) {
               return _getScrollInfinity(items);
             },
