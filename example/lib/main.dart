@@ -26,7 +26,7 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
     'Header',
     'Interval',
     'Initial Items',
-    'Loader',
+    'Custom Loader',
   ];
   final _enables = List.filled(_enableTitles.length, false);
 
@@ -39,7 +39,7 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
             enableHeader: _enables[0],
             enableInterval: _enables[1],
             enableInitialItems: _enables[2],
-            enableLoader: _enables[3],
+            enableCustomLoader: _enables[3],
           );
         },
       ),
@@ -108,13 +108,13 @@ class InfiniteScrollExample extends StatefulWidget {
     required this.enableHeader,
     required this.enableInterval,
     required this.enableInitialItems,
-    required this.enableLoader,
+    required this.enableCustomLoader,
   });
 
   final bool enableHeader;
   final bool enableInterval;
   final bool enableInitialItems;
-  final bool enableLoader;
+  final bool enableCustomLoader;
 
   @override
   State<InfiniteScrollExample> createState() => _InfiniteScrollExampleState();
@@ -189,6 +189,20 @@ class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
       loadData: _loadData,
       disableInitialRequest: widget.enableInitialItems,
       initialItems: widget.enableInitialItems ? initialItems : null,
+      loading: widget.enableCustomLoader
+          ? Container(
+              padding: const EdgeInsets.symmetric(
+                vertical: 20.0,
+              ),
+              child: Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 6,
+                  valueColor: const AlwaysStoppedAnimation(Colors.blue),
+                  backgroundColor: Colors.grey.shade800,
+                ),
+              ),
+            )
+          : null,
       itemBuilder: (value, index) {
         if (widget.enableInterval ? value == null : false) {
           return const SizedBox(
