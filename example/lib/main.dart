@@ -125,6 +125,7 @@ class ScrollInfinityExample extends StatefulWidget {
 }
 
 class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
+  Axis _selectedAxis = Axis.vertical;
   static final _enableTitles = <String>[
     'Header',
     'Intervals',
@@ -172,6 +173,31 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
+              const FieldWidget(
+                title: 'Scroll Direction',
+              ),
+              const Divider(),
+              RadioListTile(
+                title: const Text('Vertical'),
+                value: Axis.vertical,
+                groupValue: _selectedAxis,
+                onChanged: (Axis? value) {
+                  setState(() {
+                    _selectedAxis = value!;
+                  });
+                },
+              ),
+              RadioListTile(
+                title: const Text('Horizontal'),
+                value: Axis.horizontal,
+                groupValue: _selectedAxis,
+                onChanged: (Axis? value) {
+                  setState(() {
+                    _selectedAxis = value!;
+                  });
+                },
+              ),
+              const SizedBox(height: 20.0),
               const FieldWidget(
                 title: 'Enable',
               ),
