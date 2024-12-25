@@ -117,6 +117,27 @@ void main() {
   );
 }
 
+class _DefaultNotifier<T> extends ValueNotifier<List<T>> {
+  _DefaultNotifier(super._value);
+
+  void set(
+    int index,
+    T value,
+  ) {
+    super.value[index] = value;
+
+    notifyListeners();
+  }
+}
+
+class _EnablesNotifier<T> extends _DefaultNotifier<T> {
+  _EnablesNotifier(super._value);
+}
+
+class _LoadingStylesNotifier<T> extends _DefaultNotifier<T> {
+  _LoadingStylesNotifier(super._value);
+}
+
 class ScrollInfinityExample extends StatefulWidget {
   const ScrollInfinityExample({super.key});
 
@@ -125,42 +146,49 @@ class ScrollInfinityExample extends StatefulWidget {
 }
 
 class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
-  Axis _selectedScrollDirection = Axis.vertical;
-  int _maxItems = 10;
+  final _selectedScrollDirectionNotifier = ValueNotifier(Axis.vertical);
+  final _maxItemsNotifier = ValueNotifier(10);
   static final _enableTitles = <String>[
     'Header',
     'Intervals',
     'Initial Items',
     'Custom Loader',
   ];
-  final _enables = List.filled(_enableTitles.length, false);
-
-  final _loadingStyles = <LoadingStyleModel>[
-    loadingColors.first,
-    loadingStrokeAligns.first,
-    loadingStrokeWidths.first,
-  ];
+  final _enablesNotifier = _EnablesNotifier(
+    List.filled(_enableTitles.length, false),
+  );
+  final _loadingStylesNotifier = _LoadingStylesNotifier(
+    <LoadingStyleModel>[
+      loadingColors.first,
+      loadingStrokeAligns.first,
+      loadingStrokeWidths.first,
+    ],
+  );
 
   LoadingStyle get _loadingStyle {
+    final loadingStyles = _loadingStylesNotifier.value;
+
     return LoadingStyle(
-      color: _loadingStyles[0].value,
-      strokeAlign: _loadingStyles[1].value,
-      strokeWidth: _loadingStyles[2].value,
+      color: loadingStyles[0].value,
+      strokeAlign: loadingStyles[1].value,
+      strokeWidth: loadingStyles[2].value,
     );
   }
 
   void _navigateToExample() {
+    final enables = _enablesNotifier.value;
+
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) {
           return InfiniteScrollExample(
-            selectedScrollDirection: _selectedScrollDirection,
-            maxItems: _maxItems,
-            enableHeader: _enables[0],
-            enableInterval: _enables[1],
-            enableInitialItems: _enables[2],
-            enableCustomLoader: _enables[3],
+            selectedScrollDirection: _selectedScrollDirectionNotifier.value,
+            maxItems: _maxItemsNotifier.value,
+            enableHeader: enables[0],
+            enableInterval: enables[1],
+            enableInitialItems: enables[2],
+            enableCustomLoader: enables[3],
             loadingStyle: _loadingStyle,
           );
         },
@@ -180,24 +208,33 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
                 title: 'Scroll Direction',
               ),
               const Divider(),
-              RadioListTile(
-                title: const Text('Vertical'),
-                value: Axis.vertical,
-                groupValue: _selectedScrollDirection,
-                onChanged: (Axis? value) {
-                  setState(() {
-                    _selectedScrollDirection = value!;
-                  });
-                },
-              ),
-              RadioListTile(
-                title: const Text('Horizontal'),
-                value: Axis.horizontal,
-                groupValue: _selectedScrollDirection,
-                onChanged: (Axis? value) {
-                  setState(() {
-                    _selectedScrollDirection = value!;
-                  });
+              ValueListenableBuilder(
+                valueListenable: _selectedScrollDirectionNotifier,
+                builder: (context, value, child) {
+                  return Column(
+                    children: <Widget>[
+                      RadioListTile(
+                        title: const Text('Vertical'),
+                        value: Axis.vertical,
+                        groupValue: value,
+                        onChanged: (Axis? value) {
+                          setState(() {
+                            _selectedScrollDirectionNotifier.value = value!;
+                          });
+                        },
+                      ),
+                      RadioListTile(
+                        title: const Text('Horizontal'),
+                        value: Axis.horizontal,
+                        groupValue: value,
+                        onChanged: (Axis? value) {
+                          setState(() {
+                            _selectedScrollDirectionNotifier.value = value!;
+                          });
+                        },
+                      ),
+                    ],
+                  );
                 },
               ),
               const SizedBox(height: 28.0),
@@ -207,44 +244,45 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
                   const FieldWidget(
                     title: 'Max Items',
                   ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      IconButton(
-                        icon: const Icon(Icons.remove),
-                        onPressed: _maxItems != 2
-                            ? () {
-                                setState(() {
-                                  _maxItems--;
-                                });
-                              }
-                            : null,
-                      ),
-                      const SizedBox(width: 8.0),
-                      SizedBox(
-                        width: 24.0,
-                        child: Center(
-                          child: Text(
-                            '$_maxItems',
-                            style: const TextStyle(
-                              fontSize: 18.0,
-                              fontWeight: FontWeight.bold,
+                  ValueListenableBuilder(
+                    valueListenable: _maxItemsNotifier,
+                    builder: (context, value, child) {
+                      return Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          IconButton(
+                            icon: const Icon(Icons.remove),
+                            onPressed: value != 2
+                                ? () {
+                                    _maxItemsNotifier.value--;
+                                  }
+                                : null,
+                          ),
+                          const SizedBox(width: 8.0),
+                          SizedBox(
+                            width: 24.0,
+                            child: Center(
+                              child: Text(
+                                '$value',
+                                style: const TextStyle(
+                                  fontSize: 18.0,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 8.0),
-                      IconButton(
-                        icon: const Icon(Icons.add),
-                        onPressed: _maxItems != 20
-                            ? () {
-                                setState(() {
-                                  _maxItems++;
-                                });
-                              }
-                            : null,
-                      ),
-                    ],
+                          const SizedBox(width: 8.0),
+                          IconButton(
+                            icon: const Icon(Icons.add),
+                            onPressed: value != 20
+                                ? () {
+                                    _maxItemsNotifier.value++;
+                                  }
+                                : null,
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 ],
               ),
@@ -256,19 +294,22 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
               ...List.generate(
                 _enableTitles.length,
                 (index) {
-                  return SwitchListTile(
-                    onChanged: (value) {
-                      setState(() {
-                        _enables[index] = value;
-                      });
+                  return ValueListenableBuilder(
+                    valueListenable: _enablesNotifier,
+                    builder: (context, value, child) {
+                      return SwitchListTile(
+                        onChanged: (value) {
+                          _enablesNotifier.set(index, value);
+                        },
+                        value: value[index],
+                        title: Text(
+                          _enableTitles[index],
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      );
                     },
-                    value: _enables[index],
-                    title: Text(
-                      _enableTitles[index],
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
                   );
                 },
               ),
@@ -280,47 +321,46 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
               ...List.generate(loadingTypeStyles.length, (index) {
                 final loadingTypeStyle = loadingTypeStyles[index];
 
-                return GestureDetector(
-                  onTap: () {},
-                  child: Container(
-                    color: Colors.transparent,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        Text(
-                          '${loadingTypeStyle.title}:',
-                          style: const TextStyle(
-                            fontSize: 16.0,
-                            fontWeight: FontWeight.w500,
-                          ),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      Text(
+                        '${loadingTypeStyle.title}:',
+                        style: const TextStyle(
+                          fontSize: 16.0,
+                          fontWeight: FontWeight.w500,
                         ),
-                        const SizedBox(width: 12.0),
-                        DropdownButtonHideUnderline(
-                          child: DropdownButton(
-                            value: _loadingStyles[index],
-                            items: List.generate(loadingTypeStyle.value.length,
-                                (index) {
-                              final style = loadingTypeStyle.value[index];
+                      ),
+                      const SizedBox(width: 12.0),
+                      ValueListenableBuilder(
+                        valueListenable: _loadingStylesNotifier,
+                        builder: (context, value, child) {
+                          return DropdownButtonHideUnderline(
+                            child: DropdownButton(
+                              value: value[index],
+                              items: List.generate(
+                                  loadingTypeStyle.value.length, (index) {
+                                final style = loadingTypeStyle.value[index];
 
-                              return DropdownMenuItem(
-                                value: style,
-                                child: Text(
-                                  style.name,
-                                ),
-                              );
-                            }),
-                            onChanged: (value) {
-                              setState(() {
-                                _loadingStyles[index] = value!;
-                              });
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
+                                return DropdownMenuItem(
+                                  value: style,
+                                  child: Text(
+                                    style.name,
+                                  ),
+                                );
+                              }),
+                              onChanged: (value) {
+                                _loadingStylesNotifier.set(index, value!);
+                              },
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 );
               }),
