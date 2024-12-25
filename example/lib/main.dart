@@ -5,6 +5,15 @@ import 'package:scroll_infinity/scroll_infinity.dart';
 
 final _random = Random();
 
+void main() {
+  runApp(
+    const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: ScrollInfinityExample(),
+    ),
+  );
+}
+
 class ScrollInfinityExample extends StatefulWidget {
   const ScrollInfinityExample({super.key});
 
@@ -20,6 +29,22 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
     'Loader',
   ];
   final _enables = List.filled(_enableTitles.length, false);
+
+  void _navigateToExample() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) {
+          return InfiniteScrollExample(
+            enableHeader: _enables[0],
+            enableInterval: _enables[1],
+            enableInitialItems: _enables[2],
+            enableLoader: _enables[3],
+          );
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,16 +90,7 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
               Align(
                 alignment: Alignment.center,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) {
-                          return const InfiniteScrollExample();
-                        },
-                      ),
-                    );
-                  },
+                  onPressed: _navigateToExample,
                   child: const Text('Access'),
                 ),
               ),
@@ -87,25 +103,25 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
 }
 
 class InfiniteScrollExample extends StatefulWidget {
-  const InfiniteScrollExample({super.key});
+  const InfiniteScrollExample({
+    super.key,
+    required this.enableHeader,
+    required this.enableInterval,
+    required this.enableInitialItems,
+    required this.enableLoader,
+  });
+
+  final bool enableHeader;
+  final bool enableInterval;
+  final bool enableInitialItems;
+  final bool enableLoader;
 
   @override
   State<InfiniteScrollExample> createState() => _InfiniteScrollExampleState();
 }
 
 class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
-  final _notifier = InitialItemsNotifier<Color>(null);
-
   static const maxItems = 10;
-
-  Future<void> _initLoader() async {
-    final items = await _loadData(0);
-
-    _notifier.update(
-      items: items,
-      hasError: items == null,
-    );
-  }
 
   Future<List<Color>?> _loadData(
     int pageIndex,
@@ -116,12 +132,22 @@ class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
       ),
     );
 
-    if (_random.nextInt(3) == 0) {
+    if (_random.nextInt(4) == 0) {
       return null;
     }
 
+    final isListEnd = _random.nextInt(5) == 0;
+
+    return _generateColors(
+      isListEnd ? 3 : maxItems,
+    );
+  }
+
+  List<Color> _generateColors(
+    int amount,
+  ) {
     return List.generate(
-      maxItems,
+      amount,
       (index) {
         return Color.fromARGB(
           255,
@@ -131,13 +157,6 @@ class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
         );
       },
     );
-  }
-
-  @override
-  void initState() {
-    _initLoader();
-
-    super.initState();
   }
 
   @override
@@ -156,29 +175,27 @@ class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
       body: Column(
         children: <Widget>[
           Expanded(
-            child: ScrollInfinityLoader(
-              notifier: _notifier,
-              scrollInfinityBuilder: (items) {
-                return ScrollInfinity(
-                  maxItems: 10,
-                  disableInitialRequest: true,
-                  initialPageIndex: 0,
-                  initialItems: items,
-                  interval: 2,
-                  loadData: _loadData,
-                  itemBuilder: (value, index) {
-                    if (value == null) {
-                      return const SizedBox(
-                        height: 100.0,
-                        child: Placeholder(),
-                      );
-                    }
+            child: ScrollInfinity<Color?>(
+              header: widget.enableHeader
+                  ? Container(
+                      height: 40.0,
+                      color: Colors.red,
+                    )
+                  : null,
+              maxItems: maxItems,
+              interval: widget.enableInterval ? 2 : null,
+              loadData: _loadData,
+              itemBuilder: (value, index) {
+                if (widget.enableInterval ? value == null : false) {
+                  return const SizedBox(
+                    height: 100.0,
+                    child: Placeholder(),
+                  );
+                }
 
-                    return Container(
-                      height: 100.0,
-                      color: value,
-                    );
-                  },
+                return Container(
+                  height: 100.0,
+                  color: value,
                 );
               },
             ),
