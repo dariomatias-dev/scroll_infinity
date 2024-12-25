@@ -122,6 +122,21 @@ class InfiniteScrollExample extends StatefulWidget {
 
 class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
   static const maxItems = 10;
+  final _notifier = InitialItemsNotifier<Color>(null);
+
+  Future<void> _initLoader() async {
+    _notifier.update(
+      items: null,
+      hasError: false,
+    );
+
+    final items = await _loadData(0);
+
+    _notifier.update(
+      items: items,
+      hasError: items == null,
+    );
+  }
 
   Future<List<Color>?> _loadData(
     int pageIndex,
@@ -159,6 +174,54 @@ class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
     );
   }
 
+  ScrollInfinity<Color?> _getScrollInfinity(
+    List<Color>? initialItems,
+  ) {
+    return ScrollInfinity<Color?>(
+      header: widget.enableHeader
+          ? Container(
+              height: 40.0,
+              color: Colors.red,
+            )
+          : null,
+      maxItems: maxItems,
+      interval: widget.enableInterval ? 2 : null,
+      loadData: _loadData,
+      disableInitialRequest: widget.enableInitialItems,
+      initialItems: widget.enableInitialItems ? initialItems : null,
+      itemBuilder: (value, index) {
+        if (widget.enableInterval ? value == null : false) {
+          return const SizedBox(
+            height: 100.0,
+            child: Placeholder(),
+          );
+        }
+
+        return Container(
+          height: 100.0,
+          color: value,
+        );
+      },
+    );
+  }
+
+  void _reset() {
+    if (widget.enableInitialItems) {
+      _initLoader();
+    } else {
+      setState(() {});
+    }
+  }
+
+  @override
+  void initState() {
+    if (widget.enableInitialItems) {
+      _initLoader();
+    }
+
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -174,31 +237,23 @@ class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
       ),
       body: Column(
         children: <Widget>[
+          ElevatedButton(
+            onPressed: _reset,
+            child: const Text('Reset'),
+          ),
+          const SizedBox(height: 20.0),
+          const Divider(
+            height: 0.0,
+          ),
           Expanded(
-            child: ScrollInfinity<Color?>(
-              header: widget.enableHeader
-                  ? Container(
-                      height: 40.0,
-                      color: Colors.red,
-                    )
-                  : null,
-              maxItems: maxItems,
-              interval: widget.enableInterval ? 2 : null,
-              loadData: _loadData,
-              itemBuilder: (value, index) {
-                if (widget.enableInterval ? value == null : false) {
-                  return const SizedBox(
-                    height: 100.0,
-                    child: Placeholder(),
-                  );
-                }
-
-                return Container(
-                  height: 100.0,
-                  color: value,
-                );
-              },
-            ),
+            child: widget.enableInitialItems
+                ? ScrollInfinityLoader(
+                    notifier: _notifier,
+                    scrollInfinityBuilder: (items) {
+                      return _getScrollInfinity(items);
+                    },
+                  )
+                : _getScrollInfinity(null),
           ),
         ],
       ),
