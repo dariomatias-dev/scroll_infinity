@@ -11,7 +11,6 @@ part 'default_error_component.dart';
 class ScrollInfinity<T> extends StatefulWidget {
   const ScrollInfinity({
     super.key,
-    this.listKey,
     this.scrollDirection = Axis.vertical,
     this.scrollbars = false,
     this.padding,
@@ -49,9 +48,6 @@ class ScrollInfinity<T> extends StatefulWidget {
           !(loadingStyle != null && loading != null),
           'The properties `loading` and `loadingStyle` cannot be used together. Please define only one of these properties.',
         );
-
-  /// Listing key.
-  final GlobalKey? listKey;
 
   /// Defines the scrolling direction of the list. Can be `Axis.vertical` or `Axis.horizontal`.
   final Axis scrollDirection;
@@ -119,8 +115,7 @@ class ScrollInfinity<T> extends StatefulWidget {
 }
 
 class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
-  late final GlobalKey _listKey;
-  final _itemKeys = <GlobalKey>[];
+  static final _firstItemKey = GlobalKey();
   late int _pageIndex;
   bool _isLoading = false;
   bool _isListEnd = false;
@@ -141,77 +136,79 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   }
 
   /// Handles the process of adding new items.
-  Future<void> _addItems() async {
-    if (_hasError) {
-      _hasError = false;
+  void _addItems() {
+    WidgetsBinding.instance.addPostFrameCallback(
+      (timeStamp) async {
+        final enableScroll = _firstItemKey.currentContext?.size?.height == null;
 
-      _items.removeLast();
-      _items.removeLast();
+        if (_hasError) {
+          _hasError = false;
 
-      _addLoading();
+          _items.removeLast();
 
-      if (mounted) {
-        setState(() {});
-      }
-    }
+          if (enableScroll) {
+            _items.removeLast();
+            _addLoading();
 
-    if (_pageIndex == 0) {
-      _addLoading();
-      _updateIsLoading();
-    } else {
-      _isLoading = !_isLoading;
-    }
+            setState(() {});
+          }
+        }
 
-    if (_values.length != widget.maxItems) {
-      final newItems = await widget.loadData(
-        _pageIndex,
-      );
+        if (_pageIndex == 0) {
+          _addLoading();
+          _updateIsLoading();
+        } else {
+          _isLoading = !_isLoading;
+        }
 
-      if (newItems != null) {
-        _values.addAll(newItems);
-        _pageIndex++;
+        if (_values.length != widget.maxItems) {
+          final newItems = await widget.loadData(
+            _pageIndex,
+          );
 
-        _isListEnd = newItems.length < widget.maxItems;
-      } else {
-        _hasError = true;
-      }
-    }
+          if (newItems != null) {
+            _values.addAll(newItems);
+            _pageIndex++;
 
-    _removeLoading();
+            _isListEnd = newItems.length < widget.maxItems;
+          } else {
+            _hasError = true;
+          }
+        }
 
-    final enableScroll = _itemKeys.isNotEmpty
-        ? _itemKeys.first.currentContext?.size?.height == null
-        : false;
+        _removeLoading();
 
-    if (_hasError) {
-      if (!enableScroll) {
-        _items.add(
-          widget.tryAgainButtonBuilder != null
-              ? widget.tryAgainButtonBuilder!(
-                  () {},
-                )
-              : TryAgainButton(
-                  action: () {},
-                ),
-        );
-      } else {
-        _items.add(
-          widget.error ?? const _DefaultErrorComponent(),
-        );
-      }
+        if (_hasError) {
+          if (!enableScroll) {
+            _items.add(
+              widget.tryAgainButtonBuilder != null
+                  ? widget.tryAgainButtonBuilder!(
+                      _addItems,
+                    )
+                  : TryAgainButton(
+                      action: _addItems,
+                    ),
+            );
+          } else {
+            _items.add(
+              widget.error ?? const _DefaultErrorComponent(),
+            );
+          }
 
-      _isListEnd = !widget.enableRetryOnError;
-    } else {
-      final items = _generateItems();
+          _isListEnd = !widget.enableRetryOnError;
+        } else {
+          final items = _generateItems();
 
-      _items.addAll(items);
-    }
+          _items.addAll(items);
+        }
 
-    if (!_isListEnd && enableScroll) {
-      _addLoading();
-    }
+        if (!_isListEnd && !(_hasError && !enableScroll)) {
+          _addLoading();
+        }
 
-    _updateIsLoading();
+        _updateIsLoading();
+      },
+    );
   }
 
   /// Generates new items by calling `itemBuilder`.
@@ -226,11 +223,9 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
           _itemsCount = 0;
 
           items.add(
-            _setItemKey(
-              widget.itemBuilder(
-                null as T,
-                i + _items.length,
-              ),
+            widget.itemBuilder(
+              null as T,
+              i + _items.length,
             ),
           );
 
@@ -242,11 +237,9 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
         _itemsCount++;
 
         items.add(
-          _setItemKey(
-            widget.itemBuilder(
-              _values[0],
-              i + _items.length,
-            ),
+          widget.itemBuilder(
+            _values[0],
+            i + _items.length,
           ),
         );
 
@@ -257,11 +250,9 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     } else {
       for (int i = 0; i < _values.length; i++) {
         items.add(
-          _setItemKey(
-            widget.itemBuilder(
-              _values[i],
-              i + _items.length,
-            ),
+          widget.itemBuilder(
+            _values[i],
+            i + _items.length,
           ),
         );
       }
@@ -272,17 +263,12 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     return items;
   }
 
-  /// Define the key of the item in the list.
-  Widget _setItemKey(
-    Widget child,
-  ) {
-    final itemKey = GlobalKey();
-
-    _itemKeys.add(itemKey);
-
-    return KeyedSubtree(
-      key: itemKey,
-      child: child,
+  /// Adds the first item from the list.
+  void _addFirstItem() {
+    _items.add(
+      SizedBox(
+        key: _firstItemKey,
+      ),
     );
   }
 
@@ -323,7 +309,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
   /// Initializes resources.
   void _start() {
-    _listKey = widget.listKey ?? GlobalKey();
+    _addFirstItem();
     _pageIndex = widget.initialPageIndex;
 
     if (widget.initialItems != null) {
@@ -332,9 +318,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
     if (widget.header != null) {
       _items.add(
-        _setItemKey(
-          widget.header!,
-        ),
+        widget.header!,
       );
     }
 
@@ -368,8 +352,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
         curve: Curves.linear,
       );
     }
-
-    _itemKeys.clear();
     _pageIndex = widget.initialPageIndex;
 
     _isListEnd = false;
@@ -383,11 +365,11 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     _values.clear();
     _items.clear();
 
+    _addFirstItem();
+
     if (widget.header != null) {
       _items.add(
-        _setItemKey(
-          widget.header!,
-        ),
+        widget.header!,
       );
     }
 
@@ -435,7 +417,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
         scrollbars: widget.scrollbars,
       ),
       child: ListView.separated(
-        key: _listKey,
         controller: _scrollController,
         scrollDirection: widget.scrollDirection,
         padding: widget.padding,

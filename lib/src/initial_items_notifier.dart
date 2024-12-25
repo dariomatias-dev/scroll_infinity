@@ -9,6 +9,9 @@ class InitialItemsNotifier<T> extends ValueNotifier<List<T>?> {
   /// Indicates if an error has occurred.
   bool _hasError = false;
 
+  /// Indicates if the notifier was disposed.
+  bool isDisposed = false;
+
   bool get hasError => _hasError;
 
   /// Updates the notifier with new `items` and optionally updates `hasError`.
@@ -20,5 +23,12 @@ class InitialItemsNotifier<T> extends ValueNotifier<List<T>?> {
     _hasError = hasError;
 
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    isDisposed = true;
+
+    super.dispose();
   }
 }
