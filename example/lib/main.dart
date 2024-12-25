@@ -125,7 +125,7 @@ class ScrollInfinityExample extends StatefulWidget {
 }
 
 class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
-  Axis _selectedAxis = Axis.vertical;
+  Axis _selectedScrollDirection = Axis.vertical;
   static final _enableTitles = <String>[
     'Header',
     'Intervals',
@@ -154,6 +154,7 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
       MaterialPageRoute(
         builder: (context) {
           return InfiniteScrollExample(
+            selectedScrollDirection: _selectedScrollDirection,
             enableHeader: _enables[0],
             enableInterval: _enables[1],
             enableInitialItems: _enables[2],
@@ -180,24 +181,24 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
               RadioListTile(
                 title: const Text('Vertical'),
                 value: Axis.vertical,
-                groupValue: _selectedAxis,
+                groupValue: _selectedScrollDirection,
                 onChanged: (Axis? value) {
                   setState(() {
-                    _selectedAxis = value!;
+                    _selectedScrollDirection = value!;
                   });
                 },
               ),
               RadioListTile(
                 title: const Text('Horizontal'),
                 value: Axis.horizontal,
-                groupValue: _selectedAxis,
+                groupValue: _selectedScrollDirection,
                 onChanged: (Axis? value) {
                   setState(() {
-                    _selectedAxis = value!;
+                    _selectedScrollDirection = value!;
                   });
                 },
               ),
-              const SizedBox(height: 20.0),
+              const SizedBox(height: 28.0),
               const FieldWidget(
                 title: 'Enable',
               ),
@@ -318,6 +319,7 @@ class FieldWidget extends StatelessWidget {
 class InfiniteScrollExample extends StatefulWidget {
   const InfiniteScrollExample({
     super.key,
+    required this.selectedScrollDirection,
     required this.enableHeader,
     required this.enableInterval,
     required this.enableInitialItems,
@@ -325,6 +327,7 @@ class InfiniteScrollExample extends StatefulWidget {
     required this.loadingStyle,
   });
 
+  final Axis selectedScrollDirection;
   final bool enableHeader;
   final bool enableInterval;
   final bool enableInitialItems;
@@ -336,7 +339,7 @@ class InfiniteScrollExample extends StatefulWidget {
 }
 
 class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
-  static const maxItems = 10;
+  late final int maxItems;
   final _notifier = InitialItemsNotifier<Color>(null);
 
   Future<void> _initLoader() async {
@@ -392,10 +395,14 @@ class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
   ScrollInfinity<Color?> _getScrollInfinity(
     List<Color>? initialItems,
   ) {
+    final isScrollVertical = widget.selectedScrollDirection == Axis.vertical;
+
     return ScrollInfinity<Color?>(
+      scrollDirection: widget.selectedScrollDirection,
       header: widget.enableHeader
           ? Container(
-              height: 40.0,
+              height: isScrollVertical ? 40.0 : 0.0,
+              width: isScrollVertical ? 0.0 : 160.0,
               color: Colors.red,
             )
           : null,
@@ -408,9 +415,7 @@ class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
       initialItems: widget.enableInitialItems ? initialItems : null,
       loading: widget.enableCustomLoader
           ? Container(
-              padding: const EdgeInsets.symmetric(
-                vertical: 20.0,
-              ),
+              padding: const EdgeInsets.all(20.0),
               child: Center(
                 child: CircularProgressIndicator(
                   strokeWidth: 6,
@@ -421,15 +426,20 @@ class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
             )
           : null,
       itemBuilder: (value, index) {
+        final width = isScrollVertical ? 0.0 : 200.0;
+        final height = isScrollVertical ? 100.0 : 0.0;
+
         if (widget.enableInterval ? value == null : false) {
-          return const SizedBox(
-            height: 100.0,
-            child: Placeholder(),
+          return SizedBox(
+            height: height,
+            width: width,
+            child: const Placeholder(),
           );
         }
 
         return Container(
-          height: 100.0,
+          height: height,
+          width: width,
           color: value,
         );
       },
@@ -446,6 +456,8 @@ class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
 
   @override
   void initState() {
+    maxItems = widget.selectedScrollDirection == Axis.vertical ? 10 : 4;
+
     if (widget.enableInitialItems) {
       _initLoader();
     }
@@ -455,6 +467,15 @@ class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
 
   @override
   Widget build(BuildContext context) {
+    final scrollInfinity = widget.enableInitialItems
+        ? ScrollInfinityLoader(
+            notifier: _notifier,
+            scrollInfinityBuilder: (items) {
+              return _getScrollInfinity(items);
+            },
+          )
+        : _getScrollInfinity(null);
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -477,14 +498,14 @@ class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
             height: 0.0,
           ),
           Expanded(
-            child: widget.enableInitialItems
-                ? ScrollInfinityLoader(
-                    notifier: _notifier,
-                    scrollInfinityBuilder: (items) {
-                      return _getScrollInfinity(items);
-                    },
-                  )
-                : _getScrollInfinity(null),
+            child: widget.selectedScrollDirection == Axis.vertical
+                ? scrollInfinity
+                : Center(
+                    child: SizedBox(
+                      height: 100.0,
+                      child: scrollInfinity,
+                    ),
+                  ),
           ),
         ],
       ),

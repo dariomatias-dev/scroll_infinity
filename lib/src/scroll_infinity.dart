@@ -43,10 +43,6 @@ class ScrollInfinity<T> extends StatefulWidget {
         assert(
           interval != null ? null is T : true,
           'The generic type `T` must be nullable when `interval` is not null.',
-        ),
-        assert(
-          !(loadingStyle != null && loading != null),
-          'The properties `loading` and `loadingStyle` cannot be used together. Please define only one of these properties.',
         );
 
   /// Defines the scrolling direction of the list. Can be `Axis.vertical` or `Axis.horizontal`.
