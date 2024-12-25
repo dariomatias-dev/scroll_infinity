@@ -126,6 +126,7 @@ class ScrollInfinityExample extends StatefulWidget {
 
 class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
   Axis _selectedScrollDirection = Axis.vertical;
+  int _maxItems = 10;
   static final _enableTitles = <String>[
     'Header',
     'Intervals',
@@ -199,6 +200,54 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
                 },
               ),
               const SizedBox(height: 28.0),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: <Widget>[
+                  const FieldWidget(
+                    title: 'Max Items',
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      IconButton(
+                        icon: const Icon(Icons.remove),
+                        onPressed: _maxItems != 2
+                            ? () {
+                                setState(() {
+                                  _maxItems--;
+                                });
+                              }
+                            : null,
+                      ),
+                      const SizedBox(width: 8.0),
+                      SizedBox(
+                        width: 24.0,
+                        child: Center(
+                          child: Text(
+                            '$_maxItems',
+                            style: const TextStyle(
+                              fontSize: 18.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8.0),
+                      IconButton(
+                        icon: const Icon(Icons.add),
+                        onPressed: _maxItems != 20
+                            ? () {
+                                setState(() {
+                                  _maxItems++;
+                                });
+                              }
+                            : null,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 40.0),
               const FieldWidget(
                 title: 'Enable',
               ),
