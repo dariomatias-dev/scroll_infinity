@@ -148,6 +148,7 @@ class ScrollInfinityExample extends StatefulWidget {
 class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
   final _selectedScrollDirectionNotifier = ValueNotifier(Axis.vertical);
   final _maxItemsNotifier = ValueNotifier(10);
+  final _intervalNotifier = ValueNotifier(2);
   static final _enableTitles = <String>[
     'Header',
     'Intervals',
@@ -185,6 +186,7 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
           return InfiniteScrollExample(
             selectedScrollDirection: _selectedScrollDirectionNotifier.value,
             maxItems: _maxItemsNotifier.value,
+            interval: _intervalNotifier.value,
             enableHeader: enables[0],
             enableInterval: enables[1],
             enableInitialItems: enables[2],
@@ -244,45 +246,8 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
                   const FieldWidget(
                     title: 'Max Items',
                   ),
-                  ValueListenableBuilder(
-                    valueListenable: _maxItemsNotifier,
-                    builder: (context, value, child) {
-                      return Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          IconButton(
-                            icon: const Icon(Icons.remove),
-                            onPressed: value != 2
-                                ? () {
-                                    _maxItemsNotifier.value--;
-                                  }
-                                : null,
-                          ),
-                          const SizedBox(width: 8.0),
-                          SizedBox(
-                            width: 24.0,
-                            child: Center(
-                              child: Text(
-                                '$value',
-                                style: const TextStyle(
-                                  fontSize: 18.0,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8.0),
-                          IconButton(
-                            icon: const Icon(Icons.add),
-                            onPressed: value != 20
-                                ? () {
-                                    _maxItemsNotifier.value++;
-                                  }
-                                : null,
-                          ),
-                        ],
-                      );
-                    },
+                  QuantitySelectorWidget(
+                    notifier: _maxItemsNotifier,
                   ),
                 ],
               ),
@@ -297,17 +262,25 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
                   return ValueListenableBuilder(
                     valueListenable: _enablesNotifier,
                     builder: (context, value, child) {
-                      return SwitchListTile(
-                        onChanged: (value) {
-                          _enablesNotifier.set(index, value);
-                        },
-                        value: value[index],
-                        title: Text(
-                          _enableTitles[index],
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w500,
+                      return Column(
+                        children: <Widget>[
+                          SwitchListTile(
+                            onChanged: (value) {
+                              _enablesNotifier.set(index, value);
+                            },
+                            value: value[index],
+                            title: Text(
+                              _enableTitles[index],
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                           ),
-                        ),
+                          if (index == 1 && value[index])
+                            QuantitySelectorWidget(
+                              notifier: _intervalNotifier,
+                            ),
+                        ],
                       );
                     },
                   );
@@ -373,6 +346,7 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
                   child: const Text('Access Example'),
                 ),
               ),
+              const SizedBox(height: 20.0),
             ],
           ),
         ),
@@ -406,11 +380,65 @@ class FieldWidget extends StatelessWidget {
   }
 }
 
+class QuantitySelectorWidget extends StatelessWidget {
+  const QuantitySelectorWidget({
+    super.key,
+    required this.notifier,
+  });
+
+  final ValueNotifier<int> notifier;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder(
+      valueListenable: notifier,
+      builder: (context, value, child) {
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            IconButton(
+              icon: const Icon(Icons.remove),
+              onPressed: value != 2
+                  ? () {
+                      notifier.value--;
+                    }
+                  : null,
+            ),
+            const SizedBox(width: 8.0),
+            SizedBox(
+              width: 24.0,
+              child: Center(
+                child: Text(
+                  '$value',
+                  style: const TextStyle(
+                    fontSize: 18.0,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8.0),
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: value != 20
+                  ? () {
+                      notifier.value++;
+                    }
+                  : null,
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
 class InfiniteScrollExample extends StatefulWidget {
   const InfiniteScrollExample({
     super.key,
     required this.selectedScrollDirection,
     required this.maxItems,
+    required this.interval,
     required this.enableHeader,
     required this.enableInterval,
     required this.enableInitialItems,
@@ -420,6 +448,7 @@ class InfiniteScrollExample extends StatefulWidget {
 
   final Axis selectedScrollDirection;
   final int maxItems;
+  final int interval;
   final bool enableHeader;
   final bool enableInterval;
   final bool enableInitialItems;
@@ -499,7 +528,7 @@ class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
             )
           : null,
       maxItems: _maxItems,
-      interval: widget.enableInterval ? 2 : null,
+      interval: widget.enableInterval ? widget.interval : null,
       loadData: _loadData,
       loadingStyle: widget.loadingStyle,
       disableInitialRequest: widget.enableInitialItems,
