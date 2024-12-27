@@ -33,10 +33,6 @@ class ScrollInfinity<T> extends StatefulWidget {
           'The initial index cannot be less than zero.',
         ),
         assert(
-          !(initialItems == null && disableInitialRequest),
-          '`initialItems` must not be `null` when `disableInitialRequest` is `true`.',
-        ),
-        assert(
           !(interval != null && interval <= 0),
           'The interval should not be equal to or less than zero.',
         ),
@@ -120,9 +116,14 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
   final _values = <T>[];
   final _items = <Widget>[];
-  bool _tryAgain = false;
 
-  bool get _enableScroll => _scrollController.position.pixels != 0;
+  bool get _enableScroll {
+    if (mounted) {
+      _scrollController.position.pixels != 0;
+    }
+
+    return false;
+  }
 
   /// Method called during scrolling.
   void _onScroll() {
@@ -140,16 +141,10 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
         if (_hasError) {
           _hasError = false;
 
-          if (_tryAgain) {
-            _tryAgain = false;
+          _items.removeLast();
 
+          if (_enableScroll) {
             _items.removeLast();
-          } else {
-            _items.removeLast();
-
-            if (_enableScroll) {
-              _items.removeLast();
-            }
           }
 
           _addLoading();
@@ -191,10 +186,10 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
             _items.add(
               widget.tryAgainButtonBuilder != null
                   ? widget.tryAgainButtonBuilder!(
-                      _tryAgainAction,
+                      _addItems,
                     )
                   : TryAgainButton(
-                      action: _tryAgainAction,
+                      action: _addItems,
                     ),
             );
           }
@@ -221,12 +216,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
         );
       },
     );
-  }
-
-  /// Action of the element of trying again.
-  void _tryAgainAction() {
-    _tryAgain = true;
-    _addItems();
   }
 
   /// Generates new items by calling `itemBuilder`.
@@ -339,12 +328,16 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
         _generateItems(),
       );
 
-      if (!_isListEnd) {
-        _addLoading();
-      }
-    }
+      _addLoading();
 
-    if (!widget.disableInitialRequest) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (timeStamp) {
+          if (!_isListEnd && !_enableScroll) {
+            _addItems();
+          }
+        },
+      );
+    } else {
       _addItems();
     }
 
@@ -376,7 +369,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
     _values.clear();
     _items.clear();
-    _tryAgain = false;
 
     if (widget.header != null) {
       _items.add(
@@ -384,7 +376,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
       );
     }
 
-    if (widget.initialItems != null && widget.disableInitialRequest) {
+    if (widget.initialItems != null) {
       _values.addAll(
         widget.initialItems!,
       );
@@ -393,11 +385,17 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
         _generateItems(),
       );
 
-      if (!_isListEnd) {
-        _addLoading();
-      }
+      _addLoading();
 
       setState(() {});
+
+      WidgetsBinding.instance.addPostFrameCallback(
+        (timeStamp) {
+          if (!_isListEnd && !_enableScroll) {
+            _addItems();
+          }
+        },
+      );
     } else {
       _addItems();
     }
