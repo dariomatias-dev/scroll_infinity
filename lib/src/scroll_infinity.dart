@@ -112,7 +112,6 @@ class ScrollInfinity<T> extends StatefulWidget {
 
 class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   final _scrollController = ScrollController();
-  static final _firstItemKey = GlobalKey();
   late int _pageIndex;
   bool _isLoading = false;
   bool _isListEnd = false;
@@ -282,15 +281,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     return items;
   }
 
-  /// Adds the first item from the list.
-  void _addFirstItem() {
-    _items.add(
-      SizedBox(
-        key: _firstItemKey,
-      ),
-    );
-  }
-
   /// Adds the loading indicator component.
   void _addLoading() {
     _items.add(
@@ -328,7 +318,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
   /// Initializes resources.
   void _start() {
-    _addFirstItem();
     _pageIndex = widget.initialPageIndex;
 
     if (widget.initialItems != null) {
@@ -388,8 +377,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     _values.clear();
     _items.clear();
     _tryAgain = false;
-
-    _addFirstItem();
 
     if (widget.header != null) {
       _items.add(
