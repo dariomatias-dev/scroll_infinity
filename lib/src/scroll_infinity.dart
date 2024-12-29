@@ -108,22 +108,17 @@ class ScrollInfinity<T> extends StatefulWidget {
 
 class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   final _scrollController = ScrollController();
+  final _scrollKey = GlobalKey();
   late int _pageIndex;
   bool _isLoading = false;
   bool _isListEnd = false;
   int _itemsCount = 0;
   bool _hasError = false;
+  bool _isDisposed = false;
 
   final _values = <T>[];
   final _items = <Widget>[];
-
-  bool get _enableScroll {
-    if (mounted) {
-      _scrollController.position.pixels != 0;
-    }
-
-    return false;
-  }
+  final _itemKeys = <GlobalKey>[];
 
   /// Method called during scrolling.
   void _onScroll() {
@@ -142,26 +137,30 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
           _hasError = false;
 
           _items.removeLast();
+          _itemKeys.removeLast();
 
-          if (_enableScroll) {
+          if (_getEnableScroll()) {
             _items.removeLast();
+            _itemKeys.removeLast();
           }
 
           _addLoading();
           _updateIsLoading();
+        } else if (_pageIndex == 0) {
+          _addLoading();
+          _updateIsLoading();
         } else {
-          if (_pageIndex == 0) {
-            _addLoading();
-            _updateIsLoading();
-          } else {
-            _isLoading = !_isLoading;
-          }
+          _isLoading = !_isLoading;
         }
 
         if (_values.length != widget.maxItems) {
           final newItems = await widget.loadData(
             _pageIndex,
           );
+
+          if (_isDisposed) {
+            return;
+          }
 
           if (newItems != null) {
             _values.addAll(newItems);
@@ -173,24 +172,30 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
           }
         }
 
-        if (_isLoading) {
-          _removeLoading();
-        }
+        _items.removeLast();
+        _itemKeys.removeLast();
 
         if (_hasError) {
-          if (_enableScroll) {
-            _items.add(
+          _items.add(
+            _setItemKey(
               widget.error ?? const _DefaultErrorComponent(),
-            );
-          } else {
+            ),
+          );
+
+          if (!_getEnableScroll()) {
+            _items.removeLast();
+            _itemKeys.removeLast();
+
             _items.add(
-              widget.tryAgainButtonBuilder != null
-                  ? widget.tryAgainButtonBuilder!(
-                      _addItems,
-                    )
-                  : TryAgainButton(
-                      action: _addItems,
-                    ),
+              _setItemKey(
+                widget.tryAgainButtonBuilder != null
+                    ? widget.tryAgainButtonBuilder!(
+                        _addItems,
+                      )
+                    : TryAgainButton(
+                        action: _addItems,
+                      ),
+              ),
             );
           }
 
@@ -201,7 +206,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
           );
         }
 
-        if (!_isListEnd && !(_hasError && !_enableScroll)) {
+        if (!_isListEnd && !(_hasError && !_getEnableScroll())) {
           _addLoading();
         }
 
@@ -209,13 +214,30 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
         WidgetsBinding.instance.addPostFrameCallback(
           (timeStamp) {
-            if (!_isListEnd && !_hasError && !_enableScroll) {
+            if (!_isListEnd && !_hasError && !_getEnableScroll()) {
               _addItems();
             }
           },
         );
       },
     );
+  }
+
+  bool _getEnableScroll() {
+    final scrollHeight = _scrollKey.currentContext?.size?.height ?? 0.0;
+    bool enableScroll = false;
+
+    double size = 0.0;
+    for (final itemKey in _itemKeys) {
+      size += itemKey.currentContext?.size?.height ?? 0.0;
+
+      if (size >= scrollHeight) {
+        enableScroll = true;
+        break;
+      }
+    }
+
+    return enableScroll;
   }
 
   /// Generates new items by calling `itemBuilder`.
@@ -230,9 +252,11 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
           _itemsCount = 0;
 
           items.add(
-            widget.itemBuilder(
-              null as T,
-              i + _items.length,
+            _setItemKey(
+              widget.itemBuilder(
+                null as T,
+                i + _items.length,
+              ),
             ),
           );
 
@@ -244,9 +268,11 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
         _itemsCount++;
 
         items.add(
-          widget.itemBuilder(
-            _values[0],
-            i + _items.length,
+          _setItemKey(
+            widget.itemBuilder(
+              _values[0],
+              i + _items.length,
+            ),
           ),
         );
 
@@ -257,9 +283,11 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     } else {
       for (int i = 0; i < _values.length; i++) {
         items.add(
-          widget.itemBuilder(
-            _values[i],
-            i + _items.length,
+          _setItemKey(
+            widget.itemBuilder(
+              _values[i],
+              i + _items.length,
+            ),
           ),
         );
       }
@@ -270,24 +298,40 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     return items;
   }
 
+  /// Define the key of the item in the list.
+  Widget _setItemKey(
+    Widget child,
+  ) {
+    final itemKey = GlobalKey();
+
+    _itemKeys.add(itemKey);
+
+    return KeyedSubtree(
+      key: itemKey,
+      child: child,
+    );
+  }
+
   /// Adds the loading indicator component.
   void _addLoading() {
     _items.add(
-      widget.loading ??
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                CircularProgressIndicator(
-                  color: widget.loadingStyle?.color,
-                  strokeAlign: widget.loadingStyle?.strokeAlign ??
-                      BorderSide.strokeAlignCenter,
-                  strokeWidth: widget.loadingStyle?.strokeWidth ?? 4.0,
-                ),
-              ],
+      _setItemKey(
+        widget.loading ??
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  CircularProgressIndicator(
+                    color: widget.loadingStyle?.color,
+                    strokeAlign: widget.loadingStyle?.strokeAlign ??
+                        BorderSide.strokeAlignCenter,
+                    strokeWidth: widget.loadingStyle?.strokeWidth ?? 4.0,
+                  ),
+                ],
+              ),
             ),
-          ),
+      ),
     );
   }
 
@@ -300,19 +344,30 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     }
   }
 
-  /// Removes the loading indicator component.
-  void _removeLoading() {
-    _items.removeLast();
+  /// Initializes some resources.
+  void _initialize() {
+    _isListEnd = widget.initialItems!.length < widget.maxItems;
+
+    _values.addAll(widget.initialItems!);
+    _items.addAll(_generateItems());
+
+    if (widget.initialItems?.length == widget.maxItems) {
+      _addLoading();
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback(
+      (timeStamp) {
+        if (!_isListEnd && !_getEnableScroll()) {
+          _addItems();
+        }
+      },
+    );
   }
 
   /// Initializes resources.
   void _start() {
     _pageIndex = widget.initialPageIndex;
 
-    if (widget.initialItems != null) {
-      _isListEnd = widget.initialItems!.length < widget.maxItems;
-    }
-
     if (widget.header != null) {
       _items.add(
         widget.header!,
@@ -320,55 +375,26 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     }
 
     if (widget.initialItems != null) {
-      _values.addAll(
-        widget.initialItems!,
-      );
-
-      _items.addAll(
-        _generateItems(),
-      );
-
-      _addLoading();
-
-      WidgetsBinding.instance.addPostFrameCallback(
-        (timeStamp) {
-          if (!_isListEnd && !_enableScroll) {
-            _addItems();
-          }
-        },
-      );
+      _initialize();
     } else {
       _addItems();
     }
 
-    _scrollController.addListener(
-      _onScroll,
-    );
+    _scrollController.addListener(_onScroll);
   }
 
   /// Reset the component to its initial settings.
   Future<void> _reset() async {
-    if (widget.initialItems != null) {
-      await _scrollController.animateTo(
-        0.0,
-        duration: const Duration(
-          milliseconds: 600,
-        ),
-        curve: Curves.linear,
-      );
-    }
     _pageIndex = widget.initialPageIndex;
 
     _isListEnd = false;
-    if (widget.initialItems != null) {
-      _isListEnd = widget.initialItems!.length < widget.maxItems;
-    }
 
     _itemsCount = 0;
     _hasError = false;
 
     _values.clear();
     _items.clear();
+    _itemKeys.clear();
 
     if (widget.header != null) {
       _items.add(
@@ -377,25 +403,15 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     }
 
     if (widget.initialItems != null) {
-      _values.addAll(
-        widget.initialItems!,
+      await _scrollController.animateTo(
+        0.0,
+        duration: const Duration(milliseconds: 600),
+        curve: Curves.linear,
       );
 
-      _items.addAll(
-        _generateItems(),
-      );
-
-      _addLoading();
+      _initialize();
 
       setState(() {});
-
-      WidgetsBinding.instance.addPostFrameCallback(
-        (timeStamp) {
-          if (!_isListEnd && !_enableScroll) {
-            _addItems();
-          }
-        },
-      );
     } else {
       _addItems();
     }
@@ -419,6 +435,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _isDisposed = true;
 
     super.dispose();
   }
@@ -430,6 +447,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
         scrollbars: widget.scrollbars,
       ),
       child: ListView.separated(
+        key: _scrollKey,
         controller: _scrollController,
         scrollDirection: widget.scrollDirection,
         padding: widget.padding,
