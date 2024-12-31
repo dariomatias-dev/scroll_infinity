@@ -6,7 +6,9 @@ import 'package:scroll_infinity/src/try_again_button.dart';
 part 'initial_items_notifier.dart';
 part 'scroll_infinity_loader.dart';
 part 'loading_style.dart';
+part 'message_field_widget.dart';
 part 'default_error_component.dart';
+part 'default_empty_component.dart';
 
 class ScrollInfinity<T> extends StatefulWidget {
   const ScrollInfinity({
@@ -18,6 +20,7 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.disableInitialRequest = false,
     this.initialPageIndex = 0,
     this.enableRetryOnError = true,
+    this.empty,
     this.error,
     this.initialItems,
     this.interval,
@@ -61,6 +64,9 @@ class ScrollInfinity<T> extends StatefulWidget {
 
   /// Determines if retrying to load data after an error is enabled. Default is `true`.
   final bool enableRetryOnError;
+
+  /// Widget used to display custom content when the first request has no response.
+  final Widget? empty;
 
   /// Widget used to display custom content when an error occurs.
   final Widget? error;
@@ -163,8 +169,10 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
           }
 
           if (newItems != null) {
-            _values.addAll(newItems);
-            _pageIndex++;
+            if (newItems.isNotEmpty) {
+              _values.addAll(newItems);
+              _pageIndex++;
+            }
 
             _isListEnd = newItems.length < widget.maxItems;
           } else {
@@ -201,9 +209,15 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
           _isListEnd = !widget.enableRetryOnError;
         } else {
-          _items.addAll(
-            _generateItems(),
-          );
+          if (_pageIndex == 0 && _values.isEmpty) {
+            _items.add(
+              widget.empty ?? const DefaultEmptyComponent(),
+            );
+          } else {
+            _items.addAll(
+              _generateItems(),
+            );
+          }
         }
 
         if (!_isListEnd && !(_hasError && !_getEnableScroll())) {
