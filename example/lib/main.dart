@@ -338,16 +338,19 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
                 );
               }),
               const Divider(),
-              const SizedBox(height: 8.0),
-              Align(
-                alignment: Alignment.center,
-                child: ElevatedButton(
-                  onPressed: _navigateToExample,
-                  child: const Text('Access Example'),
-                ),
-              ),
               const SizedBox(height: 20.0),
             ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: Container(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        height: 80.0,
+        alignment: Alignment.center,
+        child: ElevatedButton(
+          onPressed: _navigateToExample,
+          child: const Text(
+            'Access Example',
           ),
         ),
       ),
@@ -531,7 +534,6 @@ class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
       interval: widget.enableInterval ? widget.interval : null,
       loadData: _loadData,
       loadingStyle: widget.loadingStyle,
-      disableInitialRequest: widget.enableInitialItems,
       initialPageIndex: widget.enableInitialItems ? 1 : 0,
       initialItems: widget.enableInitialItems ? initialItems : null,
       loading: widget.enableCustomLoader
