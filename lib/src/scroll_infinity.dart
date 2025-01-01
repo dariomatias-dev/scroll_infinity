@@ -252,14 +252,19 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   }
 
   bool _getEnableScroll() {
-    final scrollHeight = _scrollKey.currentContext?.size?.height ?? 0.0;
+    final isVertical = widget.scrollDirection == Axis.vertical;
+    final scrollSize = _scrollKey.currentContext?.size;
+    final scrollSizeValue =
+        (isVertical ? scrollSize?.height : scrollSize?.width) ?? 0.0;
     bool enableScroll = false;
 
     double size = 0.0;
     for (final itemKey in _itemKeys) {
-      size += itemKey.currentContext?.size?.height ?? 0.0;
+      final itemSize = itemKey.currentContext?.size;
 
-      if (size >= scrollHeight) {
+      size += (isVertical ? itemSize?.height : itemSize?.width) ?? 0.0;
+
+      if (size >= scrollSizeValue) {
         enableScroll = true;
         break;
       }
