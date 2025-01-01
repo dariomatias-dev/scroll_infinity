@@ -120,6 +120,8 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   bool _isListEnd = false;
   int _itemsCount = 0;
   bool _hasError = false;
+  bool _isReset = false;
+  final _isRequestInProgressNotifier = ValueNotifier(false);
   bool _isDisposed = false;
 
   final _values = <T>[];
@@ -139,6 +141,8 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   void _addItems() {
     WidgetsBinding.instance.addPostFrameCallback(
       (timeStamp) async {
+        _isRequestInProgressNotifier.value = true;
+
         if (_hasError) {
           _hasError = false;
 
@@ -224,15 +228,19 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
           _addLoading();
         }
 
-        _updateIsLoading();
+        if (!_isReset) {
+          _updateIsLoading();
 
-        WidgetsBinding.instance.addPostFrameCallback(
-          (timeStamp) {
-            if (!_isListEnd && !_hasError && !_getEnableScroll()) {
-              _addItems();
-            }
-          },
-        );
+          WidgetsBinding.instance.addPostFrameCallback(
+            (timeStamp) {
+              if (!_isListEnd && !_hasError && !_getEnableScroll()) {
+                _addItems();
+              }
+            },
+          );
+        }
+
+        _isRequestInProgressNotifier.value = false;
       },
     );
   }
@@ -399,6 +407,19 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
   /// Reset the component to its initial settings.
   Future<void> _reset() async {
+    _isReset = true;
+
+    if (_isRequestInProgressNotifier.value) {
+      _isRequestInProgressNotifier.addListener(_initializeItems);
+    } else {
+      _initializeItems();
+    }
+  }
+
+  void _initializeItems() {
+    _isReset = false;
+    _isRequestInProgressNotifier.removeListener(_initializeItems);
+
     _pageIndex = widget.initialPageIndex;
 
     _isListEnd = false;
@@ -417,12 +438,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     }
 
     if (widget.initialItems != null) {
-      await _scrollController.animateTo(
-        0.0,
-        duration: const Duration(milliseconds: 600),
-        curve: Curves.linear,
-      );
-
       _initialize();
 
       setState(() {});
@@ -449,6 +464,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _isRequestInProgressNotifier.dispose();
     _isDisposed = true;
 
     super.dispose();
