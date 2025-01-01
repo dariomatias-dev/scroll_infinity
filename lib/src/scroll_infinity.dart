@@ -121,10 +121,11 @@ class ScrollInfinity<T> extends StatefulWidget {
 class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   final _scrollController = ScrollController();
   final _scrollKey = GlobalKey();
-  late int _pageIndex;
+  int _pageIndex = 0;
   bool _isLoading = false;
   bool _isListEnd = false;
-  int _itemsCount = 0;
+  int _itemsCount = -1;
+  int _intervalsCount = 0;
   bool _hasError = false;
   bool _isReset = false;
   final _isRequestInProgressNotifier = ValueNotifier(false);
@@ -178,15 +179,16 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
       }
 
       if (newItems != null) {
-        if (newItems.isNotEmpty) {
-          _values.addAll(newItems);
-          _pageIndex++;
-        }
+        _values.addAll(newItems);
 
         _isListEnd = newItems.length < widget.maxItems;
       } else {
         _hasError = true;
       }
+    }
+
+    if (!_hasError) {
+      _pageIndex++;
     }
 
     _items.removeLast();
@@ -212,14 +214,12 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
       _isListEnd = !widget.enableRetryOnError;
     } else {
-      if (_pageIndex == 0 && _values.isEmpty) {
+      if (_pageIndex == 1 && _values.isEmpty) {
         _items.add(
           widget.empty ?? const _DefaultEmptyComponent(),
         );
       } else {
-        _items.addAll(
-          _generateItems(),
-        );
+        _generateItems();
       }
     }
 
@@ -267,38 +267,35 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   }
 
   /// Generates new items by calling `itemBuilder`.
-  List<Widget> _generateItems() {
-    final items = <Widget>[];
+  void _generateItems() {
+    int itemsLength = 0;
 
     if (widget.interval != null) {
-      int i = 0;
+      while (itemsLength != widget.maxItems && _values.isNotEmpty) {
+        _itemsCount++;
+        itemsLength++;
 
-      while (items.length != widget.maxItems && _values.isNotEmpty) {
-        if (_itemsCount == widget.interval) {
-          _itemsCount = 0;
+        if (_intervalsCount == widget.interval) {
+          _intervalsCount = 0;
 
           _setItemKey(
             widget.itemBuilder(
               null as T,
-              i + _items.length,
+              _itemsCount,
             ),
           );
-
-          i--;
 
           continue;
         }
 
-        _itemsCount++;
+        _intervalsCount++;
 
         _setItemKey(
           widget.itemBuilder(
             _values[0],
-            i + _items.length,
+            _itemsCount,
           ),
         );
-
-        i--;
 
         _values.removeAt(0);
       }
@@ -307,27 +304,27 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
         _setItemKey(
           widget.itemBuilder(
             _values[i],
-            i + _items.length,
+            i + (_pageIndex - 1) * widget.maxItems,
           ),
         );
       }
 
       _values.clear();
     }
-
-    return items;
   }
 
   /// Define the key of the item in the list.
-  void _setItemKey(
+  Widget _setItemKey(
     Widget child,
   ) {
-    _items.add(
-      KeyedSubtree(
-        key: GlobalKey(),
-        child: child,
-      ),
+    final widget = KeyedSubtree(
+      key: GlobalKey(),
+      child: child,
     );
+
+    _items.add(widget);
+
+    return widget;
   }
 
   /// Adds the loading indicator component.
@@ -362,10 +359,11 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
   /// Initializes some resources.
   void _initialize() {
+    _pageIndex = widget.initialPageIndex;
     _isListEnd = widget.initialItems!.length < widget.maxItems;
 
     _values.addAll(widget.initialItems!);
-    _items.addAll(_generateItems());
+    _generateItems();
 
     if (widget.initialItems?.length == widget.maxItems) {
       _addLoading();
@@ -382,8 +380,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
   /// Initializes resources.
   void _start() {
-    _pageIndex = widget.initialPageIndex;
-
     if (widget.header != null) {
       _items.add(
         widget.header!,
@@ -428,7 +424,8 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
     _isListEnd = false;
 
-    _itemsCount = 0;
+    _itemsCount = -1;
+    _intervalsCount = 0;
     _hasError = false;
 
     _values.clear();
