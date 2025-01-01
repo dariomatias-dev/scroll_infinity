@@ -494,9 +494,14 @@ class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
     }
 
     final isListEnd = _random.nextInt(5) == 0;
+    final max = widget.maxItems - 1;
 
     return _generateColors(
-      isListEnd ? _random.nextInt(widget.maxItems - 1) : _maxItems,
+      isListEnd
+          ? max == 0
+              ? 0
+              : _random.nextInt(max)
+          : _maxItems,
     );
   }
 

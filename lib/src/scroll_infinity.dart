@@ -237,6 +237,8 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
           }
         },
       );
+    } else {
+      _isLoading = !_isLoading;
     }
 
     _isRequestInProgressNotifier.value = false;
