@@ -1,14 +1,16 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
 import 'package:scroll_infinity/src/try_again_button.dart';
 
 part 'initial_items_notifier.dart';
 part 'scroll_infinity_loader.dart';
 part 'loading_style.dart';
 part 'message_field_widget.dart';
-part 'default_error_component.dart';
 part 'default_empty_component.dart';
+part 'default_reset_component.dart';
+part 'default_error_component.dart';
 
 class ScrollInfinity<T> extends StatefulWidget {
   const ScrollInfinity({
@@ -21,6 +23,7 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.initialPageIndex = 0,
     this.enableRetryOnError = true,
     this.empty,
+    this.reset,
     this.error,
     this.initialItems,
     this.interval,
@@ -67,6 +70,9 @@ class ScrollInfinity<T> extends StatefulWidget {
 
   /// Widget used to display custom content when the first request has no response.
   final Widget? empty;
+
+  /// Widget used to display custom content when an reset occurs.
+  final Widget? reset;
 
   /// Widget used to display custom content when an error occurs.
   final Widget? error;
@@ -132,117 +138,117 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   void _onScroll() {
     if (!_isListEnd && !_isLoading && _scrollController.position.atEdge) {
       if (_scrollController.position.pixels != 0) {
-        _addItems();
+        WidgetsBinding.instance.addPostFrameCallback(
+          (timeStamp) {
+            _addItems();
+          },
+        );
       }
     }
   }
 
   /// Handles the process of adding new items.
-  void _addItems() {
-    WidgetsBinding.instance.addPostFrameCallback(
-      (timeStamp) async {
-        _isRequestInProgressNotifier.value = true;
+  Future<void> _addItems() async {
+    _isRequestInProgressNotifier.value = true;
 
-        if (_hasError) {
-          _hasError = false;
+    if (_hasError) {
+      _hasError = false;
 
-          _items.removeLast();
-          _itemKeys.removeLast();
+      _items.removeLast();
+      _itemKeys.removeLast();
 
-          if (_getEnableScroll()) {
-            _items.removeLast();
-            _itemKeys.removeLast();
-          }
+      if (_getEnableScroll()) {
+        _items.removeLast();
+        _itemKeys.removeLast();
+      }
 
-          _addLoading();
-          _updateIsLoading();
-        } else if (_pageIndex == 0) {
-          _addLoading();
-          _updateIsLoading();
-        } else {
-          _isLoading = !_isLoading;
+      _addLoading();
+      _updateIsLoading();
+    } else if (_pageIndex == 0) {
+      _addLoading();
+      _updateIsLoading();
+    } else {
+      _isLoading = !_isLoading;
+    }
+
+    if (_values.length != widget.maxItems) {
+      final newItems = await widget.loadData(
+        _pageIndex,
+      );
+
+      if (_isDisposed) {
+        return;
+      }
+
+      if (newItems != null) {
+        if (newItems.isNotEmpty) {
+          _values.addAll(newItems);
+          _pageIndex++;
         }
 
-        if (_values.length != widget.maxItems) {
-          final newItems = await widget.loadData(
-            _pageIndex,
-          );
+        _isListEnd = newItems.length < widget.maxItems;
+      } else {
+        _hasError = true;
+      }
+    }
 
-          if (_isDisposed) {
-            return;
-          }
+    _items.removeLast();
+    _itemKeys.removeLast();
 
-          if (newItems != null) {
-            if (newItems.isNotEmpty) {
-              _values.addAll(newItems);
-              _pageIndex++;
-            }
+    if (_hasError) {
+      _items.add(
+        _setItemKey(
+          widget.error ?? const _DefaultErrorComponent(),
+        ),
+      );
 
-            _isListEnd = newItems.length < widget.maxItems;
-          } else {
-            _hasError = true;
-          }
-        }
-
+      if (!_getEnableScroll()) {
         _items.removeLast();
         _itemKeys.removeLast();
 
-        if (_hasError) {
-          _items.add(
-            _setItemKey(
-              widget.error ?? const _DefaultErrorComponent(),
-            ),
-          );
+        _items.add(
+          _setItemKey(
+            widget.tryAgainButtonBuilder != null
+                ? widget.tryAgainButtonBuilder!(
+                    _addItems,
+                  )
+                : TryAgainButton(
+                    action: _addItems,
+                  ),
+          ),
+        );
+      }
 
-          if (!_getEnableScroll()) {
-            _items.removeLast();
-            _itemKeys.removeLast();
+      _isListEnd = !widget.enableRetryOnError;
+    } else {
+      if (_pageIndex == 0 && _values.isEmpty) {
+        _items.add(
+          widget.empty ?? const _DefaultEmptyComponent(),
+        );
+      } else {
+        _items.addAll(
+          _generateItems(),
+        );
+      }
+    }
 
-            _items.add(
-              _setItemKey(
-                widget.tryAgainButtonBuilder != null
-                    ? widget.tryAgainButtonBuilder!(
-                        _addItems,
-                      )
-                    : TryAgainButton(
-                        action: _addItems,
-                      ),
-              ),
-            );
+    if (!_isListEnd && !(_hasError && !_getEnableScroll())) {
+      _addLoading();
+    }
+
+    if (!_isReset) {
+      _updateIsLoading();
+
+      WidgetsBinding.instance.addPostFrameCallback(
+        (timeStamp) {
+          if (!_isListEnd && !_hasError && !_getEnableScroll()) {
+            _addItems();
           }
+        },
+      );
+    }
 
-          _isListEnd = !widget.enableRetryOnError;
-        } else {
-          if (_pageIndex == 0 && _values.isEmpty) {
-            _items.add(
-              widget.empty ?? const DefaultEmptyComponent(),
-            );
-          } else {
-            _items.addAll(
-              _generateItems(),
-            );
-          }
-        }
-
-        if (!_isListEnd && !(_hasError && !_getEnableScroll())) {
-          _addLoading();
-        }
-
-        if (!_isReset) {
-          _updateIsLoading();
-
-          WidgetsBinding.instance.addPostFrameCallback(
-            (timeStamp) {
-              if (!_isListEnd && !_hasError && !_getEnableScroll()) {
-                _addItems();
-              }
-            },
-          );
-        }
-
-        _isRequestInProgressNotifier.value = false;
-      },
-    );
+    _isRequestInProgressNotifier.value = false;
   }
 
   bool _getEnableScroll() {
@@ -399,7 +405,11 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     if (widget.initialItems != null) {
       _initialize();
     } else {
-      _addItems();
+      WidgetsBinding.instance.addPostFrameCallback(
+        (timeStamp) {
+          _addItems();
+        },
+      );
     }
 
     _scrollController.addListener(_onScroll);
@@ -410,6 +420,12 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     _isReset = true;
 
     if (_isRequestInProgressNotifier.value) {
+      _items.clear();
+
+      _items.add(
+        widget.reset ?? const _DefaultResetComponent(),
+      );
+
       _isRequestInProgressNotifier.addListener(_initializeItems);
     } else {
       _initializeItems();
