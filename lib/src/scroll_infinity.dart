@@ -132,7 +132,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
   final _values = <T>[];
   final _items = <Widget>[];
-  final _itemKeys = <GlobalKey>[];
 
   /// Method called during scrolling.
   void _onScroll() {
@@ -155,11 +154,9 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
       _hasError = false;
 
       _items.removeLast();
-      _itemKeys.removeLast();
 
       if (_getEnableScroll()) {
         _items.removeLast();
-        _itemKeys.removeLast();
       }
 
       _addLoading();
@@ -193,29 +190,23 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     }
 
     _items.removeLast();
-    _itemKeys.removeLast();
 
     if (_hasError) {
-      _items.add(
-        _setItemKey(
-          widget.error ?? const _DefaultErrorComponent(),
-        ),
+      _setItemKey(
+        widget.error ?? const _DefaultErrorComponent(),
       );
 
       if (!_getEnableScroll()) {
         _items.removeLast();
-        _itemKeys.removeLast();
 
-        _items.add(
-          _setItemKey(
-            widget.tryAgainButtonBuilder != null
-                ? widget.tryAgainButtonBuilder!(
-                    _addItems,
-                  )
-                : TryAgainButton(
-                    action: _addItems,
-                  ),
-          ),
+        _setItemKey(
+          widget.tryAgainButtonBuilder != null
+              ? widget.tryAgainButtonBuilder!(
+                  _addItems,
+                )
+              : TryAgainButton(
+                  action: _addItems,
+                ),
         );
       }
 
@@ -259,8 +250,8 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     bool enableScroll = false;
 
     double size = 0.0;
-    for (final itemKey in _itemKeys) {
-      final itemSize = itemKey.currentContext?.size;
+    for (final item in _items) {
+      final itemSize = (item.key as GlobalKey?)?.currentContext?.size;
 
       size += (isVertical ? itemSize?.height : itemSize?.width) ?? 0.0;
 
@@ -284,12 +275,10 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
         if (_itemsCount == widget.interval) {
           _itemsCount = 0;
 
-          items.add(
-            _setItemKey(
-              widget.itemBuilder(
-                null as T,
-                i + _items.length,
-              ),
+          _setItemKey(
+            widget.itemBuilder(
+              null as T,
+              i + _items.length,
             ),
           );
 
@@ -300,12 +289,10 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
         _itemsCount++;
 
-        items.add(
-          _setItemKey(
-            widget.itemBuilder(
-              _values[0],
-              i + _items.length,
-            ),
+        _setItemKey(
+          widget.itemBuilder(
+            _values[0],
+            i + _items.length,
           ),
         );
 
@@ -315,12 +302,10 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
       }
     } else {
       for (int i = 0; i < _values.length; i++) {
-        items.add(
-          _setItemKey(
-            widget.itemBuilder(
-              _values[i],
-              i + _items.length,
-            ),
+        _setItemKey(
+          widget.itemBuilder(
+            _values[i],
+            i + _items.length,
           ),
         );
       }
@@ -332,39 +317,35 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   }
 
   /// Define the key of the item in the list.
-  Widget _setItemKey(
+  void _setItemKey(
     Widget child,
   ) {
-    final itemKey = GlobalKey();
-
-    _itemKeys.add(itemKey);
-
-    return KeyedSubtree(
-      key: itemKey,
-      child: child,
+    _items.add(
+      KeyedSubtree(
+        key: GlobalKey(),
+        child: child,
+      ),
     );
   }
 
   /// Adds the loading indicator component.
   void _addLoading() {
-    _items.add(
-      _setItemKey(
-        widget.loading ??
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  CircularProgressIndicator(
-                    color: widget.loadingStyle?.color,
-                    strokeAlign: widget.loadingStyle?.strokeAlign ??
-                        BorderSide.strokeAlignCenter,
-                    strokeWidth: widget.loadingStyle?.strokeWidth ?? 4.0,
-                  ),
-                ],
-              ),
+    _setItemKey(
+      widget.loading ??
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                CircularProgressIndicator(
+                  color: widget.loadingStyle?.color,
+                  strokeAlign: widget.loadingStyle?.strokeAlign ??
+                      BorderSide.strokeAlignCenter,
+                  strokeWidth: widget.loadingStyle?.strokeWidth ?? 4.0,
+                ),
+              ],
             ),
-      ),
+          ),
     );
   }
 
@@ -450,7 +431,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
     _values.clear();
     _items.clear();
-    _itemKeys.clear();
 
     if (widget.header != null) {
       _items.add(
