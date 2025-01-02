@@ -126,6 +126,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   bool _isListEnd = false;
   int _itemsCount = -1;
   int _intervalsCount = 0;
+  bool _enableScroll = false;
   bool _hasError = false;
   bool _isReset = false;
   final _isRequestInProgressNotifier = ValueNotifier(false);
@@ -245,6 +246,10 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   }
 
   bool _getEnableScroll() {
+    if (_enableScroll) {
+      return _enableScroll;
+    }
+
     final isVertical = widget.scrollDirection == Axis.vertical;
     final scrollSize = _scrollKey.currentContext?.size;
     final scrollSizeValue =
@@ -252,8 +257,9 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     bool enableScroll = false;
 
     double size = 0.0;
-    for (final item in _items) {
-      final itemSize = (item.key as GlobalKey?)?.currentContext?.size;
+    int i = 0;
+    while (i < _items.length) {
+      final itemSize = (_items[i].key as GlobalKey?)?.currentContext?.size;
 
       size += (isVertical ? itemSize?.height : itemSize?.width) ?? 0.0;
 
@@ -261,6 +267,12 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
         enableScroll = true;
         break;
       }
+
+      i++;
+    }
+
+    if (i + 1 < _items.length) {
+      _enableScroll = true;
     }
 
     return enableScroll;
@@ -406,6 +418,12 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     if (_isRequestInProgressNotifier.value) {
       _items.clear();
 
+      if (widget.header != null) {
+        _items.add(
+          widget.header!,
+        );
+      }
+
       _items.add(
         widget.reset ?? const _DefaultResetComponent(),
       );
@@ -426,6 +444,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
     _itemsCount = -1;
     _intervalsCount = 0;
+    _enableScroll = false;
     _hasError = false;
 
     _values.clear();
