@@ -1,3 +1,13 @@
+## [0.4.0] - 2024-01-02
+
+- **Restructuring of the Listing Algorithm**: The algorithm has been rewritten to provide a more efficient and seamless user experience.
+- **Auto-fill Listing Feature**: The listing now automatically fills itself whenever visible space is available on the screen.
+- **Empty List Indicator**: A visual element has been added to clearly indicate when the list is empty.
+- **Component Reset During Requests**: An automatic reset mechanism has been implemented for the component while a request is in progress, accompanied by an informative progress indicator.
+- **Retry Button for Errors**: A retry button has been added for scenarios where the list does not contain enough items to fill the visible space due to an error.
+- **Code Improvements and Fixes**: Various improvements and fixes have been made to enhance code quality and system performance.
+- **Updated Documentation**: The documentation has been updated to reflect the new features of the package.
+
 ## [0.3.3] - 2024-07-06
 
 - Added verification for `initialItems` to determine if the listing has reached the end, avoiding unnecessary loads.
