@@ -19,7 +19,6 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.scrollbars = false,
     this.padding,
     this.header,
-    this.disableInitialRequest = false,
     this.initialPageIndex = 0,
     this.enableRetryOnError = true,
     this.empty,
@@ -58,9 +57,6 @@ class ScrollInfinity<T> extends StatefulWidget {
 
   /// Listing header.
   final Widget? header;
-
-  /// Disables the initial data request if set to `true`. Default is `false`.
-  final bool disableInitialRequest;
 
   /// Initial page index. Default is `0`.
   final int initialPageIndex;

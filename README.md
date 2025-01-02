@@ -238,7 +238,6 @@ class _ExampleState extends State<Example> {
         scrollInfinityBuilder: (items) {
           return ScrollInfinity<int?>(
             maxItems: _maxItems,
-            disableInitialRequest: true,
             initialPageIndex: 1,
             initialItems: items,
             interval: 2,
@@ -281,12 +280,12 @@ scrollbars: true,
 
 - **padding**: Specifies the internal padding of the list.
 ```dart
-padding: EdgeInsets(8.0),
+padding: EdgeInsets.all(8.0),
 ```
 
-- **disableInitialRequest**: Disables the initial data request if set to `true`. Default is `false`.
+- **header**: Listing header.
 ```dart
-disableInitialRequest: true,
+header: HeaderWidget(),
 ```
 
 - **initialPageIndex**: Initial page index. Default is `0`.
@@ -296,17 +295,22 @@ initialPageIndex: 1,
 
 - **enableRetryOnError**: Determines if retrying to load data after an error is enabled. Default is `true`.
 ```dart
-enableRetryOnError = false,
+enableRetryOnError: false,
+```
+
+- **empty**: Widget used to display custom content when the list is empty.
+```dart
+empty: Text('No items available.'),
+```
+
+- **reset**: Widget used to display custom content during a reset.
+```dart
+reset: Text('Reseting...'),
 ```
 
 - **error**: Widget used to display custom content when an error occurs.
 ```dart
-error: Text('Error message'),
-```
-
-- **header**: Listing header.
-```dart
-header: HeaderWidget(),
+error: Text('Error occurred.'),
 ```
 
 - **initialItems**: Specifies the initial items to be displayed in the list.
@@ -326,12 +330,22 @@ interval: 20,
 loading: LoadingWidget(),
 ```
 
-- **loadingStyle**: Defines the style of the `CircularProgressIndicator`. Use this property to customize the appearance of the default loading indicator.
+- **loadingStyle**: Defines the style of the `CircularProgressIndicator`.
 ```dart
 loadingStyle: CircularProgressIndicator(
   color: Colors.blue,
   strokeWidth: 8.0,
 ),
+```
+
+- **tryAgainButtonBuilder**: Allows passing a custom retry button component, triggered by a callback.
+```dart
+tryAgainButtonBuilder: (action) {
+  return ElevatedButton(
+    onPressed: action,
+    child: Text('Retry'),
+  );
+},
 ```
 
 - **maxItems**: Specifies the maximum number of items per request. This will be used to determine when the list reaches the end.
@@ -346,7 +360,7 @@ loadData: (pageIndex) async {
 },
 ```
 
-- **separatorBuilder**: Builds the separator component between the items in the list. Use this property to add custom dividers between the items.
+- **separatorBuilder**: Builds the separator component between the items in the list.
 ```dart
 separatorBuilder: (context, index) {
   return Divider(
