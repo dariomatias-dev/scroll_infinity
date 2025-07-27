@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-import 'package:scroll_infinity/src/default_empty_component.dart';
+import 'package:scroll_infinity/src/message_field_widget.dart';
 
 /// A list widget that loads paginated data as the user scrolls.
 class ScrollInfinity<T> extends StatefulWidget {
