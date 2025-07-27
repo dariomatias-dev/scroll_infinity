@@ -1,80 +1,111 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-
 import 'package:scroll_infinity/scroll_infinity.dart';
-
-typedef LoadDatatype = Future<List<Color>?> Function(
-  int pageIndex, {
-  Axis scrollDirection,
-});
-
-final _random = Random();
 
 void main() {
   runApp(
     const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: ScrollInfinityExample(),
+      home: ConfigScreen(),
     ),
   );
 }
 
-class _DefaultNotifier<T> extends ValueNotifier<List<T>> {
-  _DefaultNotifier(super._value);
-
-  void set(
-    int index,
-    T value,
-  ) {
-    super.value[index] = value;
-
-    notifyListeners();
-  }
-}
-
-class _EnablesNotifier<T> extends _DefaultNotifier<T> {
-  _EnablesNotifier(super._value);
-}
-
-class ScrollInfinityExample extends StatefulWidget {
-  const ScrollInfinityExample({super.key});
+class ConfigScreen extends StatefulWidget {
+  const ConfigScreen({super.key});
 
   @override
-  State<ScrollInfinityExample> createState() => _ScrollInfinityExampleState();
+  State<ConfigScreen> createState() => _ConfigScreenState();
 }
 
-class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
-  final _selectedScrollDirectionNotifier = ValueNotifier(Axis.vertical);
-  final _maxItemsNotifier = ValueNotifier(10);
-  final _intervalNotifier = ValueNotifier(2);
-  static final _enableTitles = <String>[
-    'Header',
-    'Intervals',
-    'Initial Items',
-    'Custom Loader',
-  ];
-  final _enablesNotifier = _EnablesNotifier(
-    List.filled(_enableTitles.length, false),
-  );
+class _ConfigScreenState extends State<ConfigScreen> {
+  Axis _scrollDirection = Axis.vertical;
+  final _maxItemsNotifier = ValueNotifier<int>(10);
+  final _intervalNotifier = ValueNotifier<int>(2);
+
+  final _features = <String, bool>{
+    'Header': false,
+    'Intervals': false,
+    'Initial Items': false,
+    'Custom Loader': false,
+  };
 
   void _navigateToExample() {
-    final enables = _enablesNotifier.value;
-
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) {
-          return InfiniteScrollExample(
-            selectedScrollDirection: _selectedScrollDirectionNotifier.value,
+          return DisplayScreen(
+            scrollDirection: _scrollDirection,
             maxItems: _maxItemsNotifier.value,
             interval: _intervalNotifier.value,
-            enableHeader: enables[0],
-            enableInterval: enables[1],
-            enableInitialItems: enables[2],
-            enableCustomLoader: enables[3],
+            enableHeader: _features['Header']!,
+            enableInterval: _features['Intervals']!,
+            enableInitialItems: _features['Initial Items']!,
+            enableCustomLoader: _features['Custom Loader']!,
           );
         },
+      ),
+    );
+  }
+
+  Widget _getScrollDirectionSelector() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        RadioListTile<Axis>(
+          title: const Text('Vertical'),
+          value: Axis.vertical,
+          groupValue: _scrollDirection,
+          onChanged: (value) => setState(() => _scrollDirection = value!),
+        ),
+        RadioListTile<Axis>(
+          title: const Text('Horizontal'),
+          value: Axis.horizontal,
+          groupValue: _scrollDirection,
+          onChanged: (value) => setState(() => _scrollDirection = value!),
+        ),
+      ],
+    );
+  }
+
+  Widget _getFeatureSwitches() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: _features.keys.map((key) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            SwitchListTile(
+              title: Text(key),
+              value: _features[key]!,
+              onChanged: (bool value) {
+                setState(() {
+                  _features[key] = value;
+                });
+              },
+            ),
+            if (key == 'Intervals' && _features[key]!)
+              _QuantitySelector(notifier: _intervalNotifier),
+          ],
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _getNavigateButton() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(
+            vertical: 16.0,
+          ),
+        ),
+        onPressed: _navigateToExample,
+        child: const Text('Show Example'),
       ),
     );
   }
@@ -84,113 +115,41 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              const FieldWidget(
-                title: 'Scroll Direction',
-              ),
+              const _FieldTitle(title: 'Scroll Direction'),
               const Divider(),
-              ValueListenableBuilder(
-                valueListenable: _selectedScrollDirectionNotifier,
-                builder: (context, value, child) {
-                  return Column(
-                    children: <Widget>[
-                      RadioListTile(
-                        title: const Text('Vertical'),
-                        value: Axis.vertical,
-                        groupValue: value,
-                        onChanged: (Axis? value) {
-                          setState(() {
-                            _selectedScrollDirectionNotifier.value = value!;
-                          });
-                        },
-                      ),
-                      RadioListTile(
-                        title: const Text('Horizontal'),
-                        value: Axis.horizontal,
-                        groupValue: value,
-                        onChanged: (Axis? value) {
-                          setState(() {
-                            _selectedScrollDirectionNotifier.value = value!;
-                          });
-                        },
-                      ),
-                    ],
-                  );
-                },
-              ),
+              _getScrollDirectionSelector(),
               const SizedBox(height: 28.0),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  const FieldWidget(
-                    title: 'Max Items',
+                  const _FieldTitle(
+                    title: 'Max Items Per Fetch',
                   ),
-                  QuantitySelectorWidget(
+                  _QuantitySelector(
                     notifier: _maxItemsNotifier,
                   ),
                 ],
               ),
               const SizedBox(height: 40.0),
-              const FieldWidget(
-                title: 'Enable',
-              ),
+              const _FieldTitle(title: 'Enable Features'),
               const Divider(),
-              ...List.generate(
-                _enableTitles.length,
-                (index) {
-                  return ValueListenableBuilder(
-                    valueListenable: _enablesNotifier,
-                    builder: (context, value, child) {
-                      return Column(
-                        children: <Widget>[
-                          SwitchListTile(
-                            onChanged: (value) {
-                              _enablesNotifier.set(index, value);
-                            },
-                            value: value[index],
-                            title: Text(
-                              _enableTitles[index],
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          if (index == 1 && value[index])
-                            QuantitySelectorWidget(
-                              notifier: _intervalNotifier,
-                            ),
-                        ],
-                      );
-                    },
-                  );
-                },
-              ),
+              _getFeatureSwitches(),
               const Divider(),
-              const SizedBox(height: 20.0),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: Container(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        height: 80.0,
-        alignment: Alignment.center,
-        child: ElevatedButton(
-          onPressed: _navigateToExample,
-          child: const Text(
-            'Access Example',
-          ),
-        ),
-      ),
+      bottomNavigationBar: _getNavigateButton(),
     );
   }
 }
 
-class FieldWidget extends StatelessWidget {
-  const FieldWidget({
-    super.key,
+class _FieldTitle extends StatelessWidget {
+  const _FieldTitle({
     required this.title,
   });
 
@@ -198,24 +157,15 @@ class FieldWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16.0,
-      ),
-      child: Text(
-        '$title:',
-        style: const TextStyle(
-          fontSize: 18.0,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
+    return Text(
+      title,
+      style: Theme.of(context).textTheme.titleLarge,
     );
   }
 }
 
-class QuantitySelectorWidget extends StatelessWidget {
-  const QuantitySelectorWidget({
-    super.key,
+class _QuantitySelector extends StatelessWidget {
+  const _QuantitySelector({
     required this.notifier,
   });
 
@@ -223,7 +173,7 @@ class QuantitySelectorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder(
+    return ValueListenableBuilder<int>(
       valueListenable: notifier,
       builder: (context, value, child) {
         return Row(
@@ -231,13 +181,8 @@ class QuantitySelectorWidget extends StatelessWidget {
           children: <Widget>[
             IconButton(
               icon: const Icon(Icons.remove),
-              onPressed: value != 2
-                  ? () {
-                      notifier.value--;
-                    }
-                  : null,
+              onPressed: value > 2 ? () => notifier.value-- : null,
             ),
-            const SizedBox(width: 8.0),
             SizedBox(
               width: 24.0,
               child: Center(
@@ -250,14 +195,9 @@ class QuantitySelectorWidget extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 8.0),
             IconButton(
               icon: const Icon(Icons.add),
-              onPressed: value != 20
-                  ? () {
-                      notifier.value++;
-                    }
-                  : null,
+              onPressed: value < 20 ? () => notifier.value++ : null,
             ),
           ],
         );
@@ -266,10 +206,11 @@ class QuantitySelectorWidget extends StatelessWidget {
   }
 }
 
-class InfiniteScrollExample extends StatefulWidget {
-  const InfiniteScrollExample({
+/// Displays the configured ScrollInfinity widget.
+class DisplayScreen extends StatefulWidget {
+  const DisplayScreen({
     super.key,
-    required this.selectedScrollDirection,
+    required this.scrollDirection,
     required this.maxItems,
     required this.interval,
     required this.enableHeader,
@@ -278,7 +219,7 @@ class InfiniteScrollExample extends StatefulWidget {
     required this.enableCustomLoader,
   });
 
-  final Axis selectedScrollDirection;
+  final Axis scrollDirection;
   final int maxItems;
   final int interval;
   final bool enableHeader;
@@ -287,193 +228,137 @@ class InfiniteScrollExample extends StatefulWidget {
   final bool enableCustomLoader;
 
   @override
-  State<InfiniteScrollExample> createState() => _InfiniteScrollExampleState();
+  State<DisplayScreen> createState() => _DisplayScreenState();
 }
 
-class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
-  late final int _maxItems;
-  final _initialItemsNotifier = InitialItemsNotifier<Color>();
+class _DisplayScreenState extends State<DisplayScreen> {
+  var _scrollInfinityKey = UniqueKey();
+  final _random = Random();
 
-  Future<void> _initLoader() async {
-    _initialItemsNotifier.setLoading();
+  /// Simulates a network request to fetch paginated data.
+  Future<List<Color>?> _loadData(int pageIndex) async {
+    await Future.delayed(const Duration(seconds: 2));
 
-    try {
-      final items = await _loadData(0);
-
-      if (_initialItemsNotifier.isDisposed) return;
-
-      if (items != null) {
-        _initialItemsNotifier.setData(items);
-      } else {
-        _initialItemsNotifier.setError(
-          Exception(
-            'The initial data fetch returned no results.',
-          ),
-        );
-      }
-    } catch (e) {
-      if (_initialItemsNotifier.isDisposed) return;
-
-      _initialItemsNotifier.setError(e);
-    }
-  }
-
-  Future<List<Color>?> _loadData(
-    int pageIndex,
-  ) async {
-    await Future.delayed(
-      const Duration(
-        seconds: 2,
-      ),
-    );
-
-    if (_random.nextInt(4) == 0) {
-      return null;
+    if (pageIndex > 0 && _random.nextInt(4) == 0) {
+      return null; // Simulate a request failure
     }
 
     final isListEnd = _random.nextInt(5) == 0;
-    final max = widget.maxItems - 1;
+    final itemCount =
+        isListEnd ? _random.nextInt(widget.maxItems) : widget.maxItems;
 
-    return _generateColors(
-      isListEnd
-          ? max == 0
-              ? 0
-              : _random.nextInt(max)
-          : _maxItems,
-    );
+    return List.generate(itemCount, (index) {
+      return Color.fromARGB(
+        255,
+        _random.nextInt(256),
+        _random.nextInt(256),
+        _random.nextInt(256),
+      );
+    });
   }
 
-  List<Color> _generateColors(
-    int amount,
-  ) {
-    return List.generate(
-      amount,
-      (index) {
-        return Color.fromARGB(
-          255,
-          _random.nextInt(255),
-          _random.nextInt(255),
-          _random.nextInt(255),
-        );
-      },
-    );
+  void _resetList() {
+    setState(() {
+      _scrollInfinityKey = UniqueKey();
+    });
   }
 
-  ScrollInfinity<Color?> _getScrollInfinity(
-    List<Color>? initialItems,
-  ) {
-    final isScrollVertical = widget.selectedScrollDirection == Axis.vertical;
-
-    return ScrollInfinity<Color?>(
-      scrollDirection: widget.selectedScrollDirection,
-      header: widget.enableHeader
-          ? Container(
-              height: isScrollVertical ? 40.0 : 0.0,
-              width: isScrollVertical ? 0.0 : 160.0,
-              color: Colors.red,
-            )
-          : null,
-      maxItems: _maxItems,
-      interval: widget.enableInterval ? widget.interval : null,
-      loadData: _loadData,
-      initialPageIndex: widget.enableInitialItems ? 1 : 0,
-      initialItems: widget.enableInitialItems ? initialItems : null,
-      loading: widget.enableCustomLoader
-          ? Container(
-              padding: const EdgeInsets.all(20.0),
-              child: Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 6,
-                  valueColor: const AlwaysStoppedAnimation(Colors.blue),
-                  backgroundColor: Colors.grey.shade800,
-                ),
-              ),
-            )
-          : null,
-      itemBuilder: (value, index) {
-        final width = isScrollVertical ? 0.0 : 200.0;
-        final height = isScrollVertical ? 100.0 : 0.0;
-
-        if (widget.enableInterval ? value == null : false) {
-          return SizedBox(
-            height: height,
-            width: width,
-            child: const Placeholder(),
-          );
-        }
-
-        return Container(
-          height: height,
-          width: width,
-          color: value,
-        );
-      },
-    );
-  }
-
-  void _reset() {
-    if (widget.enableInitialItems) {
-      _initLoader();
-    } else {
-      setState(() {});
-    }
-  }
-
-  @override
-  void initState() {
-    _maxItems = widget.maxItems;
-
-    if (widget.enableInitialItems) {
-      _initLoader();
-    }
-
-    super.initState();
+  List<Color> _generateInitialItems() {
+    return List.generate(widget.maxItems, (index) {
+      return Color.fromARGB(
+        255,
+        _random.nextInt(256),
+        _random.nextInt(256),
+        _random.nextInt(256),
+      );
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final scrollInfinity = widget.enableInitialItems
-        ? ScrollInfinityLoader(
-            notifier: _initialItemsNotifier,
-            scrollInfinityBuilder: (items) {
-              return _getScrollInfinity(items);
-            },
-          )
-        : _getScrollInfinity(null);
+    final isVertical = widget.scrollDirection == Axis.vertical;
+
+    final scrollInfinity = ScrollInfinity<Color?>(
+      key: _scrollInfinityKey,
+      scrollDirection: widget.scrollDirection,
+      maxItems: widget.maxItems,
+      initialItems: widget.enableInitialItems ? _generateInitialItems() : null,
+      loadData: _loadData,
+      header: widget.enableHeader
+          ? Container(
+              height: isVertical ? 60.0 : double.infinity,
+              width: isVertical ? double.infinity : 160.0,
+              color: Colors.red.withAlpha(204),
+              alignment: Alignment.center,
+              child: const Text(
+                'Header',
+                style: TextStyle(
+                  color: Colors.white,
+                ),
+              ),
+            )
+          : null,
+      loading: widget.enableCustomLoader
+          ? const Center(
+              child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: CircularProgressIndicator(
+                  strokeWidth: 6,
+                  valueColor: AlwaysStoppedAnimation(Colors.blue),
+                ),
+              ),
+            )
+          : null,
+      interval: widget.enableInterval ? widget.interval : null,
+      itemBuilder: (value, index) {
+        final width = isVertical ? double.infinity : 200.0;
+        final height = isVertical ? 100.0 : double.infinity;
+
+        if (value == null) {
+          return Container(
+            width: width,
+            height: height,
+            color: Colors.grey.shade200,
+            alignment: Alignment.center,
+            child: const Text('Interval Widget'),
+          );
+        }
+
+        return Container(
+          width: width,
+          height: height,
+          color: value,
+          alignment: Alignment.center,
+          child: Text(
+            'Item $index',
+            style: TextStyle(
+              color:
+                  value.computeLuminance() > 0.5 ? Colors.black : Colors.white,
+            ),
+          ),
+        );
+      },
+    );
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-          ),
-        ),
-      ),
-      body: Column(
-        children: <Widget>[
-          ElevatedButton(
-            onPressed: _reset,
-            child: const Text('Reset'),
-          ),
-          const SizedBox(height: 20.0),
-          const Divider(
-            height: 0.0,
-          ),
-          Expanded(
-            child: widget.selectedScrollDirection == Axis.vertical
-                ? scrollInfinity
-                : Center(
-                    child: SizedBox(
-                      height: 100.0,
-                      child: scrollInfinity,
-                    ),
-                  ),
+        title: const Text('ScrollInfinity Example'),
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _resetList,
+            tooltip: 'Reset List',
           ),
         ],
       ),
+      body: isVertical
+          ? scrollInfinity
+          : Center(
+              child: SizedBox(
+                height: 120.0,
+                child: scrollInfinity,
+              ),
+            ),
     );
   }
 }
