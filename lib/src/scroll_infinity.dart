@@ -1,86 +1,97 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
 
-// Assuming this file exists and provides a default widget for the empty state.
+import 'package:flutter/material.dart';
 import 'package:scroll_infinity/src/message_field_widget.dart';
 
-/// A list widget that loads paginated data as the user scrolls.
-/// It automatically fetches more items until the viewport is filled.
+/// A widget that displays a scrollable list with support for paginated data loading.
+///
+/// As the user scrolls, additional items are automatically fetched to fill the viewport.
+/// This widget also provides built-in support for handling loading, empty, and error states.
 class ScrollInfinity<T> extends StatefulWidget {
   const ScrollInfinity({
     super.key,
     required this.loadData,
     required this.itemBuilder,
     required this.maxItems,
+    this.initialItems,
+    this.initialPageIndex = 0,
     this.scrollDirection = Axis.vertical,
-    this.scrollbars = false,
     this.padding,
     this.header,
-    this.initialPageIndex = 0,
-    this.enableRetryOnError = true,
-    this.empty,
-    this.initialItems,
-    this.interval,
-    this.loading,
-    this.tryAgainBuilder,
     this.separatorBuilder,
+    this.scrollbars = false,
+    this.interval,
+    this.enableRetryOnError = true,
+    this.loading,
+    this.empty,
+    this.tryAgainBuilder,
   })  : assert(
           initialPageIndex >= 0,
           'The initial page index cannot be less than zero.',
         ),
         assert(
           interval == null || interval > 0,
-          'The interval must not be zero or negative.',
+          'The interval must be greater than zero.',
         ),
         assert(
           interval != null ? null is T : true,
-          'Generic type `T` must be nullable when `interval` is not null.',
+          'The generic type `T` must be nullable when `interval` is provided.',
         );
 
-  /// The function that fetches data for each page.
-  final Future<List<T>?> Function(int pageIndex) loadData;
+  /// Callback responsible for fetching data for each page.
+  final Future<List<T>?> Function(
+    int pageIndex,
+  ) loadData;
 
-  /// Builds the widget for each item in the data list.
-  final Widget Function(T value, int index) itemBuilder;
+  /// Builder function responsible for rendering each item in the list.
+  final Widget Function(
+    T value,
+    int index,
+  ) itemBuilder;
 
-  /// The maximum number of items to fetch per request.
+  /// The maximum number of items to retrieve per request.
   final int maxItems;
 
-  /// The scroll direction of the list.
-  final Axis scrollDirection;
-
-  /// Shows scrollbars if true.
-  final bool scrollbars;
-
-  /// The inner padding of the list.
-  final EdgeInsetsGeometry? padding;
-
-  /// A widget to be displayed at the top of the list.
-  final Widget? header;
-
-  /// The initial page index to load.
-  final int initialPageIndex;
-
-  /// Allows retrying data loading after an error.
-  final bool enableRetryOnError;
-
-  /// Widget to display when the initial fetch returns no items.
-  final Widget? empty;
-
-  /// An initial list of items to display.
+  /// A list of items displayed before the first data fetch is initiated.
   final List<T>? initialItems;
 
-  /// The interval at which to insert a null value, e.g., for ads.
+  /// The starting index from which to begin loading data.
+  final int initialPageIndex;
+
+  /// Defines the scroll direction of the list. Defaults to [Axis.vertical].
+  final Axis scrollDirection;
+
+  /// Defines the internal padding of the list view.
+  final EdgeInsetsGeometry? padding;
+
+  /// A widget displayed at the beginning of the list.
+  final Widget? header;
+
+  /// A builder that inserts separators between list items.
+  final Widget Function(
+    BuildContext context,
+    int index,
+  )? separatorBuilder;
+
+  /// Determines whether scrollbars should be displayed. Defaults to `false`.
+  final bool scrollbars;
+
+  /// Specifies an interval at which a `null` value is inserted into the list.
   final int? interval;
 
-  /// A custom loading widget.
+  /// Indicates whether retrying is allowed when an error occurs.
+  final bool enableRetryOnError;
+
+  /// Custom widget shown during the loading of additional data.
   final Widget? loading;
 
-  /// Creates a custom "Try Again" element.
-  final Widget Function(VoidCallback action)? tryAgainBuilder;
+  /// Widget displayed when the initial data fetch returns an empty result.
+  final Widget? empty;
 
-  /// Builds a separator between list items.
-  final Widget Function(BuildContext context, int index)? separatorBuilder;
+  /// A builder that constructs a custom 'Try Again' widget when an error occurs.
+  final Widget Function(
+    VoidCallback action,
+  )? tryAgainBuilder;
 
   @override
   State<ScrollInfinity<T>> createState() => _ScrollInfinityState<T>();
@@ -89,7 +100,7 @@ class ScrollInfinity<T> extends StatefulWidget {
 class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   final _scrollController = ScrollController();
 
-  final List<T?> _displayItems = [];
+  final _displayItems = <T?>[];
   int _realItemsCountSinceInterval = 0;
   int _pageIndex = 0;
   bool _isLoading = false;
@@ -97,32 +108,9 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   bool _hasError = false;
   bool _isDisposed = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _initialize();
-    _scrollController.addListener(_onScroll);
-  }
-
-  @override
-  void didUpdateWidget(covariant ScrollInfinity<T> oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.loadData != oldWidget.loadData ||
-        widget.maxItems != oldWidget.maxItems) {
-      _reset();
-    }
-  }
-
-  @override
-  void dispose() {
-    _isDisposed = true;
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
-    super.dispose();
-  }
-
   void _initialize() {
     _pageIndex = widget.initialPageIndex;
+
     if (widget.initialItems != null) {
       _processAndAddItems(widget.initialItems!);
       _isEndOfList = widget.initialItems!.length < widget.maxItems;
@@ -142,7 +130,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
         _isEndOfList = false;
         _hasError = false;
       });
-      await Future.delayed(const Duration(milliseconds: 100));
+
       _initialize();
     }
   }
@@ -162,18 +150,18 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
       _displayItems.addAll(newItems);
       return;
     }
+
     for (final item in newItems) {
       if (_realItemsCountSinceInterval == widget.interval) {
         _displayItems.add(null);
         _realItemsCountSinceInterval = 0;
       }
+
       _displayItems.add(item);
       _realItemsCountSinceInterval++;
     }
   }
 
-  /// After a frame is rendered, check if the content is scrollable.
-  /// If not, and there's more data, fetch the next page.
   void _checkIfScreenIsFilledAndFetchMore() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted &&
@@ -195,13 +183,13 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
     try {
       final newItems = await widget.loadData(_pageIndex);
+
       if (_isDisposed) return;
 
       if (newItems != null) {
         _processAndAddItems(newItems);
         _pageIndex++;
         _isEndOfList = newItems.length < widget.maxItems;
-
         _checkIfScreenIsFilledAndFetchMore();
       } else {
         _hasError = true;
@@ -220,18 +208,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return ScrollConfiguration(
-      behavior: ScrollConfiguration.of(context).copyWith(
-        scrollbars: widget.scrollbars,
-      ),
-      child: _buildListView(),
-    );
-  }
-
   Widget _buildListView() {
-    // Case 1: The list is empty.
     if (_displayItems.isEmpty) {
       if (_isLoading) {
         return _buildLoadingIndicator();
@@ -239,11 +216,13 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
       if (_hasError) {
         return Center(child: _buildRetryWidget());
       }
+
       return widget.empty ??
-          const MessageFieldWidget(message: 'No items found.');
+          const MessageFieldWidget(
+            message: 'No items found.',
+          );
     }
 
-    // Case 2: The list has items.
     final itemCount = _displayItems.length +
         (widget.header != null ? 1 : 0) +
         (_isEndOfList ? 0 : 1);
@@ -261,13 +240,12 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
           index--;
         }
 
-        // Build list item.
         if (index < _displayItems.length) {
           final item = _displayItems[index];
+
           return widget.itemBuilder(item as T, index);
         }
 
-        // Build footer (loading indicator or retry button).
         if (_hasError) {
           return _buildRetryWidget();
         }
@@ -305,6 +283,43 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
           child: const Text('Try Again'),
         ),
       ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    _initialize();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void didUpdateWidget(covariant ScrollInfinity<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.loadData != oldWidget.loadData ||
+        widget.maxItems != oldWidget.maxItems) {
+      _reset();
+    }
+  }
+
+  @override
+  void dispose() {
+    _isDisposed = true;
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScrollConfiguration(
+      behavior: ScrollConfiguration.of(context).copyWith(
+        scrollbars: widget.scrollbars,
+      ),
+      child: _buildListView(),
     );
   }
 }
