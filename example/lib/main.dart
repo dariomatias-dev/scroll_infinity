@@ -167,16 +167,6 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
     ],
   );
 
-  LoadingStyle get _loadingStyle {
-    final loadingStyles = _loadingStylesNotifier.value;
-
-    return LoadingStyle(
-      color: loadingStyles[0].value,
-      strokeAlign: loadingStyles[1].value,
-      strokeWidth: loadingStyles[2].value,
-    );
-  }
-
   void _navigateToExample() {
     final enables = _enablesNotifier.value;
 
@@ -192,7 +182,6 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
             enableInterval: enables[1],
             enableInitialItems: enables[2],
             enableCustomLoader: enables[3],
-            loadingStyle: _loadingStyle,
           );
         },
       ),
@@ -447,7 +436,6 @@ class InfiniteScrollExample extends StatefulWidget {
     required this.enableInterval,
     required this.enableInitialItems,
     required this.enableCustomLoader,
-    required this.loadingStyle,
   });
 
   final Axis selectedScrollDirection;
@@ -457,7 +445,6 @@ class InfiniteScrollExample extends StatefulWidget {
   final bool enableInterval;
   final bool enableInitialItems;
   final bool enableCustomLoader;
-  final LoadingStyle loadingStyle;
 
   @override
   State<InfiniteScrollExample> createState() => _InfiniteScrollExampleState();
@@ -549,7 +536,6 @@ class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
       maxItems: _maxItems,
       interval: widget.enableInterval ? widget.interval : null,
       loadData: _loadData,
-      loadingStyle: widget.loadingStyle,
       initialPageIndex: widget.enableInitialItems ? 1 : 0,
       initialItems: widget.enableInitialItems ? initialItems : null,
       loading: widget.enableCustomLoader

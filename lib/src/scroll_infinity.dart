@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 
 import 'package:scroll_infinity/src/default_empty_component.dart';
 import 'package:scroll_infinity/src/default_error_component.dart';
-import 'package:scroll_infinity/src/loading_style.dart';
 
 /// A list widget with infinite scroll that loads data in a paginated way.
 class ScrollInfinity<T> extends StatefulWidget {
@@ -24,7 +23,6 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.initialItems,
     this.interval,
     this.loading,
-    this.loadingStyle,
     this.tryAgainButtonBuilder,
     this.separatorBuilder,
   })  : assert(
@@ -84,9 +82,6 @@ class ScrollInfinity<T> extends StatefulWidget {
 
   /// A custom loading widget.
   final Widget? loading;
-
-  /// Style for the default loading progress indicator.
-  final LoadingStyle? loadingStyle;
 
   /// Builds a custom "Try Again" button.
   final Widget Function(VoidCallback action)? tryAgainButtonBuilder;
@@ -304,15 +299,10 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
   Widget _buildLoadingIndicator() {
     return widget.loading ??
-        Padding(
-          padding: const EdgeInsets.all(16.0),
+        const Padding(
+          padding: EdgeInsets.all(16.0),
           child: Center(
-            child: CircularProgressIndicator(
-              color: widget.loadingStyle?.color,
-              strokeAlign: widget.loadingStyle?.strokeAlign ??
-                  BorderSide.strokeAlignCenter,
-              strokeWidth: widget.loadingStyle?.strokeWidth ?? 4.0,
-            ),
+            child: CircularProgressIndicator(),
           ),
         );
   }
