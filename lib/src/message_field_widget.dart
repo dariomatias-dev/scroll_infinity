@@ -25,24 +25,3 @@ class MessageFieldWidget extends StatelessWidget {
     );
   }
 }
-
-class DefaultEmptyComponent extends MessageFieldWidget {
-  const DefaultEmptyComponent({super.key})
-      : super(
-          message: 'No items available at the moment.',
-        );
-}
-
-class DefaultErrorComponent extends MessageFieldWidget {
-  const DefaultErrorComponent({super.key})
-      : super(
-          message: 'Error fetching data.',
-        );
-}
-
-class DefaultResetComponent extends MessageFieldWidget {
-  const DefaultResetComponent({super.key})
-      : super(
-          message: 'Resetting...',
-        );
-}
