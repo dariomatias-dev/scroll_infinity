@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
+// Assuming this file exists and provides a default widget for the empty state.
 import 'package:scroll_infinity/src/message_field_widget.dart';
 
 /// A list widget that loads paginated data as the user scrolls.
+/// It automatically fetches more items until the viewport is filled.
 class ScrollInfinity<T> extends StatefulWidget {
   const ScrollInfinity({
     super.key,
@@ -37,15 +39,10 @@ class ScrollInfinity<T> extends StatefulWidget {
         );
 
   /// The function that fetches data for each page.
-  final Future<List<T>?> Function(
-    int pageIndex,
-  ) loadData;
+  final Future<List<T>?> Function(int pageIndex) loadData;
 
   /// Builds the widget for each item in the data list.
-  final Widget Function(
-    T value,
-    int index,
-  ) itemBuilder;
+  final Widget Function(T value, int index) itemBuilder;
 
   /// The maximum number of items to fetch per request.
   final int maxItems;
@@ -84,15 +81,10 @@ class ScrollInfinity<T> extends StatefulWidget {
   final Widget? loading;
 
   /// Builds a custom "Try Again" button.
-  final Widget Function(
-    VoidCallback action,
-  )? tryAgainButtonBuilder;
+  final Widget Function(VoidCallback action)? tryAgainButtonBuilder;
 
   /// Builds a separator between list items.
-  final Widget Function(
-    BuildContext context,
-    int index,
-  )? separatorBuilder;
+  final Widget Function(BuildContext context, int index)? separatorBuilder;
 
   @override
   State<ScrollInfinity<T>> createState() => _ScrollInfinityState<T>();
@@ -112,7 +104,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   @override
   void initState() {
     super.initState();
-
     _initialize();
     _scrollController.addListener(_onScroll);
   }
@@ -120,7 +111,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   @override
   void didUpdateWidget(covariant ScrollInfinity<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
-
     if (widget.loadData != oldWidget.loadData ||
         widget.maxItems != oldWidget.maxItems) {
       _reset();
@@ -132,7 +122,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     _isDisposed = true;
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
-
     super.dispose();
   }
 
@@ -141,14 +130,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     if (widget.initialItems != null) {
       _processAndAddItems(widget.initialItems!);
       _isEndOfList = widget.initialItems!.length < widget.maxItems;
-
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted &&
-            _scrollController.position.maxScrollExtent == 0 &&
-            !_isEndOfList) {
-          _fetchNextPage();
-        }
-      });
+      _checkIfScreenIsFilledAndFetchMore();
     } else {
       _fetchNextPage();
     }
@@ -184,7 +166,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
       _displayItems.addAll(newItems);
       return;
     }
-
     for (final item in newItems) {
       if (_realItemsCountSinceInterval == widget.interval) {
         _displayItems.add(null);
@@ -193,6 +174,19 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
       _displayItems.add(item);
       _realItemsCountSinceInterval++;
     }
+  }
+
+  /// After a frame is rendered, check if the content is scrollable.
+  /// If not, and there's more data, fetch the next page.
+  void _checkIfScreenIsFilledAndFetchMore() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted &&
+          !_isEndOfList &&
+          !_isLoading &&
+          _scrollController.position.maxScrollExtent == 0) {
+        _fetchNextPage();
+      }
+    });
   }
 
   Future<void> _fetchNextPage() async {
@@ -205,13 +199,14 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
     try {
       final newItems = await widget.loadData(_pageIndex);
-
       if (_isDisposed) return;
 
       if (newItems != null) {
         _processAndAddItems(newItems);
         _pageIndex++;
         _isEndOfList = newItems.length < widget.maxItems;
+
+        _checkIfScreenIsFilledAndFetchMore();
       } else {
         _hasError = true;
       }
@@ -248,8 +243,8 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
       if (_hasError) {
         return Center(child: _buildRetryWidget());
       }
-
-      return widget.empty ?? const DefaultEmptyComponent();
+      return widget.empty ??
+          const MessageFieldWidget(message: 'No items found.');
     }
 
     // Case 2: The list has items.
@@ -273,7 +268,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
         // Build list item.
         if (index < _displayItems.length) {
           final item = _displayItems[index];
-
           return widget.itemBuilder(item as T, index);
         }
 
