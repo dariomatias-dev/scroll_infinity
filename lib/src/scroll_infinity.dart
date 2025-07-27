@@ -19,11 +19,10 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.initialPageIndex = 0,
     this.enableRetryOnError = true,
     this.empty,
-    this.error,
     this.initialItems,
     this.interval,
     this.loading,
-    this.tryAgainButtonBuilder,
+    this.tryAgainBuilder,
     this.separatorBuilder,
   })  : assert(
           initialPageIndex >= 0,
@@ -68,9 +67,6 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// Widget to display when the initial fetch returns no items.
   final Widget? empty;
 
-  /// This parameter is no longer used. Use `tryAgainButtonBuilder` to customize the error action.
-  final Widget? error;
-
   /// An initial list of items to display.
   final List<T>? initialItems;
 
@@ -80,8 +76,8 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// A custom loading widget.
   final Widget? loading;
 
-  /// Builds a custom "Try Again" button.
-  final Widget Function(VoidCallback action)? tryAgainButtonBuilder;
+  /// Creates a custom "Try Again" element.
+  final Widget Function(VoidCallback action)? tryAgainBuilder;
 
   /// Builds a separator between list items.
   final Widget Function(BuildContext context, int index)? separatorBuilder;
@@ -297,13 +293,18 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   Widget _buildRetryWidget() {
     if (!widget.enableRetryOnError) return const SizedBox.shrink();
 
-    if (widget.tryAgainButtonBuilder != null) {
-      return widget.tryAgainButtonBuilder!(_fetchNextPage);
+    if (widget.tryAgainBuilder != null) {
+      return widget.tryAgainBuilder!(_fetchNextPage);
     }
 
-    return ElevatedButton(
-      onPressed: _fetchNextPage,
-      child: const Text('Try Again'),
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: ElevatedButton(
+          onPressed: _fetchNextPage,
+          child: const Text('Try Again'),
+        ),
+      ),
     );
   }
 }
