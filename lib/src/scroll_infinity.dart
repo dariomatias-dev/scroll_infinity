@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
 import 'package:scroll_infinity/src/message_field_widget.dart';
 
 /// A widget that displays a scrollable list with support for paginated data loading.
@@ -196,6 +197,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
       }
     } catch (e) {
       if (_isDisposed) return;
+
       _hasError = true;
     } finally {
       if (!_isDisposed) {
@@ -237,6 +239,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
       itemBuilder: (context, index) {
         if (widget.header != null) {
           if (index == 0) return widget.header!;
+
           index--;
         }
 
