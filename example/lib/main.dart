@@ -9,104 +9,6 @@ typedef LoadDatatype = Future<List<Color>?> Function(
   Axis scrollDirection,
 });
 
-class LoadingStyleModel<T> {
-  const LoadingStyleModel({
-    required this.name,
-    this.value,
-  });
-
-  final String name;
-  final T? value;
-}
-
-const loadingColors = <LoadingStyleModel<Color>>[
-  LoadingStyleModel(
-    name: 'Default',
-  ),
-  LoadingStyleModel(
-    name: 'Red',
-    value: Colors.red,
-  ),
-  LoadingStyleModel(
-    name: 'Blue',
-    value: Colors.blue,
-  ),
-  LoadingStyleModel(
-    name: 'Yellow',
-    value: Colors.yellow,
-  ),
-  LoadingStyleModel(
-    name: 'Green',
-    value: Colors.green,
-  ),
-  LoadingStyleModel(
-    name: 'Purple',
-    value: Colors.purple,
-  ),
-];
-
-const loadingStrokeAligns = <LoadingStyleModel<double>>[
-  LoadingStyleModel(
-    name: 'Center',
-    value: BorderSide.strokeAlignCenter,
-  ),
-  LoadingStyleModel(
-    name: 'Inside',
-    value: BorderSide.strokeAlignInside,
-  ),
-  LoadingStyleModel(
-    name: 'Outside',
-    value: BorderSide.strokeAlignOutside,
-  ),
-];
-
-const loadingStrokeWidths = <LoadingStyleModel<double>>[
-  LoadingStyleModel(
-    name: 'Default',
-  ),
-  LoadingStyleModel(
-    name: '2',
-    value: 2.0,
-  ),
-  LoadingStyleModel(
-    name: '6',
-    value: 6.0,
-  ),
-  LoadingStyleModel(
-    name: '8',
-    value: 8.0,
-  ),
-  LoadingStyleModel(
-    name: '10',
-    value: 10.0,
-  ),
-];
-
-class LoadingStyleTypeModel<T> {
-  const LoadingStyleTypeModel({
-    required this.title,
-    required this.value,
-  });
-
-  final String title;
-  final List<LoadingStyleModel> value;
-}
-
-const loadingTypeStyles = <LoadingStyleTypeModel>[
-  LoadingStyleTypeModel(
-    title: 'Color',
-    value: loadingColors,
-  ),
-  LoadingStyleTypeModel(
-    title: 'Align',
-    value: loadingStrokeAligns,
-  ),
-  LoadingStyleTypeModel(
-    title: 'Width',
-    value: loadingStrokeWidths,
-  ),
-];
-
 final _random = Random();
 
 void main() {
@@ -135,10 +37,6 @@ class _EnablesNotifier<T> extends _DefaultNotifier<T> {
   _EnablesNotifier(super._value);
 }
 
-class _LoadingStylesNotifier<T> extends _DefaultNotifier<T> {
-  _LoadingStylesNotifier(super._value);
-}
-
 class ScrollInfinityExample extends StatefulWidget {
   const ScrollInfinityExample({super.key});
 
@@ -158,13 +56,6 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
   ];
   final _enablesNotifier = _EnablesNotifier(
     List.filled(_enableTitles.length, false),
-  );
-  final _loadingStylesNotifier = _LoadingStylesNotifier(
-    <LoadingStyleModel>[
-      loadingColors.first,
-      loadingStrokeAligns.first,
-      loadingStrokeWidths.first,
-    ],
   );
 
   void _navigateToExample() {
@@ -276,57 +167,6 @@ class _ScrollInfinityExampleState extends State<ScrollInfinityExample> {
                   );
                 },
               ),
-              const SizedBox(height: 40.0),
-              const FieldWidget(
-                title: 'Customize default loader',
-              ),
-              const Divider(),
-              ...List.generate(loadingTypeStyles.length, (index) {
-                final loadingTypeStyle = loadingTypeStyles[index];
-
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: <Widget>[
-                      Text(
-                        '${loadingTypeStyle.title}:',
-                        style: const TextStyle(
-                          fontSize: 16.0,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(width: 12.0),
-                      ValueListenableBuilder(
-                        valueListenable: _loadingStylesNotifier,
-                        builder: (context, value, child) {
-                          return DropdownButtonHideUnderline(
-                            child: DropdownButton(
-                              value: value[index],
-                              items: List.generate(
-                                  loadingTypeStyle.value.length, (index) {
-                                final style = loadingTypeStyle.value[index];
-
-                                return DropdownMenuItem(
-                                  value: style,
-                                  child: Text(
-                                    style.name,
-                                  ),
-                                );
-                              }),
-                              onChanged: (value) {
-                                _loadingStylesNotifier.set(index, value!);
-                              },
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                );
-              }),
               const Divider(),
               const SizedBox(height: 20.0),
             ],

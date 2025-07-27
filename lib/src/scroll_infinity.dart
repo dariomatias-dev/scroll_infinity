@@ -18,7 +18,6 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.initialPageIndex = 0,
     this.enableRetryOnError = true,
     this.empty,
-    this.reset,
     this.error,
     this.initialItems,
     this.interval,
@@ -67,9 +66,6 @@ class ScrollInfinity<T> extends StatefulWidget {
 
   /// Widget to display when the initial fetch returns no items.
   final Widget? empty;
-
-  /// Widget to display during a reset.
-  final Widget? reset;
 
   /// Widget to display when an error occurs during data fetch.
   final Widget? error;
