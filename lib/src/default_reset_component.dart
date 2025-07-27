@@ -1,7 +1,7 @@
-part of 'scroll_infinity.dart';
+import 'package:scroll_infinity/src/message_field_widget.dart';
 
-class _DefaultResetComponent extends _MessageFieldWidget {
-  const _DefaultResetComponent()
+class DefaultResetComponent extends MessageFieldWidget {
+  const DefaultResetComponent({super.key})
       : super(
           message: 'Resetting...',
         );

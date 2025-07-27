@@ -1,7 +1,7 @@
-part of 'scroll_infinity.dart';
+import 'package:scroll_infinity/src/message_field_widget.dart';
 
-class _DefaultEmptyComponent extends _MessageFieldWidget {
-  const _DefaultEmptyComponent()
+class DefaultEmptyComponent extends MessageFieldWidget {
+  const DefaultEmptyComponent({super.key})
       : super(
           message: 'No items available at the moment.',
         );

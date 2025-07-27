@@ -1,7 +1,8 @@
-part of 'scroll_infinity.dart';
+import 'package:flutter/material.dart';
 
-class _MessageFieldWidget extends StatelessWidget {
-  const _MessageFieldWidget({
+class MessageFieldWidget extends StatelessWidget {
+  const MessageFieldWidget({
+    super.key,
     required this.message,
   });
 

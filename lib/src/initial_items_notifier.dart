@@ -1,34 +1,39 @@
-part of 'scroll_infinity.dart';
 
-/// Notifier for initial items of infinite scroll.
+import 'package:flutter/material.dart';
+
 class InitialItemsNotifier<T> extends ValueNotifier<List<T>?> {
-  InitialItemsNotifier(
-    super.value,
-  );
+  InitialItemsNotifier() : super(null);
 
-  /// Indicates if an error has occurred.
-  bool _hasError = false;
+  Object? _error;
 
-  /// Indicates if the notifier was disposed.
-  bool isDisposed = false;
+  bool _isDisposed = false;
 
-  bool get hasError => _hasError;
+  Object? get error => _error;
 
-  /// Updates the notifier with new `items` and optionally updates `hasError`.
-  void update({
-    required List<T>? items,
-    bool hasError = false,
-  }) {
+  bool get hasError => _error != null;
+
+  bool get isDisposed => _isDisposed;
+
+  void setLoading() {
+    value = null;
+    _error = null;
+    notifyListeners();
+  }
+
+  void setData(List<T> items) {
     value = items;
-    _hasError = hasError;
+    _error = null;
+    notifyListeners();
+  }
 
+  void setError(Object error) {
+    _error = error;
     notifyListeners();
   }
 
   @override
   void dispose() {
-    isDisposed = true;
-
+    _isDisposed = true;
     super.dispose();
   }
 }

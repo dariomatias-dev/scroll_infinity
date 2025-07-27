@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+
 import 'package:scroll_infinity/scroll_infinity.dart';
 
 typedef LoadDatatype = Future<List<Color>?> Function(
@@ -464,20 +465,30 @@ class InfiniteScrollExample extends StatefulWidget {
 
 class _InfiniteScrollExampleState extends State<InfiniteScrollExample> {
   late final int _maxItems;
-  final _initialItemsNotifier = InitialItemsNotifier<Color>(null);
+  final _initialItemsNotifier = InitialItemsNotifier<Color>();
 
   Future<void> _initLoader() async {
-    _initialItemsNotifier.update(
-      items: null,
-      hasError: false,
-    );
+    _initialItemsNotifier.setLoading();
 
-    final items = await _loadData(0);
+    try {
+      final items = await _loadData(0);
 
-    _initialItemsNotifier.update(
-      items: items,
-      hasError: items == null,
-    );
+      if (_initialItemsNotifier.isDisposed) return;
+
+      if (items != null) {
+        _initialItemsNotifier.setData(items);
+      } else {
+        _initialItemsNotifier.setError(
+          Exception(
+            'The initial data fetch returned no results.',
+          ),
+        );
+      }
+    } catch (e) {
+      if (_initialItemsNotifier.isDisposed) return;
+
+      _initialItemsNotifier.setError(e);
+    }
   }
 
   Future<List<Color>?> _loadData(

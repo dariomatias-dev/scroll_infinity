@@ -1,4 +1,4 @@
-part of 'scroll_infinity.dart';
+import 'package:flutter/material.dart';
 
 /// Style configuration for loading indicator.
 class LoadingStyle {
