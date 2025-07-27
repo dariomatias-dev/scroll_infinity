@@ -1,15 +1,28 @@
 # Scroll Infinity
 
+Scroll Infinity is a Flutter widget that provides an infinite scrolling list with support for paginated data loading, including loading, error, and empty states handling.
+
 ## Installation
-Run this command:
+
+Add the package to your project:
+
 ```bash
 flutter pub add scroll_infinity
 ```
 
-## Usage Example
-Here are some examples of how to use the package to create a list with infinite scrolling:
+## Features
 
-Vertical:
+- Infinite scroll with pagination support
+- Handling of loading, error, and empty states
+- Insertion of separators between items
+- Support for both vertical and horizontal scrolling
+- Insertion of `null` values at defined intervals
+- Optional header widget support
+
+## Usage Example
+
+### Vertical Scrolling
+
 ```dart
 import 'package:flutter/material.dart';
 import 'package:scroll_infinity/scroll_infinity.dart';
@@ -27,26 +40,16 @@ class _ExampleState extends State<Example> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: ScrollInfinity(
+      body: ScrollInfinity<int>(
         maxItems: _maxItems,
-        loadData: (pageKey) async {
-          await Future.delayed(
-            const Duration(
-              seconds: 2,
-            ),
-          );
-
-          return List.generate(_maxItems, (index) {
-            return _maxItems * pageKey + index + 1;
-          });
+        loadData: (page) async {
+          await Future.delayed(const Duration(seconds: 2));
+          return List.generate(_maxItems, (index) => page * _maxItems + index + 1);
         },
         itemBuilder: (value, index) {
           return ListTile(
             title: Text('Item $value'),
             subtitle: const Text('Subtitle'),
-            trailing: const Icon(
-              Icons.keyboard_arrow_right_rounded,
-            ),
           );
         },
       ),
@@ -55,335 +58,63 @@ class _ExampleState extends State<Example> {
 }
 ```
 
-Horizontal:
+### Horizontal Scrolling
+
 ```dart
-import 'package:flutter/material.dart';
-import 'package:scroll_infinity/scroll_infinity.dart';
-
-class Example extends StatefulWidget {
-  const Example({super.key});
-
-  @override
-  State<Example> createState() => _ExampleState();
-}
-
-class _ExampleState extends State<Example> {
-  static const _maxItems = 6;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: SizedBox(
-          height: 64.0,
-          child: ScrollInfinity(
-            scrollDirection: Axis.horizontal,
-            maxItems: _maxItems,
-            loadData: (pageKey) async {
-              await Future.delayed(
-                const Duration(
-                  seconds: 2,
-                ),
-              );
-        
-              return List.generate(_maxItems, (index) {
-                return _maxItems * pageKey + index + 1;
-              });
-            },
-            itemBuilder: (value, index) {
-              return Center(
-                child: SizedBox(
-                  width: MediaQuery.sizeOf(context).width * 0.5,
-                  child: ListTile(
-                    onTap: () {},
-                    title: Text('Item $value'),
-                    subtitle: const Text('Subtitle'),
-                    trailing: const Icon(
-                      Icons.keyboard_arrow_right_rounded,
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-}
+ScrollInfinity<int>(
+  scrollDirection: Axis.horizontal,
+  maxItems: 10,
+  loadData: (page) async {
+    await Future.delayed(const Duration(seconds: 2));
+    return List.generate(10, (index) => page * 10 + index + 1);
+  },
+  itemBuilder: (value, index) => Text('Item $value'),
+)
 ```
-
-</br>
 
 ### With Interval
 
-Intervals are identified when the `value` of `itemBuilder` is `null`.
-To allow the `value` of `itemBuilder` to be nullable, facilitating the verification of the `value`, use `ScrollInfinity` with the expected value type followed by `?`.
-
 ```dart
-import 'dart:math';
-
-import 'package:flutter/material.dart';
-import 'package:scroll_infinity/scroll_infinity.dart';
-
-class Example extends StatefulWidget {
-  const Example({super.key});
-
-  @override
-  State<Example> createState() => _ExampleState();
-}
-
-class _ExampleState extends State<Example> {
-  static const _maxItems = 20;
-  final _random = Random();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: ScrollInfinity<int?>(
-        maxItems: _maxItems,
-        interval: 2,
-        loadData: (pageKey) async {
-          await Future.delayed(
-            const Duration(
-              seconds: 2,
-            ),
-          );
-
-          if (_random.nextInt(4) == 0) {
-            return null;
-          }
-
-          return List.generate(_maxItems, (index) {
-            return _maxItems * pageKey + index + 1;
-          });
-        },
-        itemBuilder: (value, index) {
-          if (value == null) {
-            return const SizedBox(
-              height: 60.0,
-              child: Placeholder(),
-            );
-          }
-
-          return ListTile(
-            title: Text('Item $value'),
-            subtitle: const Text('Subtitle'),
-            trailing: const Icon(
-              Icons.keyboard_arrow_right_rounded,
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-```
-
-### With Loader
-
-Add custom loading for initial items.
-
-```dart
-import 'dart:math';
-
-import 'package:flutter/material.dart';
-import 'package:scroll_infinity/scroll_infinity.dart';
-
-class Example extends StatefulWidget {
-  const Example({super.key});
-
-  @override
-  State<Example> createState() => _ExampleState();
-}
-
-class _ExampleState extends State<Example> {
-  final _notifier = ScrollInfinityInitialItemsNotifier<int?>(null);
-
-  static const _maxItems = 20;
-  final _random = Random();
-
-  Future<void> _initLoader() async {
-    _notifier.value = await _loadData(0);
-  }
-
-  Future<List<int>?> _loadData(int pageIndex) async {
-    await Future.delayed(
-      const Duration(
-        seconds: 2,
-      ),
-    );
-
-    if (_random.nextInt(4) == 0) {
-      return null;
-    }
-
-    return List.generate(_maxItems, (index) {
-      return _maxItems * pageIndex + index + 1;
-    });
-  }
-
-  @override
-  void initState() {
-    _initLoader();
-
-    super.initState();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: ScrollInfinityLoader(
-        notifier: _notifier,
-        scrollInfinityBuilder: (items) {
-          return ScrollInfinity<int?>(
-            maxItems: _maxItems,
-            initialPageIndex: 1,
-            initialItems: items,
-            interval: 2,
-            loadData: _loadData,
-            itemBuilder: (value, index) {
-              if (value == null) {
-                return const SizedBox(
-                  height: 60.0,
-                  child: Placeholder(),
-                );
-              }
-
-              return ListTile(
-                title: Text('Item $value'),
-                subtitle: const Text('Subtitle'),
-                trailing: const Icon(
-                  Icons.keyboard_arrow_right_rounded,
-                ),
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-}
+ScrollInfinity<int?>(
+  maxItems: 10,
+  interval: 2,
+  loadData: (page) async {
+    return List.generate(10, (index) => page * 10 + index + 1);
+  },
+  itemBuilder: (value, index) {
+    if (value == null) return const Divider();
+    return ListTile(title: Text('Item $value'));
+  },
+)
 ```
 
 ## Properties
 
-- **scrollDirection**: Defines the scrolling direction of the list. Can be `Axis.vertical` or `Axis.horizontal`.
-```dart
-scrollDirection: Axis.vertical,
-```
+| Name                 | Type                                  | Description                                             |
+| -------------------- | ------------------------------------- | ------------------------------------------------------- |
+| `loadData`           | `Future<List<T>?> Function(int)`      | Function responsible for loading data per page.         |
+| `itemBuilder`        | `Widget Function(T value, int index)` | Builds each list item.                                  |
+| `maxItems`           | `int`                                 | Maximum number of items per page.                       |
+| `initialItems`       | `List<T>?`                            | Initial items to display before the first request.      |
+| `initialPageIndex`   | `int`                                 | Starting page index. Default is `0`.                    |
+| `scrollDirection`    | `Axis`                                | Scroll direction: `Axis.vertical` or `Axis.horizontal`. |
+| `padding`            | `EdgeInsetsGeometry?`                 | Inner padding for the list.                             |
+| `header`             | `Widget?`                             | Widget displayed at the beginning of the list.          |
+| `separatorBuilder`   | `Widget Function(BuildContext, int)?` | Builder for separators between items.                   |
+| `scrollbars`         | `bool`                                | Enables scrollbars if `true`. Default is `false`.       |
+| `interval`           | `int?`                                | Defines the interval for inserting `null` values.       |
+| `enableRetryOnError` | `bool`                                | Enables retry button on error. Default is `true`.       |
+| `loading`            | `Widget?`                             | Widget displayed during loading.                        |
+| `empty`              | `Widget?`                             | Widget displayed when no data is available.             |
+| `tryAgainBuilder`    | `Widget Function(VoidCallback)?`      | Custom builder for the retry button.                    |
 
-- **scrollbars**: Shows scrollbars if `true`. Default is `false`.
-```dart
-scrollbars: true,
-```
+## License
 
-- **padding**: Specifies the internal padding of the list.
-```dart
-padding: EdgeInsets.all(8.0),
-```
+Distributed under the MIT License. See the `LICENSE` file for more information.
 
-- **header**: Listing header.
-```dart
-header: HeaderWidget(),
-```
+## Author
 
-- **initialPageIndex**: Initial page index. Default is `0`.
-```dart
-initialPageIndex: 1,
-```
-
-- **enableRetryOnError**: Determines if retrying to load data after an error is enabled. Default is `true`.
-```dart
-enableRetryOnError: false,
-```
-
-- **empty**: Widget used to display custom content when the list is empty.
-```dart
-empty: Text('No items available.'),
-```
-
-- **reset**: Widget used to display custom content during a reset.
-```dart
-reset: Text('Reseting...'),
-```
-
-- **error**: Widget used to display custom content when an error occurs.
-```dart
-error: Text('Error occurred.'),
-```
-
-- **initialItems**: Specifies the initial items to be displayed in the list.
-```dart
-initialItems: <Widget>[
-  // items
-],
-```
-
-- **interval**: Specifies the range in which the `null` value is passed.
-```dart
-interval: 20,
-```
-
-- **loading**: Allows passing a custom loading component.
-```dart
-loading: LoadingWidget(),
-```
-
-- **loadingStyle**: Defines the style of the `CircularProgressIndicator`.
-```dart
-loadingStyle: CircularProgressIndicator(
-  color: Colors.blue,
-  strokeWidth: 8.0,
-),
-```
-
-- **tryAgainButtonBuilder**: Allows passing a custom retry button component, triggered by a callback.
-```dart
-tryAgainButtonBuilder: (action) {
-  return ElevatedButton(
-    onPressed: action,
-    child: Text('Retry'),
-  );
-},
-```
-
-- **maxItems**: Specifies the maximum number of items per request. This will be used to determine when the list reaches the end.
-```dart
-maxItems: 20,
-```
-
-- **loadData**: Function responsible for loading the data. It should return a list of items.
-```dart
-loadData: (pageIndex) async {
-  // Logic to load the data
-},
-```
-
-- **separatorBuilder**: Builds the separator component between the items in the list.
-```dart
-separatorBuilder: (context, index) {
-  return Divider(
-    color: Colors.grey,
-    height: 1.0,
-  );
-},
-```
-
-- **itemBuilder**: Builds the items in the list. This function should return the widget that represents each item in the list.
-```dart
-itemBuilder: (value, index) {
-  final item = items[index];
-
-  return ListTile(
-    title: Text(item.title),
-    subtitle: Text(item.subtitle),
-  );
-},
-```
-
-# Author
-This Flutter package was developed by [Dário Matias](https://github.com/dariomatias-dev).
+Developed by [Dário Matias](https://github.com/dariomatias-dev).
 
 # Donations
 
