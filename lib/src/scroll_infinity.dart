@@ -24,6 +24,7 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.loading,
     this.empty,
     this.tryAgainBuilder,
+    this.useRealItemIndex = true,
   })  : assert(
           initialPageIndex >= 0,
           'The initial page index cannot be less than zero.',
@@ -31,10 +32,6 @@ class ScrollInfinity<T> extends StatefulWidget {
         assert(
           interval == null || interval > 0,
           'The interval must be greater than zero.',
-        ),
-        assert(
-          interval != null ? null is T : true,
-          'The generic type `T` must be nullable when `interval` is provided.',
         );
 
   /// Callback responsible for fetching data for each page.
@@ -43,8 +40,10 @@ class ScrollInfinity<T> extends StatefulWidget {
   ) loadData;
 
   /// Builder function responsible for rendering each item in the list.
+  ///
+  /// When an interval is used, `value` will be `null` for interval items.
   final Widget Function(
-    T value,
+    T? value,
     int index,
   ) itemBuilder;
 
@@ -92,6 +91,11 @@ class ScrollInfinity<T> extends StatefulWidget {
     VoidCallback action,
   )? tryAgainBuilder;
 
+  /// The index ignores range items and reflects only actual data items.
+  ///
+  /// The default is `true`.
+  final bool useRealItemIndex;
+
   @override
   State<ScrollInfinity<T>> createState() => _ScrollInfinityState<T>();
 }
@@ -100,7 +104,10 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   final _scrollController = ScrollController();
 
   final _displayItems = <T?>[];
+  final _mappedIndices = <int>[];
   int _realItemsCountSinceInterval = 0;
+  int _realItemCounter = 0;
+  int _intervalCounter = 0;
   int _pageIndex = 0;
   bool _isLoading = false;
   bool _isEndOfList = false;
@@ -123,7 +130,10 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     if (mounted) {
       setState(() {
         _displayItems.clear();
+        _mappedIndices.clear();
         _realItemsCountSinceInterval = 0;
+        _realItemCounter = 0;
+        _intervalCounter = 0;
         _pageIndex = widget.initialPageIndex;
         _isLoading = false;
         _isEndOfList = false;
@@ -153,10 +163,14 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     for (final item in newItems) {
       if (_realItemsCountSinceInterval == widget.interval) {
         _displayItems.add(null);
+        _mappedIndices.add(_intervalCounter);
+        _intervalCounter++;
         _realItemsCountSinceInterval = 0;
       }
 
       _displayItems.add(item);
+      _mappedIndices.add(_realItemCounter);
+      _realItemCounter++;
       _realItemsCountSinceInterval++;
     }
   }
@@ -247,7 +261,13 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
         if (itemIndex < _displayItems.length) {
           final item = _displayItems[itemIndex];
-          return widget.itemBuilder(item as T, itemIndex);
+
+          int finalIndex = itemIndex;
+          if (widget.useRealItemIndex && widget.interval != null) {
+            finalIndex = _mappedIndices[itemIndex];
+          }
+
+          return widget.itemBuilder(item, finalIndex);
         }
 
         if (_hasError) {
@@ -255,6 +275,9 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
         }
         if (_isLoading) {
           return _buildLoadingIndicator();
+        }
+        if (_isEndOfList && _displayItems.isEmpty) {
+          return widget.empty ?? const Center(child: Text('No items found.'));
         }
 
         return const SizedBox.shrink();

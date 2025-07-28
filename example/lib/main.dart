@@ -320,7 +320,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
             height: height,
             color: Colors.grey.shade200,
             alignment: Alignment.center,
-            child: const Text('Interval Widget'),
+            child: Text('Interval Widget $index'),
           );
         }
 
