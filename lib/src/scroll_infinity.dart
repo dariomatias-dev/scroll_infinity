@@ -2,8 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import 'package:scroll_infinity/src/message_field_widget.dart';
-
 /// A widget that displays a scrollable list with support for paginated data loading.
 ///
 /// As the user scrolls, additional items are automatically fetched to fill the viewport.
@@ -211,42 +209,45 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   }
 
   Widget _buildListView() {
-    if (_displayItems.isEmpty) {
-      if (_isLoading) {
-        return _buildLoadingIndicator();
-      }
-      if (_hasError) {
-        return Center(child: _buildRetryWidget());
-      }
+    final hasHeader = widget.header != null;
+    final headerCount = hasHeader ? 1 : 0;
 
-      return widget.empty ??
-          const MessageFieldWidget(
-            message: 'No items found.',
-          );
-    }
+    final hasFooter =
+        _isLoading || _hasError || (_isEndOfList && _displayItems.isEmpty);
 
-    final itemCount = _displayItems.length +
-        (widget.header != null ? 1 : 0) +
-        (_isEndOfList ? 0 : 1);
+    final itemCount = headerCount + _displayItems.length + (hasFooter ? 1 : 0);
 
     return ListView.separated(
       controller: _scrollController,
       scrollDirection: widget.scrollDirection,
       padding: widget.padding,
       itemCount: itemCount,
-      separatorBuilder: widget.separatorBuilder ??
-          (context, index) => const SizedBox.shrink(),
-      itemBuilder: (context, index) {
-        if (widget.header != null) {
-          if (index == 0) return widget.header!;
-
-          index--;
+      separatorBuilder: (context, index) {
+        if (widget.separatorBuilder == null) {
+          return const SizedBox.shrink();
         }
 
-        if (index < _displayItems.length) {
-          final item = _displayItems[index];
+        if (hasHeader && index == 0) {
+          return const SizedBox.shrink();
+        }
 
-          return widget.itemBuilder(item as T, index);
+        final itemIndex = index - headerCount;
+        if (itemIndex >= 0 && itemIndex < _displayItems.length - 1) {
+          return widget.separatorBuilder!(context, itemIndex);
+        }
+
+        return const SizedBox.shrink();
+      },
+      itemBuilder: (context, index) {
+        if (hasHeader && index == 0) {
+          return widget.header!;
+        }
+
+        final itemIndex = index - headerCount;
+
+        if (itemIndex < _displayItems.length) {
+          final item = _displayItems[itemIndex];
+          return widget.itemBuilder(item as T, itemIndex);
         }
 
         if (_hasError) {
