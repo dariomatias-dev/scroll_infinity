@@ -51,26 +51,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
     );
   }
 
-  Widget _getScrollDirectionSelector() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        RadioListTile<Axis>(
-          title: const Text('Vertical'),
-          value: Axis.vertical,
-          groupValue: _scrollDirection,
-          onChanged: (value) => setState(() => _scrollDirection = value!),
-        ),
-        RadioListTile<Axis>(
-          title: const Text('Horizontal'),
-          value: Axis.horizontal,
-          groupValue: _scrollDirection,
-          onChanged: (value) => setState(() => _scrollDirection = value!),
-        ),
-      ],
-    );
-  }
-
   Widget _getFeatureSwitches() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -88,25 +68,12 @@ class _ConfigScreenState extends State<ConfigScreen> {
               },
             ),
             if (key == 'Intervals' && _features[key]!)
-              _QuantitySelector(notifier: _intervalNotifier),
+              _QuantitySelector(
+                notifier: _intervalNotifier,
+              ),
           ],
         );
       }).toList(),
-    );
-  }
-
-  Widget _getNavigateButton() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(
-            vertical: 16.0,
-          ),
-        ),
-        onPressed: _navigateToExample,
-        child: const Text('Show Example'),
-      ),
     );
   }
 
@@ -121,7 +88,25 @@ class _ConfigScreenState extends State<ConfigScreen> {
             children: <Widget>[
               const _FieldTitle(title: 'Scroll Direction'),
               const Divider(),
-              _getScrollDirectionSelector(),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  RadioListTile<Axis>(
+                    title: const Text('Vertical'),
+                    value: Axis.vertical,
+                    groupValue: _scrollDirection,
+                    onChanged: (value) =>
+                        setState(() => _scrollDirection = value!),
+                  ),
+                  RadioListTile<Axis>(
+                    title: const Text('Horizontal'),
+                    value: Axis.horizontal,
+                    groupValue: _scrollDirection,
+                    onChanged: (value) =>
+                        setState(() => _scrollDirection = value!),
+                  ),
+                ],
+              ),
               const SizedBox(height: 28.0),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -143,7 +128,20 @@ class _ConfigScreenState extends State<ConfigScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: _getNavigateButton(),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(
+                vertical: 16.0,
+              ),
+            ),
+            onPressed: _navigateToExample,
+            child: const Text('Show Example'),
+          ),
+        ),
+      ),
     );
   }
 }
