@@ -234,6 +234,7 @@ class DisplayScreen extends StatefulWidget {
 class _DisplayScreenState extends State<DisplayScreen> {
   var _scrollInfinityKey = UniqueKey();
   final _random = Random();
+  final _initialItems = <Color>[];
 
   /// Simulates a network request to fetch paginated data.
   Future<List<Color>?> _loadData(int pageIndex) async {
@@ -275,6 +276,15 @@ class _DisplayScreenState extends State<DisplayScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+
+    _initialItems.addAll(
+      _generateInitialItems(),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isVertical = widget.scrollDirection == Axis.vertical;
 
@@ -282,7 +292,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
       key: _scrollInfinityKey,
       scrollDirection: widget.scrollDirection,
       maxItems: widget.maxItems,
-      initialItems: widget.enableInitialItems ? _generateInitialItems() : null,
+      initialItems: widget.enableInitialItems ? _initialItems : null,
       loadData: _loadData,
       header: widget.enableHeader
           ? Container(
