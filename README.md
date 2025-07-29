@@ -31,31 +31,48 @@ flutter pub add scroll_infinity
 import 'package:flutter/material.dart';
 import 'package:scroll_infinity/scroll_infinity.dart';
 
-class Example extends StatefulWidget {
-  const Example({super.key});
-
-  @override
-  State<Example> createState() => _ExampleState();
+void main() {
+  runApp(
+    const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: MyApp(),
+    ),
+  );
 }
 
-class _ExampleState extends State<Example> {
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
   static const _maxItems = 20;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: ScrollInfinity<int>(
-        maxItems: _maxItems,
-        loadData: (page) async {
-          await Future.delayed(const Duration(seconds: 2));
-          return List.generate(_maxItems, (index) => page * _maxItems + index + 1);
-        },
-        itemBuilder: (value, index) {
-          return ListTile(
-            title: Text('Item $value'),
-            subtitle: const Text('Subtitle'),
-          );
-        },
+      body: SafeArea(
+        child: ScrollInfinity<int>(
+          maxItems: _maxItems,
+          loadData: (page) async {
+            await Future.delayed(
+              const Duration(seconds: 2),
+            );
+
+            return List.generate(
+              _maxItems,
+              (index) => page * _maxItems + index + 1,
+            );
+          },
+          itemBuilder: (value, index) {
+            return ListTile(
+              title: Text('Item $value'),
+              subtitle: Text('Subtitle $value'),
+            );
+          },
+        ),
       ),
     );
   }
@@ -65,31 +82,117 @@ class _ExampleState extends State<Example> {
 ### Horizontal Scrolling
 
 ```dart
-ScrollInfinity<int>(
-  scrollDirection: Axis.horizontal,
-  maxItems: 10,
-  loadData: (page) async {
-    await Future.delayed(const Duration(seconds: 2));
-    return List.generate(10, (index) => page * 10 + index + 1);
-  },
-  itemBuilder: (value, index) => Text('Item $value'),
-)
+import 'package:flutter/material.dart';
+import 'package:scroll_infinity/scroll_infinity.dart';
+
+void main() {
+  runApp(
+    const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: MyApp(),
+    ),
+  );
+}
+
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  static const _maxItems = 10;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: SizedBox(
+          height: 100.0,
+          child: ScrollInfinity<int>(
+            scrollDirection: Axis.horizontal,
+            maxItems: _maxItems,
+            loadData: (page) async {
+              await Future.delayed(
+                const Duration(seconds: 2),
+              );
+
+              return List.generate(
+                _maxItems,
+                (index) => page * _maxItems + index + 1,
+              );
+            },
+            itemBuilder: (value, index) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text('Item $value'),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
 ```
 
 ### With Interval
 
 ```dart
-ScrollInfinity<int?>(
-  maxItems: 10,
-  interval: 2,
-  loadData: (page) async {
-    return List.generate(10, (index) => page * 10 + index + 1);
-  },
-  itemBuilder: (value, index) {
-    if (value == null) return const Divider();
-    return ListTile(title: Text('Item $value'));
-  },
-)
+import 'package:flutter/material.dart';
+import 'package:scroll_infinity/scroll_infinity.dart';
+
+void main() {
+  runApp(
+    const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: MyApp(),
+    ),
+  );
+}
+
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  static const _maxItems = 20;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: ScrollInfinity<int?>(
+          maxItems: _maxItems,
+          interval: 2,
+          loadData: (page) async {
+            await Future.delayed(
+              const Duration(seconds: 2),
+            );
+
+            return List.generate(
+              _maxItems,
+              (index) => page * _maxItems + index + 1,
+            );
+          },
+          itemBuilder: (value, index) {
+            if (value == null) return const Divider();
+
+            return ListTile(
+              title: Text('Item $value'),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
 ```
 
 ## Properties
