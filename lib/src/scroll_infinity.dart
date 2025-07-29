@@ -18,7 +18,7 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.padding,
     this.header,
     this.separatorBuilder,
-    this.scrollbars = false,
+    this.scrollbars = true,
     this.interval,
     this.enableRetryOnError = true,
     this.loading,

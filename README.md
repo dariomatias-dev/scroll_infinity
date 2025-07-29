@@ -18,6 +18,10 @@ flutter pub add scroll_infinity
 - Support for both vertical and horizontal scrolling
 - Insertion of `null` values at defined intervals
 - Optional header widget support
+- Optional scrollbars
+- Custom retry button on error
+- Support for initial items
+- Real item index mapping when using intervals
 
 ## Usage Example
 
@@ -90,23 +94,24 @@ ScrollInfinity<int?>(
 
 ## Properties
 
-| Name                 | Type                                  | Description                                             |
-| -------------------- | ------------------------------------- | ------------------------------------------------------- |
-| `loadData`           | `Future<List<T>?> Function(int)`      | Function responsible for loading data per page.         |
-| `itemBuilder`        | `Widget Function(T value, int index)` | Builds each list item.                                  |
-| `maxItems`           | `int`                                 | Maximum number of items per page.                       |
-| `initialItems`       | `List<T>?`                            | Initial items to display before the first request.      |
-| `initialPageIndex`   | `int`                                 | Starting page index. Default is `0`.                    |
-| `scrollDirection`    | `Axis`                                | Scroll direction: `Axis.vertical` or `Axis.horizontal`. |
-| `padding`            | `EdgeInsetsGeometry?`                 | Inner padding for the list.                             |
-| `header`             | `Widget?`                             | Widget displayed at the beginning of the list.          |
-| `separatorBuilder`   | `Widget Function(BuildContext, int)?` | Builder for separators between items.                   |
-| `scrollbars`         | `bool`                                | Enables scrollbars if `true`. Default is `false`.       |
-| `interval`           | `int?`                                | Defines the interval for inserting `null` values.       |
-| `enableRetryOnError` | `bool`                                | Enables retry button on error. Default is `true`.       |
-| `loading`            | `Widget?`                             | Widget displayed during loading.                        |
-| `empty`              | `Widget?`                             | Widget displayed when no data is available.             |
-| `tryAgainBuilder`    | `Widget Function(VoidCallback)?`      | Custom builder for the retry button.                    |
+| Name                 | Type                                   | Description                                                                                |
+| -------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `loadData`           | `Future<List<T>?> Function(int)`       | Function responsible for loading data per page.                                            |
+| `itemBuilder`        | `Widget Function(T? value, int index)` | Builds each list item. If `interval` is set, `value` can be `null`.                        |
+| `maxItems`           | `int`                                  | Maximum number of items per page.                                                          |
+| `initialItems`       | `List<T>?`                             | Initial items to display before the first request.                                         |
+| `initialPageIndex`   | `int`                                  | Starting page index. Default is `0`.                                                       |
+| `scrollDirection`    | `Axis`                                 | Scroll direction: `Axis.vertical` or `Axis.horizontal`. Default is `Axis.vertical`.        |
+| `padding`            | `EdgeInsetsGeometry?`                  | Inner padding for the list.                                                                |
+| `header`             | `Widget?`                              | Widget displayed at the beginning of the list.                                             |
+| `separatorBuilder`   | `Widget Function(BuildContext, int)?`  | Builder for separators between items.                                                      |
+| `scrollbars`         | `bool`                                 | Enables scrollbars if `true`. Default is `true`.                                           |
+| `interval`           | `int?`                                 | Defines the interval for inserting `null` values.                                          |
+| `enableRetryOnError` | `bool`                                 | Enables retry button on error. Default is `true`.                                          |
+| `loading`            | `Widget?`                              | Widget displayed during loading.                                                           |
+| `empty`              | `Widget?`                              | Widget displayed when no data is available.                                                |
+| `tryAgainBuilder`    | `Widget Function(VoidCallback)?`       | Custom builder for the retry button.                                                       |
+| `useRealItemIndex`   | `bool`                                 | If true, uses only actual item indices, skipping interval placeholders. Default is `true`. |
 
 ## License
 
@@ -116,7 +121,7 @@ Distributed under the MIT License. See the `LICENSE` file for more information.
 
 Developed by [Dário Matias](https://github.com/dariomatias-dev).
 
-# Donations
+## Donations
 
 Help maintain the project with donations.
 
