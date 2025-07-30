@@ -51,32 +51,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
     );
   }
 
-  Widget _getFeatureSwitches() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: _features.keys.map((key) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            SwitchListTile(
-              title: Text(key),
-              value: _features[key]!,
-              onChanged: (bool value) {
-                setState(() {
-                  _features[key] = value;
-                });
-              },
-            ),
-            if (key == 'Intervals' && _features[key]!)
-              _QuantitySelector(
-                notifier: _intervalNotifier,
-              ),
-          ],
-        );
-      }).toList(),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -95,15 +69,21 @@ class _ConfigScreenState extends State<ConfigScreen> {
                     title: const Text('Vertical'),
                     value: Axis.vertical,
                     groupValue: _scrollDirection,
-                    onChanged: (value) =>
-                        setState(() => _scrollDirection = value!),
+                    onChanged: (value) {
+                      setState(() {
+                        _scrollDirection = value!;
+                      });
+                    },
                   ),
                   RadioListTile<Axis>(
                     title: const Text('Horizontal'),
                     value: Axis.horizontal,
                     groupValue: _scrollDirection,
-                    onChanged: (value) =>
-                        setState(() => _scrollDirection = value!),
+                    onChanged: (value) {
+                      setState(() {
+                        _scrollDirection = value!;
+                      });
+                    },
                   ),
                 ],
               ),
@@ -122,7 +102,29 @@ class _ConfigScreenState extends State<ConfigScreen> {
               const SizedBox(height: 40.0),
               const _FieldTitle(title: 'Enable Features'),
               const Divider(),
-              _getFeatureSwitches(),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: _features.keys.map((key) {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      SwitchListTile(
+                        title: Text(key),
+                        value: _features[key]!,
+                        onChanged: (bool value) {
+                          setState(() {
+                            _features[key] = value;
+                          });
+                        },
+                      ),
+                      if (key == 'Intervals' && _features[key]!)
+                        _QuantitySelector(
+                          notifier: _intervalNotifier,
+                        ),
+                    ],
+                  );
+                }).toList(),
+              ),
               const Divider(),
             ],
           ),
@@ -328,7 +330,9 @@ class _DisplayScreenState extends State<DisplayScreen> {
             height: height,
             color: Colors.grey.shade200,
             alignment: Alignment.center,
-            child: Text('Interval Widget $index'),
+            child: Text(
+              'Interval Widget $index',
+            ),
           );
         }
 
