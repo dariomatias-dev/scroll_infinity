@@ -25,6 +25,8 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.empty,
     this.tryAgainBuilder,
     this.useRealItemIndex = true,
+    this.maxRetries,
+    this.retryLimitReachedWidget,
   })  : assert(
           initialPageIndex >= 0,
           'The initial page index cannot be less than zero.',
@@ -36,6 +38,10 @@ class ScrollInfinity<T> extends StatefulWidget {
         assert(
           interval != null ? null is T : true,
           'When `interval` is used, the generic type `T` must be nullable (e.g., String?).',
+        ),
+        assert(
+          maxRetries == null || maxRetries >= 0,
+          'maxRetries cannot be negative.',
         );
 
   /// Callback responsible for fetching data for each page.
@@ -102,6 +108,16 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// The default is `true`.
   final bool useRealItemIndex;
 
+  /// The maximum number of retries to attempt after a failed data fetch.
+  ///
+  /// If `null`, retries will be attempted indefinitely. Defaults to `null`.
+  final int? maxRetries;
+
+  /// A widget to display when the `maxRetries` limit has been reached.
+  ///
+  /// If not provided, a default message is shown.
+  final Widget? retryLimitReachedWidget;
+
   @override
   State<ScrollInfinity<T>> createState() => _ScrollInfinityState<T>();
 }
@@ -115,6 +131,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   int _realItemCounter = 0;
   int _intervalCounter = 0;
   int _pageIndex = 0;
+  int _retryCount = 0;
   bool _isLoading = false;
   bool _isEndOfList = false;
   bool _hasError = false;
@@ -141,6 +158,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
         _realItemCounter = 0;
         _intervalCounter = 0;
         _pageIndex = widget.initialPageIndex;
+        _retryCount = 0;
         _isLoading = false;
         _isEndOfList = false;
         _hasError = false;
@@ -206,16 +224,18 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
       if (_isDisposed) return;
 
       if (newItems != null) {
+        _retryCount = 0;
         _processAndAddItems(newItems);
         _pageIndex++;
         _isEndOfList = newItems.length < widget.maxItems;
         _checkIfScreenIsFilledAndFetchMore();
       } else {
+        _retryCount++;
         _hasError = true;
       }
     } catch (e) {
       if (_isDisposed) return;
-
+      _retryCount++;
       _hasError = true;
     } finally {
       if (!_isDisposed) {
@@ -303,6 +323,16 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
   Widget _buildRetryWidget() {
     if (!widget.enableRetryOnError) return const SizedBox.shrink();
+
+    if (widget.maxRetries != null && _retryCount >= widget.maxRetries!) {
+      return widget.retryLimitReachedWidget ??
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text('Retry limit has been reached.'),
+            ),
+          );
+    }
 
     if (widget.tryAgainBuilder != null) {
       return widget.tryAgainBuilder!(_fetchNextPage);
