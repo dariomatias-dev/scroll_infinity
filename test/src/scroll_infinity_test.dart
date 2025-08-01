@@ -69,7 +69,7 @@ void main() {
             maxItems: 10,
             header: const Text('My Header'),
             loadData: (page) => completer.future,
-            itemBuilder: (item, index) => Text(item!),
+            itemBuilder: (item, index) => Text(item),
           ),
         ),
       );
@@ -98,7 +98,7 @@ void main() {
                 totalItems: 0,
               );
             },
-            itemBuilder: (item, index) => Text(item!),
+            itemBuilder: (item, index) => Text(item),
           ),
         ),
       );
@@ -126,7 +126,7 @@ void main() {
                 maxItemsPerPage: 5,
               );
             },
-            itemBuilder: (item, index) => Text(item!),
+            itemBuilder: (item, index) => Text(item),
           ),
         ),
       );
@@ -158,7 +158,7 @@ void main() {
                 errorPage: 0,
               );
             },
-            itemBuilder: (item, index) => Text(item!),
+            itemBuilder: (item, index) => Text(item),
           ),
         ),
       );
@@ -196,7 +196,7 @@ void main() {
               key: Key('divider'),
             );
           },
-          itemBuilder: (item, index) => Text(item!),
+          itemBuilder: (item, index) => Text(item),
         ),
       ));
 
@@ -213,7 +213,7 @@ void main() {
       final receivedItems = <String, int>{};
 
       await tester.pumpWidget(buildTestableWidget(
-        ScrollInfinity<String>(
+        ScrollInfinity<String?>(
           maxItems: 3,
           interval: 2,
           useRealItemIndex: true,
@@ -251,7 +251,7 @@ void main() {
       final Map<String, int> receivedItems = {};
 
       await tester.pumpWidget(buildTestableWidget(
-        ScrollInfinity<String>(
+        ScrollInfinity<String?>(
           maxItems: 3,
           interval: 2,
           useRealItemIndex: false,
