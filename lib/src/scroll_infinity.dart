@@ -32,6 +32,10 @@ class ScrollInfinity<T> extends StatefulWidget {
         assert(
           interval == null || interval > 0,
           'The interval must be greater than zero.',
+        ),
+        assert(
+          interval != null ? null is T : true,
+          'When `interval` is used, the generic type `T` must be nullable (e.g., String?).',
         );
 
   /// Callback responsible for fetching data for each page.
@@ -42,8 +46,10 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// Builder function responsible for rendering each item in the list.
   ///
   /// When an interval is used, `value` will be `null` for interval items.
+  /// It is the developer's responsibility to use a nullable type for `T`
+  /// (e.g., `String?`) if `interval` is non-null.
   final Widget Function(
-    T? value,
+    T value,
     int index,
   ) itemBuilder;
 
@@ -71,7 +77,7 @@ class ScrollInfinity<T> extends StatefulWidget {
     int index,
   )? separatorBuilder;
 
-  /// Determines whether scrollbars should be displayed. Defaults to `false`.
+  /// Determines whether scrollbars should be displayed. Defaults to `true`.
   final bool scrollbars;
 
   /// Specifies an interval at which a `null` value is inserted into the list.
@@ -103,7 +109,7 @@ class ScrollInfinity<T> extends StatefulWidget {
 class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   final _scrollController = ScrollController();
 
-  final _displayItems = <T?>[];
+  final _displayItems = <T>[];
   final _mappedIndices = <int>[];
   int _realItemsCountSinceInterval = 0;
   int _realItemCounter = 0;
@@ -162,7 +168,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
     for (final item in newItems) {
       if (_realItemsCountSinceInterval == widget.interval) {
-        _displayItems.add(null);
+        _displayItems.add(null as T);
         _mappedIndices.add(_intervalCounter);
         _intervalCounter++;
         _realItemsCountSinceInterval = 0;
