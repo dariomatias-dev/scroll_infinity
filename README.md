@@ -59,9 +59,7 @@ class _MyAppState extends State<MyApp> {
         child: ScrollInfinity<int>(
           maxItems: _maxItems,
           loadData: (page) async {
-            await Future.delayed(
-              const Duration(seconds: 2),
-            );
+            await Future.delayed(const Duration(seconds: 2));
 
             return List.generate(
               _maxItems,
@@ -80,6 +78,8 @@ class _MyAppState extends State<MyApp> {
   }
 }
 ```
+
+---
 
 ### Horizontal Scrolling
 
@@ -116,9 +116,7 @@ class _MyAppState extends State<MyApp> {
             scrollDirection: Axis.horizontal,
             maxItems: _maxItems,
             loadData: (page) async {
-              await Future.delayed(
-                const Duration(seconds: 2),
-              );
+              await Future.delayed(const Duration(seconds: 2));
 
               return List.generate(
                 _maxItems,
@@ -140,6 +138,8 @@ class _MyAppState extends State<MyApp> {
   }
 }
 ```
+
+---
 
 ### With Interval
 
@@ -174,9 +174,7 @@ class _MyAppState extends State<MyApp> {
           maxItems: _maxItems,
           interval: 2,
           loadData: (page) async {
-            await Future.delayed(
-              const Duration(seconds: 2),
-            );
+            await Future.delayed(const Duration(seconds: 2));
 
             return List.generate(
               _maxItems,
@@ -199,28 +197,58 @@ class _MyAppState extends State<MyApp> {
 
 ## Properties
 
-| Name                      | Type                                  | Description                                                                                      |
-| ------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `loadData`                | `Future<List<T>?> Function(int)`      | Fetches paginated data. Required.                                                                |
-| `itemBuilder`             | `Widget Function(T value, int index)` | Builds each list item. If `interval` is used, `T` must be nullable.                              |
-| `maxItems`                | `int`                                 | Max number of items per request. Required.                                                       |
-| `initialItems`            | `List<T>?`                            | Optional initial items shown before the first load.                                              |
-| `initialPageIndex`        | `int`                                 | Starting page index. Default is `0`.                                                             |
-| `scrollDirection`         | `Axis`                                | Scrolling direction. Default is `Axis.vertical`.                                                 |
-| `padding`                 | `EdgeInsetsGeometry?`                 | Inner padding of the list.                                                                       |
-| `header`                  | `Widget?`                             | Widget shown at the start of the list.                                                           |
-| `separatorBuilder`        | `Widget Function(BuildContext, int)?` | Builder for item separators.                                                                     |
-| `scrollbars`              | `bool`                                | Whether scrollbars are visible. Default is `true`.                                               |
-| `interval`                | `int?`                                | Inserts `null` every `interval` items. `T` must be nullable if set.                              |
-| `enableRetryOnError`      | `bool`                                | Enables retry button on error. Default is `true`.                                                |
-| `loading`                 | `Widget?`                             | Custom loading indicator.                                                                        |
-| `empty`                   | `Widget?`                             | Widget shown when no items are found.                                                            |
-| `tryAgainBuilder`         | `Widget Function(VoidCallback)?`      | Custom retry widget builder.                                                                     |
-| `useRealItemIndex`        | `bool`                                | If true, uses real indices, ignoring interval items. Default is `true`.                          |
-| `maxRetries`              | `int?`                                | Max number of retries before showing `retryLimitReachedWidget`. If `null`, retries indefinitely. |
-| `retryLimitReachedWidget` | `Widget?`                             | Widget shown when retry limit is reached.                                                        |
-| `automaticLoading`        | `bool`                                | If `true`, loads more items on scroll. If `false`, shows 'Load More' button. Default is `true`.  |
-| `loadMoreBuilder`         | `Widget Function(VoidCallback)?`      | Custom builder for 'Load More' widget.                                                           |
+### Core Data Handling
+
+| Name               | Type                                  | Default | Description                                                                                                              |
+| ------------------ | ------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `loadData`         | `Future<List<T>?> Function(int)`      | –       | Callback responsible for fetching data for each page. Required.                                                          |
+| `itemBuilder`      | `Widget Function(T value, int index)` | –       | Builder function responsible for rendering each item in the list. If `interval` is used, `T` must be nullable. Required. |
+| `maxItems`         | `int`                                 | –       | The maximum number of items to retrieve per request. Required.                                                           |
+| `initialItems`     | `List<T>?`                            | `null`  | A list of items displayed before the first data fetch is initiated.                                                      |
+| `initialPageIndex` | `int`                                 | `0`     | The starting index from which to begin loading data.                                                                     |
+
+---
+
+### Layout & Appearance
+
+| Name               | Type                                  | Default         | Description                                           |
+| ------------------ | ------------------------------------- | --------------- | ----------------------------------------------------- |
+| `scrollDirection`  | `Axis`                                | `Axis.vertical` | Defines the scroll direction of the list.             |
+| `padding`          | `EdgeInsetsGeometry?`                 | `null`          | Defines the internal padding of the list view.        |
+| `header`           | `Widget?`                             | `null`          | A widget displayed at the beginning of the list.      |
+| `separatorBuilder` | `Widget Function(BuildContext, int)?` | `null`          | A builder that inserts separators between list items. |
+| `scrollbars`       | `bool`                                | `true`          | Determines whether scrollbars should be displayed.    |
+
+---
+
+### Behavioral Features
+
+| Name               | Type   | Default | Description                                                                                                                        |
+| ------------------ | ------ | ------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `interval`         | `int?` | `null`  | Specifies an interval at which a `null` value is inserted into the list. `T` must be nullable if set.                              |
+| `useRealItemIndex` | `bool` | `true`  | The index ignores range items and reflects only actual data items.                                                                 |
+| `automaticLoading` | `bool` | `true`  | Determines if new items are fetched automatically on scroll. If `false`, a 'Load More' button is displayed at the end of the list. |
+
+---
+
+### Error Handling
+
+| Name                 | Type   | Default | Description                                                                                                            |
+| -------------------- | ------ | ------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `enableRetryOnError` | `bool` | `true`  | Indicates whether retrying is allowed when an error occurs.                                                            |
+| `maxRetries`         | `int?` | `null`  | The maximum number of retries to attempt after a failed data fetch. If `null`, retries will be attempted indefinitely. |
+
+---
+
+### State-Specific Widgets
+
+| Name                      | Type                             | Default | Description                                                                                            |
+| ------------------------- | -------------------------------- | ------- | ------------------------------------------------------------------------------------------------------ |
+| `loading`                 | `Widget?`                        | `null`  | Custom widget shown during the loading of additional data.                                             |
+| `empty`                   | `Widget?`                        | `null`  | Widget displayed when the initial data fetch returns an empty result.                                  |
+| `tryAgainBuilder`         | `Widget Function(VoidCallback)?` | `null`  | A builder that constructs a custom 'Try Again' widget when an error occurs.                            |
+| `loadMoreBuilder`         | `Widget Function(VoidCallback)?` | `null`  | A builder that constructs a custom 'Load More' widget when `automaticLoading` is `false`.              |
+| `retryLimitReachedWidget` | `Widget?`                        | `null`  | A widget to display when the `maxRetries` limit has been reached. If not provided, a default is shown. |
 
 ## License
 
