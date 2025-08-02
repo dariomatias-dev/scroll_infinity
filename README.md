@@ -1,5 +1,10 @@
 # Scroll Infinity
 
+[![pub package](https://img.shields.io/pub/v/scroll_infinity.svg)](https://pub.dev/packages/scroll_infinity)
+[![likes](https://img.shields.io/pub/likes/scroll_infinity)](https://pub.dev/packages/scroll_infinity/score)
+[![points](https://img.shields.io/pub/points/scroll_infinity)](https://pub.dev/packages/scroll_infinity/score)
+[![popularity](https://img.shields.io/pub/popularity/scroll_infinity)](https://pub.dev/packages/scroll_infinity/score)
+
 **Scroll Infinity** is a Flutter widget that provides an infinite scrollable list with built-in support for paginated data loading. It handles loading, empty, and error states, and offers flexible customization options.
 
 ## Installation
@@ -9,6 +14,17 @@ Add the package to your project:
 ```bash
 flutter pub add scroll_infinity
 ```
+
+## Minimum Requirements
+
+To use `ScrollInfinity`, ensure your Flutter environment meets the following minimum requirements:
+
+| Tool        | Minimum Recommended Version | Version Used in Tests |
+| ----------- | --------------------------- | --------------------- |
+| Flutter SDK | 3.10.0                      | 3.32.7                |
+| Dart SDK    | 3.1.0                       | 3.8.1                 |
+
+The versions listed reflect the environment used during development and testing. Previous versions may work but have not been officially tested.
 
 ## Features
 
@@ -24,6 +40,20 @@ flutter pub add scroll_infinity
 - Inserting ranges with `null` values for identification;
 - Limitation of repetitions;
 - Real item index mapping when using intervals.
+
+## How Pagination Works
+
+The pagination mechanism is based on requesting a new page of items when the user scrolls to the end of the list (or manually triggers loading if `automaticLoading` is disabled). The `loadData` function is called with the current page index, and it should return a list of up to `maxItems`.
+
+If the returned list is empty on the **first request**, the widget assumes there are no items to display and shows an empty state widget or message.
+
+If the request returns `null` at any time, it indicates that an error occurred during data fetching, and the error state will be displayed.
+
+Intervals can be used to insert `null` values periodically in the list, which can serve as placeholders to display ads, dividers, or other special widgets.
+
+## Note on Generic Type `T`
+
+The `ScrollInfinity` widget uses a generic type `T` to support any data model. When using features like `interval`, ensure that `T` is nullable (`T?`), as `null` values will be inserted into the list to represent special items (e.g., ads, dividers or spacers). The `itemBuilder` must handle these cases accordingly.
 
 ## Usage
 
@@ -207,8 +237,6 @@ class _MyAppState extends State<MyApp> {
 | `initialItems`     | `List<T>?`                            | `null`  | A list of items displayed before the first data fetch is initiated.                                                      |
 | `initialPageIndex` | `int`                                 | `0`     | The starting index from which to begin loading data.                                                                     |
 
----
-
 ### Layout & Appearance
 
 | Name               | Type                                  | Default         | Description                                           |
@@ -219,8 +247,6 @@ class _MyAppState extends State<MyApp> {
 | `separatorBuilder` | `Widget Function(BuildContext, int)?` | `null`          | A builder that inserts separators between list items. |
 | `scrollbars`       | `bool`                                | `true`          | Determines whether scrollbars should be displayed.    |
 
----
-
 ### Behavioral Features
 
 | Name               | Type   | Default | Description                                                                                                                        |
@@ -229,16 +255,12 @@ class _MyAppState extends State<MyApp> {
 | `useRealItemIndex` | `bool` | `true`  | The index ignores range items and reflects only actual data items.                                                                 |
 | `automaticLoading` | `bool` | `true`  | Determines if new items are fetched automatically on scroll. If `false`, a 'Load More' button is displayed at the end of the list. |
 
----
-
 ### Error Handling
 
 | Name                 | Type   | Default | Description                                                                                                            |
 | -------------------- | ------ | ------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `enableRetryOnError` | `bool` | `true`  | Indicates whether retrying is allowed when an error occurs.                                                            |
 | `maxRetries`         | `int?` | `null`  | The maximum number of retries to attempt after a failed data fetch. If `null`, retries will be attempted indefinitely. |
-
----
 
 ### State-Specific Widgets
 
