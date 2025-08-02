@@ -21,15 +21,20 @@ class ConfigScreen extends StatefulWidget {
 }
 
 class _ConfigScreenState extends State<ConfigScreen> {
-  Axis _scrollDirection = Axis.vertical;
+  // Notifiers for numeric values
   final _maxItemsNotifier = ValueNotifier<int>(10);
   final _intervalNotifier = ValueNotifier<int>(2);
+  final _maxRetriesNotifier = ValueNotifier<int>(3);
 
+  // Configuration state
+  Axis _scrollDirection = Axis.vertical;
   final _features = <String, bool>{
     'Header': false,
     'Intervals': false,
     'Initial Items': false,
-    'Custom Loader': false,
+    'Automatic Loading': true,
+    'Enable Retries Limit': false,
+    'Custom Builders': false,
   };
 
   void _navigateToExample() {
@@ -41,10 +46,13 @@ class _ConfigScreenState extends State<ConfigScreen> {
             scrollDirection: _scrollDirection,
             maxItems: _maxItemsNotifier.value,
             interval: _intervalNotifier.value,
+            maxRetries: _maxRetriesNotifier.value,
             enableHeader: _features['Header']!,
             enableInterval: _features['Intervals']!,
             enableInitialItems: _features['Initial Items']!,
-            enableCustomLoader: _features['Custom Loader']!,
+            automaticLoading: _features['Automatic Loading']!,
+            enableRetryLimit: _features['Enable Retries Limit']!,
+            enableCustomBuilders: _features['Custom Builders']!,
           );
         },
       ),
@@ -54,6 +62,9 @@ class _ConfigScreenState extends State<ConfigScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Scroll Infinity Config'),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -62,70 +73,55 @@ class _ConfigScreenState extends State<ConfigScreen> {
             children: <Widget>[
               const _FieldTitle(title: 'Scroll Direction'),
               const Divider(),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  RadioListTile<Axis>(
-                    title: const Text('Vertical'),
-                    value: Axis.vertical,
-                    groupValue: _scrollDirection,
-                    onChanged: (value) {
-                      setState(() {
-                        _scrollDirection = value!;
-                      });
-                    },
-                  ),
-                  RadioListTile<Axis>(
-                    title: const Text('Horizontal'),
-                    value: Axis.horizontal,
-                    groupValue: _scrollDirection,
-                    onChanged: (value) {
-                      setState(() {
-                        _scrollDirection = value!;
-                      });
-                    },
-                  ),
-                ],
+              RadioListTile<Axis>(
+                title: const Text('Vertical'),
+                value: Axis.vertical,
+                groupValue: _scrollDirection,
+                onChanged: (value) => setState(() => _scrollDirection = value!),
               ),
-              const SizedBox(height: 28.0),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  const _FieldTitle(
-                    title: 'Max Items Per Fetch',
-                  ),
-                  _QuantitySelector(
-                    notifier: _maxItemsNotifier,
-                  ),
-                ],
+              RadioListTile<Axis>(
+                title: const Text('Horizontal'),
+                value: Axis.horizontal,
+                groupValue: _scrollDirection,
+                onChanged: (value) => setState(() => _scrollDirection = value!),
               ),
-              const SizedBox(height: 40.0),
-              const _FieldTitle(title: 'Enable Features'),
+              const SizedBox(height: 24.0),
+              const _FieldTitle(title: 'Data & Features'),
               const Divider(),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: _features.keys.map((key) {
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      SwitchListTile(
-                        title: Text(key),
-                        value: _features[key]!,
-                        onChanged: (bool value) {
-                          setState(() {
-                            _features[key] = value;
-                          });
-                        },
-                      ),
-                      if (key == 'Intervals' && _features[key]!)
-                        _QuantitySelector(
+              _ConfigRow(
+                label: 'Max Items Per Fetch',
+                control: _QuantitySelector(notifier: _maxItemsNotifier),
+              ),
+              const Divider(),
+              // Feature Toggles
+              ..._features.keys.map((key) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    SwitchListTile(
+                      title: Text(key),
+                      value: _features[key]!,
+                      onChanged: (value) {
+                        setState(() => _features[key] = value);
+                      },
+                    ),
+                    if (key == 'Intervals' && _features[key]!)
+                      _ConfigRow(
+                        label: 'Item Interval',
+                        control: _QuantitySelector(
                           notifier: _intervalNotifier,
                         ),
-                    ],
-                  );
-                }).toList(),
-              ),
-              const Divider(),
+                      ),
+                    if (key == 'Enable Retries Limit' && _features[key]!)
+                      _ConfigRow(
+                        label: 'Max Retries Count',
+                        control: _QuantitySelector(
+                          notifier: _maxRetriesNotifier,
+                        ),
+                      ),
+                  ],
+                );
+              }),
             ],
           ),
         ),
@@ -148,6 +144,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
   }
 }
 
+// region Helper Widgets for ConfigScreen
 class _FieldTitle extends StatelessWidget {
   const _FieldTitle({
     required this.title,
@@ -157,9 +154,41 @@ class _FieldTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: Theme.of(context).textTheme.titleLarge,
+    return Padding(
+      padding: const EdgeInsets.only(
+        top: 8.0,
+      ),
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.titleLarge,
+      ),
+    );
+  }
+}
+
+class _ConfigRow extends StatelessWidget {
+  const _ConfigRow({
+    required this.label,
+    required this.control,
+  });
+
+  final String label;
+  final Widget control;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16.0,
+        vertical: 4.0,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Text(label),
+          control,
+        ],
+      ),
     );
   }
 }
@@ -205,6 +234,7 @@ class _QuantitySelector extends StatelessWidget {
     );
   }
 }
+// endregion
 
 /// Displays the configured ScrollInfinity widget.
 class DisplayScreen extends StatefulWidget {
@@ -213,19 +243,25 @@ class DisplayScreen extends StatefulWidget {
     required this.scrollDirection,
     required this.maxItems,
     required this.interval,
+    required this.maxRetries,
     required this.enableHeader,
     required this.enableInterval,
     required this.enableInitialItems,
-    required this.enableCustomLoader,
+    required this.automaticLoading,
+    required this.enableRetryLimit,
+    required this.enableCustomBuilders,
   });
 
   final Axis scrollDirection;
   final int maxItems;
   final int interval;
+  final int maxRetries;
   final bool enableHeader;
   final bool enableInterval;
   final bool enableInitialItems;
-  final bool enableCustomLoader;
+  final bool automaticLoading;
+  final bool enableRetryLimit;
+  final bool enableCustomBuilders;
 
   @override
   State<DisplayScreen> createState() => _DisplayScreenState();
@@ -234,17 +270,18 @@ class DisplayScreen extends StatefulWidget {
 class _DisplayScreenState extends State<DisplayScreen> {
   var _scrollInfinityKey = UniqueKey();
   final _random = Random();
-  final _initialItems = <Color>[];
 
   /// Simulates a network request to fetch paginated data.
   Future<List<Color>?> _loadData(int pageIndex) async {
     await Future.delayed(const Duration(seconds: 2));
 
+    // Simulate a request failure
     if (pageIndex > 0 && _random.nextInt(4) == 0) {
-      return null; // Simulate a request failure
+      return null;
     }
 
-    final isListEnd = _random.nextInt(5) == 0;
+    // Simulate the end of the list
+    final isListEnd = pageIndex > 3 && _random.nextInt(4) == 0;
     final itemCount =
         isListEnd ? _random.nextInt(widget.maxItems) : widget.maxItems;
 
@@ -258,29 +295,12 @@ class _DisplayScreenState extends State<DisplayScreen> {
     });
   }
 
-  void _resetList() {
-    setState(() {
-      _scrollInfinityKey = UniqueKey();
-    });
-  }
+  void _resetList() => setState(() => _scrollInfinityKey = UniqueKey());
 
   List<Color> _generateInitialItems() {
-    return List.generate(widget.maxItems, (index) {
-      return Color.fromARGB(
-        255,
-        _random.nextInt(256),
-        _random.nextInt(256),
-        _random.nextInt(256),
-      );
-    });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-
-    _initialItems.addAll(
-      _generateInitialItems(),
+    return List.generate(
+      widget.maxItems,
+      (index) => Colors.primaries[index % Colors.primaries.length],
     );
   }
 
@@ -290,36 +310,10 @@ class _DisplayScreenState extends State<DisplayScreen> {
 
     final scrollInfinity = ScrollInfinity<Color?>(
       key: _scrollInfinityKey,
-      scrollDirection: widget.scrollDirection,
+      // Core
       maxItems: widget.maxItems,
-      initialItems: widget.enableInitialItems ? _initialItems : null,
+      initialItems: widget.enableInitialItems ? _generateInitialItems() : null,
       loadData: _loadData,
-      header: widget.enableHeader
-          ? Container(
-              height: isVertical ? 60.0 : double.infinity,
-              width: isVertical ? double.infinity : 160.0,
-              color: Colors.red.withAlpha(204),
-              alignment: Alignment.center,
-              child: const Text(
-                'Header',
-                style: TextStyle(
-                  color: Colors.white,
-                ),
-              ),
-            )
-          : null,
-      loading: widget.enableCustomLoader
-          ? const Center(
-              child: Padding(
-                padding: EdgeInsets.all(20.0),
-                child: CircularProgressIndicator(
-                  strokeWidth: 6,
-                  valueColor: AlwaysStoppedAnimation(Colors.blue),
-                ),
-              ),
-            )
-          : null,
-      interval: widget.enableInterval ? widget.interval : null,
       itemBuilder: (value, index) {
         final width = isVertical ? double.infinity : 200.0;
         final height = isVertical ? 100.0 : double.infinity;
@@ -330,9 +324,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
             height: height,
             color: Colors.grey.shade200,
             alignment: Alignment.center,
-            child: Text(
-              'Interval Widget $index',
-            ),
+            child: Text('Interval Widget $index'),
           );
         }
 
@@ -350,6 +342,75 @@ class _DisplayScreenState extends State<DisplayScreen> {
           ),
         );
       },
+      // Layout
+      scrollDirection: widget.scrollDirection,
+      header: widget.enableHeader
+          ? Container(
+              color: Colors.red.withAlpha(204),
+              alignment: Alignment.center,
+              padding: const EdgeInsets.all(8.0),
+              height: 52.0,
+              child: const Text(
+                'Header',
+                style: TextStyle(
+                  color: Colors.white,
+                ),
+              ),
+            )
+          : null,
+      // Behavior
+      interval: widget.enableInterval ? widget.interval : null,
+      automaticLoading: widget.automaticLoading,
+      // Error Handling
+      maxRetries: widget.enableRetryLimit ? widget.maxRetries : null,
+      // Custom State Widgets
+      loading: widget.enableCustomBuilders
+          ? const Center(
+              child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: CircularProgressIndicator(
+                  strokeWidth: 6.0,
+                  valueColor: AlwaysStoppedAnimation(
+                    Colors.orange,
+                  ),
+                ),
+              ),
+            )
+          : null,
+      loadMoreBuilder: widget.enableCustomBuilders
+          ? (action) {
+              return TextButton.icon(
+                onPressed: action,
+                icon: const Icon(Icons.add),
+                label: const Text('Load More'),
+              );
+            }
+          : null,
+      tryAgainBuilder: widget.enableCustomBuilders
+          ? (action) {
+              return Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Center(
+                  child: OutlinedButton.icon(
+                    onPressed: action,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Please Try Again'),
+                  ),
+                ),
+              );
+            }
+          : null,
+      retryLimitReachedWidget: widget.enableCustomBuilders
+          ? const Card(
+              margin: EdgeInsets.all(16.0),
+              child: Padding(
+                padding: EdgeInsets.all(16.0),
+                child: Text(
+                  'Retry limit reached. Please try again later.',
+                ),
+              ),
+            )
+          : null,
     );
 
     return Scaffold(
