@@ -171,7 +171,7 @@ class _MyAppState extends State<MyApp> {
 
 ---
 
-### With Interval
+### Vertical Scrolling With Interval
 
 ```dart
 import 'package:flutter/material.dart';
@@ -218,6 +218,167 @@ class _MyAppState extends State<MyApp> {
               title: Text('Item $value'),
             );
           },
+        ),
+      ),
+    );
+  }
+}
+```
+
+### Advanced Usage
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:scroll_infinity/scroll_infinity.dart';
+
+void main() {
+  runApp(
+    const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: MyApp(),
+    ),
+  );
+}
+
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  static const _maxItemsPerPage = 10;
+  static const _maxRetries = 3;
+
+  int _retryCount = 0;
+
+  Future<List<int>?> _fetchData(int page) async {
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (page == 3 && _retryCount < _maxRetries) {
+      _retryCount++;
+
+      return null;
+    }
+
+    return List.generate(
+      _maxItemsPerPage,
+      (index) => page * _maxItemsPerPage + index,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: ScrollInfinity<int?>(
+          initialItems: const <int>[0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+          initialPageIndex: 1,
+          maxItems: _maxItemsPerPage,
+          loadData: _fetchData,
+          interval: 4,
+          automaticLoading: false,
+          maxRetries: _maxRetries,
+          header: Container(
+            padding: const EdgeInsets.all(12.0),
+            color: Colors.blue.shade50,
+            child: const Center(
+              child: Text(
+                'This is a header widget',
+                style: TextStyle(
+                  fontSize: 18.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(
+            vertical: 8.0,
+          ),
+          separatorBuilder: (context, index) {
+            return const Divider(
+              height: 1.0,
+              color: Colors.grey,
+            );
+          },
+          itemBuilder: (item, index) {
+            if (item == null) {
+              return Container(
+                margin: const EdgeInsets.symmetric(
+                  vertical: 10.0,
+                  horizontal: 16.0,
+                ),
+                padding: const EdgeInsets.all(16.0),
+                color: Colors.yellow.shade200,
+                child: Center(
+                  child: Text(
+                    'Sponsored Ad Banner $index',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            return ListTile(
+              leading: CircleAvatar(
+                child: Text('$item'),
+              ),
+              title: Text('Item #$item'),
+              subtitle: Text(
+                'This is the subtitle for item #$item',
+              ),
+            );
+          },
+          loading: const Padding(
+            padding: EdgeInsets.all(20.0),
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          ),
+          empty: const Padding(
+            padding: EdgeInsets.all(20.0),
+            child: Center(
+              child: Text(
+                'No items available to display',
+              ),
+            ),
+          ),
+          tryAgainBuilder: (onTryAgain) {
+            return Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: ElevatedButton.icon(
+                onPressed: onTryAgain,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Try Again'),
+              ),
+            );
+          },
+          loadMoreBuilder: (onLoadMore) {
+            return Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: ElevatedButton(
+                onPressed: onLoadMore,
+                child: const Text(
+                  'Load More Items',
+                ),
+              ),
+            );
+          },
+          retryLimitReachedWidget: const Padding(
+            padding: EdgeInsets.all(20.0),
+            child: Center(
+              child: Text(
+                'Maximum retry attempts reached.\nPlease try again later.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.red,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );

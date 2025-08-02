@@ -173,7 +173,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
     if (widget.initialItems != null) {
       _processAndAddItems(widget.initialItems!);
-      _isEndOfList = widget.initialItems!.length < widget.maxItems;
       _checkIfScreenIsFilledAndFetchMore();
     } else {
       _fetchNextPage();
