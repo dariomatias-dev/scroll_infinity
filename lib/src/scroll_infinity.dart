@@ -5,30 +5,38 @@ import 'package:flutter/material.dart';
 /// A widget that displays a scrollable list with support for paginated data loading.
 ///
 /// As the user scrolls, additional items are automatically fetched to fill the viewport.
-/// This widget also provides built-in support for handling loading, empty, and error states.
 class ScrollInfinity<T> extends StatefulWidget {
   const ScrollInfinity({
     super.key,
+    // Core Data Handling
     required this.loadData,
     required this.itemBuilder,
     required this.maxItems,
     this.initialItems,
     this.initialPageIndex = 0,
+
+    // Layout & Appearance
     this.scrollDirection = Axis.vertical,
     this.padding,
     this.header,
     this.separatorBuilder,
     this.scrollbars = true,
+
+    // Behavioral Features
     this.interval,
+    this.useRealItemIndex = true,
+    this.automaticLoading = true,
+
+    // Error Handling
     this.enableRetryOnError = true,
+    this.maxRetries,
+
+    // State-Specific Widgets
     this.loading,
     this.empty,
     this.tryAgainBuilder,
-    this.useRealItemIndex = true,
-    this.maxRetries,
-    this.retryLimitReachedWidget,
-    this.automaticLoading = true,
     this.loadMoreBuilder,
+    this.retryLimitReachedWidget,
   })  : assert(
           initialPageIndex >= 0,
           'The initial page index cannot be less than zero.',
@@ -46,6 +54,8 @@ class ScrollInfinity<T> extends StatefulWidget {
           'maxRetries cannot be negative.',
         );
 
+  // Core Data Handling
+
   /// Callback responsible for fetching data for each page.
   final Future<List<T>?> Function(
     int pageIndex,
@@ -54,7 +64,7 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// Builder function responsible for rendering each item in the list.
   ///
   /// When an interval is used, `value` will be `null` for interval items.
-  /// It is the developer's responsibility to use a nullable type for `T`
+  /// A nullable type must be used for `T`
   /// (e.g., `String?`) if `interval` is non-null.
   final Widget Function(
     T value,
@@ -69,6 +79,8 @@ class ScrollInfinity<T> extends StatefulWidget {
 
   /// The starting index from which to begin loading data.
   final int initialPageIndex;
+
+  // Layout & Appearance
 
   /// Defines the scroll direction of the list. Defaults to [Axis.vertical].
   final Axis scrollDirection;
@@ -88,11 +100,33 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// Determines whether scrollbars should be displayed. Defaults to `true`.
   final bool scrollbars;
 
+  // Behavioral Features
+
   /// Specifies an interval at which a `null` value is inserted into the list.
   final int? interval;
 
+  /// The index ignores range items and reflects only actual data items.
+  ///
+  /// The default is `true`.
+  final bool useRealItemIndex;
+
+  /// Determines if new items are fetched automatically on scroll.
+  ///
+  /// If `false`, a 'Load More' button will be displayed at the end of the list.
+  /// Defaults to `true`.
+  final bool automaticLoading;
+
+  // Error Handling
+
   /// Indicates whether retrying is allowed when an error occurs.
   final bool enableRetryOnError;
+
+  /// The maximum number of retries to attempt after a failed data fetch.
+  ///
+  /// If `null`, retries will be attempted indefinitely. Defaults to `null`.
+  final int? maxRetries;
+
+  // State-Specific Widgets
 
   /// Custom widget shown during the loading of additional data.
   final Widget? loading;
@@ -105,31 +139,15 @@ class ScrollInfinity<T> extends StatefulWidget {
     VoidCallback action,
   )? tryAgainBuilder;
 
-  /// The index ignores range items and reflects only actual data items.
-  ///
-  /// The default is `true`.
-  final bool useRealItemIndex;
-
-  /// The maximum number of retries to attempt after a failed data fetch.
-  ///
-  /// If `null`, retries will be attempted indefinitely. Defaults to `null`.
-  final int? maxRetries;
+  /// A builder that constructs a custom 'Load More' widget when [automaticLoading] is `false`.
+  final Widget Function(
+    VoidCallback action,
+  )? loadMoreBuilder;
 
   /// A widget to display when the `maxRetries` limit has been reached.
   ///
   /// If not provided, a default message is shown.
   final Widget? retryLimitReachedWidget;
-
-  /// Determines if new items are fetched automatically on scroll.
-  ///
-  /// If `false`, a 'Load More' button will be displayed at the end of the list.
-  /// Defaults to `true`.
-  final bool automaticLoading;
-
-  /// A builder that constructs a custom 'Load More' widget when [automaticLoading] is `false`.
-  final Widget Function(
-    VoidCallback action,
-  )? loadMoreBuilder;
 
   @override
   State<ScrollInfinity<T>> createState() => _ScrollInfinityState<T>();
