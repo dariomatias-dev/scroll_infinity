@@ -27,6 +27,8 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.useRealItemIndex = true,
     this.maxRetries,
     this.retryLimitReachedWidget,
+    this.automaticLoading = true,
+    this.loadMoreBuilder,
   })  : assert(
           initialPageIndex >= 0,
           'The initial page index cannot be less than zero.',
@@ -118,6 +120,17 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// If not provided, a default message is shown.
   final Widget? retryLimitReachedWidget;
 
+  /// Determines if new items are fetched automatically on scroll.
+  ///
+  /// If `false`, a 'Load More' button will be displayed at the end of the list.
+  /// Defaults to `true`.
+  final bool automaticLoading;
+
+  /// A builder that constructs a custom 'Load More' widget when [automaticLoading] is `false`.
+  final Widget Function(
+    VoidCallback action,
+  )? loadMoreBuilder;
+
   @override
   State<ScrollInfinity<T>> createState() => _ScrollInfinityState<T>();
 }
@@ -169,6 +182,8 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   }
 
   void _onScroll() {
+    if (!widget.automaticLoading) return;
+
     if (_scrollController.position.pixels >=
             _scrollController.position.maxScrollExtent - 200 &&
         !_isLoading &&
@@ -202,6 +217,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   void _checkIfScreenIsFilledAndFetchMore() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted &&
+          widget.automaticLoading &&
           !_isEndOfList &&
           !_isLoading &&
           _scrollController.position.maxScrollExtent == 0) {
@@ -252,8 +268,13 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     final hasHeader = widget.header != null;
     final headerCount = hasHeader ? 1 : 0;
 
-    final hasFooter =
-        _isLoading || _hasError || (_isEndOfList && _displayItems.isEmpty);
+    final isManualLoadReady =
+        !widget.automaticLoading && !_isEndOfList && !_isLoading && !_hasError;
+
+    final hasFooter = _isLoading ||
+        _hasError ||
+        isManualLoadReady ||
+        (_isEndOfList && _displayItems.isEmpty);
 
     final itemCount = headerCount + _displayItems.length + (hasFooter ? 1 : 0);
 
@@ -302,6 +323,9 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
         if (_isLoading) {
           return _buildLoadingIndicator();
         }
+        if (isManualLoadReady) {
+          return _buildLoadMoreWidget();
+        }
         if (_isEndOfList && _displayItems.isEmpty) {
           return widget.empty ?? const Center(child: Text('No items found.'));
         }
@@ -344,6 +368,22 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
         child: ElevatedButton(
           onPressed: _fetchNextPage,
           child: const Text('Try Again'),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadMoreWidget() {
+    if (widget.loadMoreBuilder != null) {
+      return widget.loadMoreBuilder!(_fetchNextPage);
+    }
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: ElevatedButton(
+          onPressed: _fetchNextPage,
+          child: const Text('Load More'),
         ),
       ),
     );
