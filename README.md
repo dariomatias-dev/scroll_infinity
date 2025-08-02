@@ -15,16 +15,14 @@ Add the package to your project:
 flutter pub add scroll_infinity
 ```
 
-## Minimum Requirements
+## Development Environment
 
-To use `ScrollInfinity`, ensure your Flutter environment meets the following minimum requirements:
+The following versions were used during the development and testing of `ScrollInfinity`. Other versions might work, but they haven't been officially tested:
 
-| Tool        | Minimum Recommended Version | Version Used in Tests |
-| ----------- | --------------------------- | --------------------- |
-| Flutter SDK | 3.10.0                      | 3.32.7                |
-| Dart SDK    | 3.1.0                       | 3.8.1                 |
-
-The versions listed reflect the environment used during development and testing. Previous versions may work but have not been officially tested.
+| Tool        | Version Used |
+| ----------- | ------------ |
+| Flutter SDK | 3.32.7       |
+| Dart SDK    | 3.8.1        |
 
 ## Features
 
