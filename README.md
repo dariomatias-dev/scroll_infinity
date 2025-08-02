@@ -1,6 +1,6 @@
 # Scroll Infinity
 
-Scroll Infinity is a Flutter widget that provides an infinite scrolling list with support for paginated data loading, including loading, error, and empty states handling.
+**Scroll Infinity** is a Flutter widget that provides an infinite scrollable list with built-in support for paginated data loading. It handles loading, empty, and error states, and offers flexible customization options.
 
 ## Installation
 
@@ -12,18 +12,20 @@ flutter pub add scroll_infinity
 
 ## Features
 
-- Infinite scroll with pagination support
-- Handling of loading, error, and empty states
-- Insertion of separators between items
-- Support for both vertical and horizontal scrolling
-- Insertion of `null` values at defined intervals
-- Optional header widget support
-- Optional scrollbars
-- Custom retry button on error
-- Support for initial items
-- Real item index mapping when using intervals
+- Infinite scroll with pagination;
+- Manual or automatic data loading;
+- Custom "Load More" and "Try Again" builders;
+- Loading, error, and empty states handling;
+- Optional scrollbars;
+- Optional header widget;
+- Optional separators between items;
+- Vertical and horizontal scrolling support;
+- Support for initial items;
+- Inserting ranges with `null` values for identification;
+- Limitation of repetitions;
+- Real item index mapping when using intervals.
 
-## Usage Example
+## Usage
 
 ### Vertical Scrolling
 
@@ -197,35 +199,39 @@ class _MyAppState extends State<MyApp> {
 
 ## Properties
 
-| Name                 | Type                                   | Description                                                                                |
-| -------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `loadData`           | `Future<List<T>?> Function(int)`       | Function responsible for loading data per page.                                            |
-| `itemBuilder`        | `Widget Function(T? value, int index)` | Builds each list item. If `interval` is set, `value` can be `null`.                        |
-| `maxItems`           | `int`                                  | Maximum number of items per page.                                                          |
-| `initialItems`       | `List<T>?`                             | Initial items to display before the first request.                                         |
-| `initialPageIndex`   | `int`                                  | Starting page index. Default is `0`.                                                       |
-| `scrollDirection`    | `Axis`                                 | Scroll direction: `Axis.vertical` or `Axis.horizontal`. Default is `Axis.vertical`.        |
-| `padding`            | `EdgeInsetsGeometry?`                  | Inner padding for the list.                                                                |
-| `header`             | `Widget?`                              | Widget displayed at the beginning of the list.                                             |
-| `separatorBuilder`   | `Widget Function(BuildContext, int)?`  | Builder for separators between items.                                                      |
-| `scrollbars`         | `bool`                                 | Enables scrollbars if `true`. Default is `true`.                                           |
-| `interval`           | `int?`                                 | Defines the interval for inserting `null` values.                                          |
-| `enableRetryOnError` | `bool`                                 | Enables retry button on error. Default is `true`.                                          |
-| `loading`            | `Widget?`                              | Widget displayed during loading.                                                           |
-| `empty`              | `Widget?`                              | Widget displayed when no data is available.                                                |
-| `tryAgainBuilder`    | `Widget Function(VoidCallback)?`       | Custom builder for the retry button.                                                       |
-| `useRealItemIndex`   | `bool`                                 | If true, uses only actual item indices, skipping interval placeholders. Default is `true`. |
+| Name                      | Type                                  | Description                                                                                      |
+| ------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `loadData`                | `Future<List<T>?> Function(int)`      | Fetches paginated data. Required.                                                                |
+| `itemBuilder`             | `Widget Function(T value, int index)` | Builds each list item. If `interval` is used, `T` must be nullable.                              |
+| `maxItems`                | `int`                                 | Max number of items per request. Required.                                                       |
+| `initialItems`            | `List<T>?`                            | Optional initial items shown before the first load.                                              |
+| `initialPageIndex`        | `int`                                 | Starting page index. Default is `0`.                                                             |
+| `scrollDirection`         | `Axis`                                | Scrolling direction. Default is `Axis.vertical`.                                                 |
+| `padding`                 | `EdgeInsetsGeometry?`                 | Inner padding of the list.                                                                       |
+| `header`                  | `Widget?`                             | Widget shown at the start of the list.                                                           |
+| `separatorBuilder`        | `Widget Function(BuildContext, int)?` | Builder for item separators.                                                                     |
+| `scrollbars`              | `bool`                                | Whether scrollbars are visible. Default is `true`.                                               |
+| `interval`                | `int?`                                | Inserts `null` every `interval` items. `T` must be nullable if set.                              |
+| `enableRetryOnError`      | `bool`                                | Enables retry button on error. Default is `true`.                                                |
+| `loading`                 | `Widget?`                             | Custom loading indicator.                                                                        |
+| `empty`                   | `Widget?`                             | Widget shown when no items are found.                                                            |
+| `tryAgainBuilder`         | `Widget Function(VoidCallback)?`      | Custom retry widget builder.                                                                     |
+| `useRealItemIndex`        | `bool`                                | If true, uses real indices, ignoring interval items. Default is `true`.                          |
+| `maxRetries`              | `int?`                                | Max number of retries before showing `retryLimitReachedWidget`. If `null`, retries indefinitely. |
+| `retryLimitReachedWidget` | `Widget?`                             | Widget shown when retry limit is reached.                                                        |
+| `automaticLoading`        | `bool`                                | If `true`, loads more items on scroll. If `false`, shows 'Load More' button. Default is `true`.  |
+| `loadMoreBuilder`         | `Widget Function(VoidCallback)?`      | Custom builder for 'Load More' widget.                                                           |
 
 ## License
 
-Distributed under the MIT License. See the `LICENSE` file for more information.
+Distributed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ## Author
 
-Developed by [Dário Matias](https://github.com/dariomatias-dev).
+Developed by [Dário Matias](https://github.com/dariomatias-dev)
 
-## Donations
+## Support
 
-Help maintain the project with donations.
+If you find this package helpful, consider supporting it:
 
-[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/dariomatias)
+[![Buy Me a Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/dariomatias)
