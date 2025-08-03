@@ -365,7 +365,7 @@ class _MyAppState extends State<MyApp> {
               ),
             );
           },
-          retryLimitReachedWidget: const Padding(
+          retryLimitReached: const Padding(
             padding: EdgeInsets.all(20.0),
             child: Center(
               child: Text(
@@ -423,13 +423,13 @@ class _MyAppState extends State<MyApp> {
 
 ### State-Specific Widgets
 
-| Name                      | Type                             | Default | Description                                                                                            |
-| ------------------------- | -------------------------------- | ------- | ------------------------------------------------------------------------------------------------------ |
-| `loading`                 | `Widget?`                        | `null`  | Custom widget shown during the loading of additional data.                                             |
-| `empty`                   | `Widget?`                        | `null`  | Widget displayed when the initial data fetch returns an empty result.                                  |
-| `tryAgainBuilder`         | `Widget Function(VoidCallback)?` | `null`  | A builder that constructs a custom 'Try Again' widget when an error occurs.                            |
-| `loadMoreBuilder`         | `Widget Function(VoidCallback)?` | `null`  | A builder that constructs a custom 'Load More' widget when `automaticLoading` is `false`.              |
-| `retryLimitReachedWidget` | `Widget?`                        | `null`  | A widget to display when the `maxRetries` limit has been reached. If not provided, a default is shown. |
+| Name                | Type                             | Default | Description                                                                                            |
+| ------------------- | -------------------------------- | ------- | ------------------------------------------------------------------------------------------------------ |
+| `loading`           | `Widget?`                        | `null`  | Custom widget shown during the loading of additional data.                                             |
+| `empty`             | `Widget?`                        | `null`  | Widget displayed when the initial data fetch returns an empty result.                                  |
+| `tryAgainBuilder`   | `Widget Function(VoidCallback)?` | `null`  | A builder that constructs a custom 'Try Again' widget when an error occurs.                            |
+| `loadMoreBuilder`   | `Widget Function(VoidCallback)?` | `null`  | A builder that constructs a custom 'Load More' widget when `automaticLoading` is `false`.              |
+| `retryLimitReached` | `Widget?`                        | `null`  | A widget to display when the `maxRetries` limit has been reached. If not provided, a default is shown. |
 
 ## License
 

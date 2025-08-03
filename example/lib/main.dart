@@ -400,7 +400,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
               );
             }
           : null,
-      retryLimitReachedWidget: widget.enableCustomBuilders
+      retryLimitReached: widget.enableCustomBuilders
           ? const Card(
               margin: EdgeInsets.all(16.0),
               child: Padding(

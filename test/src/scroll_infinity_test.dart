@@ -226,7 +226,7 @@ void main() {
               ScrollInfinity<String>(
                 maxItems: 10,
                 maxRetries: 2, // Limit to 2 total attempts.
-                retryLimitReachedWidget: const Text('No more retries allowed'),
+                retryLimitReached: const Text('No more retries allowed'),
                 loadData: (page) {
                   callCount++;
                   throw Exception('Failed to load data');

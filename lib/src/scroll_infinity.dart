@@ -36,7 +36,7 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.empty,
     this.tryAgainBuilder,
     this.loadMoreBuilder,
-    this.retryLimitReachedWidget,
+    this.retryLimitReached,
   })  : assert(
           initialPageIndex >= 0,
           'The initial page index cannot be less than zero.',
@@ -147,7 +147,7 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// A widget to display when the `maxRetries` limit has been reached.
   ///
   /// If not provided, a default message is shown.
-  final Widget? retryLimitReachedWidget;
+  final Widget? retryLimitReached;
 
   @override
   State<ScrollInfinity<T>> createState() => _ScrollInfinityState<T>();
@@ -366,7 +366,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     if (!widget.enableRetryOnError) return const SizedBox.shrink();
 
     if (widget.maxRetries != null && _retryCount >= widget.maxRetries!) {
-      return widget.retryLimitReachedWidget ??
+      return widget.retryLimitReached ??
           const Center(
             child: Padding(
               padding: EdgeInsets.all(16.0),
