@@ -1,11 +1,11 @@
-# Scroll Infinity
+# ScrollInfinity
 
 [![pub package](https://img.shields.io/pub/v/scroll_infinity.svg)](https://pub.dev/packages/scroll_infinity)
 [![likes](https://img.shields.io/pub/likes/scroll_infinity)](https://pub.dev/packages/scroll_infinity/score)
 [![points](https://img.shields.io/pub/points/scroll_infinity)](https://pub.dev/packages/scroll_infinity/score)
 [![popularity](https://img.shields.io/pub/popularity/scroll_infinity)](https://pub.dev/packages/scroll_infinity/score)
 
-**Scroll Infinity** is a Flutter widget that provides an infinite scrollable list with built-in support for paginated data loading. It handles loading, empty, and error states, and offers flexible customization options.
+**ScrollInfinity** is a Flutter widget that provides an infinite scrollable list with built-in support for paginated data loading. It handles loading, empty, and error states, and offers flexible customization options.
 
 ## Installation
 
@@ -35,8 +35,8 @@ The following versions were used during the development and testing of `ScrollIn
 - Optional separators between items;
 - Vertical and horizontal scrolling support;
 - Support for initial items;
-- Inserting ranges with `null` values for identification;
-- Limitation of repetitions;
+- Inserting ranges with `null` value for identification;
+- Limitation of retry repetitions;
 - Real item index mapping when using intervals.
 
 ## How Pagination Works
@@ -408,11 +408,11 @@ class _MyAppState extends State<MyApp> {
 
 ### Behavioral Features
 
-| Name               | Type   | Default | Description                                                                                                                        |
-| ------------------ | ------ | ------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `interval`         | `int?` | `null`  | Specifies an interval at which a `null` value is inserted into the list. `T` must be nullable if set.                              |
-| `useRealItemIndex` | `bool` | `true`  | The index ignores range items and reflects only actual data items.                                                                 |
-| `automaticLoading` | `bool` | `true`  | Determines if new items are fetched automatically on scroll. If `false`, a 'Load More' button is displayed at the end of the list. |
+| Name               | Type   | Default | Description                                                                                                                                       |
+| ------------------ | ------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `interval`         | `int?` | `null`  | Specifies an interval at which a `null` value is inserted into the list. `T` must be nullable if set.                                             |
+| `useRealItemIndex` | `bool` | `true`  | If `true`, real data items have their own index that ignores interval (`null`) items — meaning data and interval items have independent indexing. |
+| `automaticLoading` | `bool` | `true`  | Determines if new items are fetched automatically on scroll. If `false`, a 'Load More' button is displayed at the end of the list.                |
 
 ### Error Handling
 
