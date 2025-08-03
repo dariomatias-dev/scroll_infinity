@@ -3,8 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 /// A widget that displays a scrollable list with support for paginated data loading.
-///
-/// As the user scrolls, additional items are automatically fetched to fill the viewport.
 class ScrollInfinity<T> extends StatefulWidget {
   const ScrollInfinity({
     super.key,
@@ -105,7 +103,8 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// Specifies an interval at which a `null` value is inserted into the list.
   final int? interval;
 
-  /// The index ignores range items and reflects only actual data items.
+  /// If `true`, real data items have their own index that ignores interval (`null`) items,
+  /// meaning data items and interval items have independent indexes.
   ///
   /// The default is `true`.
   final bool useRealItemIndex;
@@ -121,9 +120,9 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// Indicates whether retrying is allowed when an error occurs.
   final bool enableRetryOnError;
 
-  /// The maximum number of retries to attempt after a failed data fetch.
+  /// Maximum number of retries after a failed data fetch.
   ///
-  /// If `null`, retries will be attempted indefinitely. Defaults to `null`.
+  /// If `null`, retries will be attempted indefinitely. The default is `null`.
   final int? maxRetries;
 
   // State-Specific Widgets
@@ -144,7 +143,7 @@ class ScrollInfinity<T> extends StatefulWidget {
     VoidCallback action,
   )? loadMoreBuilder;
 
-  /// A widget to display when the `maxRetries` limit has been reached.
+  /// A widget to display when the [maxRetries] limit has been reached.
   ///
   /// If not provided, a default message is shown.
   final Widget? retryLimitReached;
