@@ -1,3 +1,25 @@
+## [0.5.1] - 2025-08-03
+
+- **Retry limiter and custom message**: Added support to limit the number of retry attempts, displaying a custom message when the limit is reached.
+- **Manual loading mode**: Added `automaticLoading` and `loadMoreBuilder` properties, allowing toggling between automatic and manual loading (with a "load more" button).
+- **Property renaming**: Renamed `retryLimitReachedWidget` to `retryLimitReached` for naming consistency.
+- **Improved example**:
+
+  - Added new customization options to the example project.
+  - Included a configurable screen demonstrating package usage with applied options on a second screen.
+
+- **Enhanced documentation**:
+
+  - Updated the package description.
+  - Added a section about the development environment.
+  - Added advanced usage examples and more detailed feature descriptions.
+  - Reorganized and grouped properties for easier reading.
+  - Added a subsection referencing the configurable example in the `example` directory.
+  - Fixed minor documentation errors and inconsistencies.
+
+- **Testing improvements**: Tests reorganized and new cases added to ensure feature reliability.
+- **Internal refactor**: Removed unnecessary nullability from the generic type.
+
 ## [0.5.0] - 2025-07-30
 
 - **Dynamic Index Feature**: Introduced the `useRealItemIndex` property to allow differentiation between real data item indexes and interval indexes.

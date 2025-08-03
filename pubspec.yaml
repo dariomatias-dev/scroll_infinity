@@ -1,6 +1,6 @@
 name: scroll_infinity
 description: ScrollInfinity is a Flutter package that provides a widget with infinite scrolling and paginated loading support, making it easier to build dynamic and endless listings.
-version: 0.5.0
+version: 0.5.1
 homepage: https://github.com/dariomatias-dev/scroll_infinity
 
 environment:
