@@ -63,7 +63,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Scroll Infinity Config'),
+        title: const Text('ScrollInfinity Config'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(

@@ -445,7 +445,7 @@ Distributed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ## Author
 
-Developed by [Dário Matias](https://github.com/dariomatias-dev)
+Developed by [Dário Matias](https://github.com/dariomatias-dev).
 
 ## Support
 
