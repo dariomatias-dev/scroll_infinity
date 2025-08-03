@@ -384,6 +384,14 @@ class _MyAppState extends State<MyApp> {
 }
 ```
 
+---
+
+### Full Example with Configuration Screen
+
+A more advanced and complete example is available in the `example` directory of the repository.
+It includes a configuration screen for adjusting `ScrollInfinity` options, and a separate screen that displays the infinite scroll with the selected settings applied:
+[example/lib/main.dart](https://github.com/dariomatias-dev/scroll_infinity/blob/main/example/lib/main.dart)
+
 ## Properties
 
 ### Core Data Handling
