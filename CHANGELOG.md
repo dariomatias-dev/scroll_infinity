@@ -1,3 +1,7 @@
+## [0.5.2] - 2025-08-13
+
+- **Documentation Update**: Standardized the README documentation to align with the formatting and style of other projects.
+
 ## [0.5.1] - 2025-08-03
 
 - **Retry limiter and custom message**: Added support to limit the number of retry attempts, displaying a custom message when the limit is reached.
