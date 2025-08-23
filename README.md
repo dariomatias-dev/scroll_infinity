@@ -69,8 +69,8 @@ It offers customization for manual/automatic loading, custom state widgets, and 
 
 ## Built With
 
-- **Flutter** – UI toolkit by Google for mobile, web, and desktop
-- **Dart** – Language optimized for fast cross-platform apps
+- **[Flutter](https://flutter.dev/)** – A UI toolkit by Google for building beautiful, natively compiled applications for mobile, web, and desktop from a single codebase.  
+- **[Dart](https://dart.dev/)** – The programming language used for Flutter, optimized for building fast apps on any platform.
 
 ## Getting Started
 
