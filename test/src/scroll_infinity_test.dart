@@ -559,6 +559,33 @@ void main() {
           expect(listView.padding, padding);
         },
       );
+
+      testWidgets(
+        'Applies the reverse property to the underlying ListView',
+        (tester) async {
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                reverse: true,
+                loadData: (page) {
+                  return mockLoadData(
+                    page,
+                    totalItems: 5,
+                    maxItemsPerPage: 5,
+                  );
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          final listView = tester.widget<ListView>(find.byType(ListView));
+          expect(listView.reverse, isTrue);
+        },
+      );
     });
 
     /// Tests covering how the widget reacts to `didUpdateWidget` when its

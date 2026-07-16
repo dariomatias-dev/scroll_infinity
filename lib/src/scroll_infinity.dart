@@ -21,6 +21,7 @@ class ScrollInfinity<T> extends StatefulWidget {
 
     // Layout & Appearance
     this.scrollDirection = Axis.vertical,
+    this.reverse = false,
     this.padding,
     this.header,
     this.separatorBuilder,
@@ -89,6 +90,14 @@ class ScrollInfinity<T> extends StatefulWidget {
 
   /// Defines the scroll direction of the list. Defaults to [Axis.vertical].
   final Axis scrollDirection;
+
+  /// Whether the list scrolls in the reading direction (`false`, the
+  /// default) or the opposite direction (`true`).
+  ///
+  /// Useful for chat-style layouts: with `reverse: true`, item `0` (the
+  /// newest message) is drawn at the end of the list, and pagination
+  /// (triggered by scrolling toward the list's start) loads older items.
+  final bool reverse;
 
   /// Defines the internal padding of the list view.
   final EdgeInsetsGeometry? padding;
@@ -284,6 +293,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
     return ListView.separated(
       controller: _scrollController,
       scrollDirection: widget.scrollDirection,
+      reverse: widget.reverse,
       padding: widget.padding,
       itemCount: itemCount,
       separatorBuilder: (context, index) {

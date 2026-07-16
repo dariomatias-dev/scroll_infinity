@@ -62,6 +62,7 @@ It offers customization for manual/automatic loading, custom state widgets, and 
 - Loading, error, and empty states handling
 - Optional scrollbars, header widget, and separators
 - Vertical and horizontal scrolling support
+- Reversed scroll direction (e.g. chat-style lists)
 - Initial items support
 - Insert null values at intervals (ads/dividers)
 - Retry attempts limit on error
@@ -268,13 +269,14 @@ class _MyAppState extends State<MyApp> {
 
 **Layout & Appearance**
 
-| Name             | Type                                  | Default  | Description      |
-| ---------------- | ------------------------------------- | -------- | ---------------- |
-| scrollDirection  | `Axis`                                | vertical | Scroll direction |
-| padding          | `EdgeInsetsGeometry?`                 | null     | Internal padding |
-| header           | `Widget?`                             | null     | Header widget    |
-| separatorBuilder | `Widget Function(BuildContext, int)?` | null     | Separators       |
-| scrollbars       | `bool`                                | true     | Show scrollbars  |
+| Name             | Type                                  | Default  | Description                                        |
+| ---------------- | ------------------------------------- | -------- | -------------------------------------------------- |
+| scrollDirection  | `Axis`                                | vertical | Scroll direction                                   |
+| reverse          | `bool`                                | false    | Reverses scroll/growth direction (e.g. chat lists) |
+| padding          | `EdgeInsetsGeometry?`                 | null     | Internal padding                                   |
+| header           | `Widget?`                             | null     | Header widget                                      |
+| separatorBuilder | `Widget Function(BuildContext, int)?` | null     | Separators                                         |
+| scrollbars       | `bool`                                | true     | Show scrollbars                                    |
 
 **Behavioral Features**
 
