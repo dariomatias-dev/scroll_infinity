@@ -13,7 +13,9 @@ void main() {
   );
 }
 
+/// Screen for configuring the [ScrollInfinity] example before viewing it.
 class ConfigScreen extends StatefulWidget {
+  /// Creates a [ConfigScreen].
   const ConfigScreen({super.key});
 
   @override
@@ -38,23 +40,25 @@ class _ConfigScreenState extends State<ConfigScreen> {
   };
 
   void _navigateToExample() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) {
-          return DisplayScreen(
-            scrollDirection: _scrollDirection,
-            maxItems: _maxItemsNotifier.value,
-            interval: _intervalNotifier.value,
-            maxRetries: _maxRetriesNotifier.value,
-            enableHeader: _features['Header']!,
-            enableInterval: _features['Intervals']!,
-            enableInitialItems: _features['Initial Items']!,
-            automaticLoading: _features['Automatic Loading']!,
-            enableRetryLimit: _features['Enable Retries Limit']!,
-            enableCustomBuilders: _features['Custom Builders']!,
-          );
-        },
+    unawaited(
+      Navigator.push<void>(
+        context,
+        MaterialPageRoute<void>(
+          builder: (context) {
+            return DisplayScreen(
+              scrollDirection: _scrollDirection,
+              maxItems: _maxItemsNotifier.value,
+              interval: _intervalNotifier.value,
+              maxRetries: _maxRetriesNotifier.value,
+              enableHeader: _features['Header']!,
+              enableInterval: _features['Intervals']!,
+              enableInitialItems: _features['Initial Items']!,
+              automaticLoading: _features['Automatic Loading']!,
+              enableRetryLimit: _features['Enable Retries Limit']!,
+              enableCustomBuilders: _features['Custom Builders']!,
+            );
+          },
+        ),
       ),
     );
   }
@@ -67,7 +71,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
@@ -89,7 +93,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 24.0),
+              const SizedBox(height: 24),
               const _FieldTitle(title: 'Data & Features'),
               const Divider(),
               _ConfigRow(
@@ -132,11 +136,11 @@ class _ConfigScreenState extends State<ConfigScreen> {
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(16),
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(
-                vertical: 16.0,
+                vertical: 16,
               ),
             ),
             onPressed: _navigateToExample,
@@ -160,7 +164,7 @@ class _FieldTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(
-        top: 8.0,
+        top: 8,
       ),
       child: Text(
         title,
@@ -183,8 +187,8 @@ class _ConfigRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: 16.0,
-        vertical: 4.0,
+        horizontal: 16,
+        vertical: 4,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -217,12 +221,12 @@ class _QuantitySelector extends StatelessWidget {
               onPressed: value > 2 ? () => notifier.value-- : null,
             ),
             SizedBox(
-              width: 24.0,
+              width: 24,
               child: Center(
                 child: Text(
                   '$value',
                   style: const TextStyle(
-                    fontSize: 18.0,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -242,8 +246,8 @@ class _QuantitySelector extends StatelessWidget {
 
 /// Displays the configured ScrollInfinity widget.
 class DisplayScreen extends StatefulWidget {
+  /// Creates a [DisplayScreen].
   const DisplayScreen({
-    super.key,
     required this.scrollDirection,
     required this.maxItems,
     required this.interval,
@@ -254,17 +258,37 @@ class DisplayScreen extends StatefulWidget {
     required this.automaticLoading,
     required this.enableRetryLimit,
     required this.enableCustomBuilders,
+    super.key,
   });
 
+  /// The scroll direction to use.
   final Axis scrollDirection;
+
+  /// The maximum number of items to fetch per page.
   final int maxItems;
+
+  /// The interval at which a placeholder item is inserted.
   final int interval;
+
+  /// The maximum number of retry attempts allowed after an error.
   final int maxRetries;
+
+  /// Whether to show a header widget above the list.
   final bool enableHeader;
+
+  /// Whether [interval] should be passed to the underlying list.
   final bool enableInterval;
+
+  /// Whether the list should be seeded with initial items.
   final bool enableInitialItems;
+
+  /// Whether new pages are fetched automatically on scroll.
   final bool automaticLoading;
+
+  /// Whether [maxRetries] should be enforced.
   final bool enableRetryLimit;
+
+  /// Whether to use custom builders for the state-specific widgets.
   final bool enableCustomBuilders;
 
   @override
@@ -277,7 +301,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
 
   /// Simulates a network request to fetch paginated data.
   Future<List<Color>?> _loadData(int pageIndex) async {
-    await Future.delayed(const Duration(seconds: 2));
+    await Future<void>.delayed(const Duration(seconds: 2));
 
     // Simulate a request failure
     if (pageIndex > 0 && _random.nextInt(4) == 0) {
@@ -352,8 +376,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
           ? Container(
               color: Colors.red.withAlpha(204),
               alignment: Alignment.center,
-              padding: const EdgeInsets.all(8.0),
-              height: 52.0,
+              padding: const EdgeInsets.all(8),
+              height: 52,
               child: const Text(
                 'Header',
                 style: TextStyle(
@@ -371,9 +395,9 @@ class _DisplayScreenState extends State<DisplayScreen> {
       loading: widget.enableCustomBuilders
           ? const Center(
               child: Padding(
-                padding: EdgeInsets.all(20.0),
+                padding: EdgeInsets.all(20),
                 child: CircularProgressIndicator(
-                  strokeWidth: 6.0,
+                  strokeWidth: 6,
                   valueColor: AlwaysStoppedAnimation(
                     Colors.orange,
                   ),
@@ -393,7 +417,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
       tryAgainBuilder: widget.enableCustomBuilders
           ? (action) {
               return Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(8),
                 child: Center(
                   child: OutlinedButton.icon(
                     onPressed: action,
@@ -406,9 +430,9 @@ class _DisplayScreenState extends State<DisplayScreen> {
           : null,
       retryLimitReached: widget.enableCustomBuilders
           ? const Card(
-              margin: EdgeInsets.all(16.0),
+              margin: EdgeInsets.all(16),
               child: Padding(
-                padding: EdgeInsets.all(16.0),
+                padding: EdgeInsets.all(16),
                 child: Text(
                   'Retry limit reached. Please try again later.',
                 ),
@@ -432,7 +456,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
           ? scrollInfinity
           : Center(
               child: SizedBox(
-                height: 120.0,
+                height: 120,
                 child: scrollInfinity,
               ),
             ),
