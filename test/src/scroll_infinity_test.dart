@@ -394,7 +394,11 @@ void main() {
           expect(find.text('Item 29'), findsOneWidget);
         },
       );
+    });
 
+    /// Tests covering how the widget reacts to `didUpdateWidget` when its
+    /// configuration changes while mounted.
+    group('Widget Updates', () {
       testWidgets(
         'Resets cleanly when interval changes without loadData or '
         'maxItems changing',

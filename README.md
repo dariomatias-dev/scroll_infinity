@@ -51,8 +51,8 @@ It offers customization for manual/automatic loading, custom state widgets, and 
 
 | Tool        | Version Used |
 | ----------- | ------------ |
-| Flutter SDK | 3.32.7       |
-| Dart SDK    | 3.8.1        |
+| Flutter SDK | 3.44.6       |
+| Dart SDK    | 3.12.2       |
 
 ## Features
 
