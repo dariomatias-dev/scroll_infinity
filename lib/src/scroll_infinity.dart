@@ -1,6 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:scroll_infinity/src/interval_item_mapper.dart';
+import 'package:scroll_infinity/src/scroll_infinity_action_button.dart';
+import 'package:scroll_infinity/src/scroll_infinity_footer_type.dart';
 
 /// A widget that displays a scrollable list with support for paginated
 /// data loading.
@@ -116,8 +119,8 @@ class ScrollInfinity<T> extends StatefulWidget {
 
   /// Determines if new items are fetched automatically on scroll.
   ///
-  /// If `false`, a 'Load More' button will be displayed at the end of the list.
-  /// Defaults to `true`.
+  /// If `false`, a 'Load More' button will be displayed at the end of the
+  /// list. Defaults to `true`.
   final bool automaticLoading;
 
   // Error Handling
@@ -161,12 +164,8 @@ class ScrollInfinity<T> extends StatefulWidget {
 
 class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   final _scrollController = ScrollController();
+  final _itemMapper = IntervalItemMapper<T>();
 
-  final _displayItems = <T>[];
-  final _mappedIndices = <int>[];
-  int _realItemsCountSinceInterval = 0;
-  int _realItemCounter = 0;
-  int _intervalCounter = 0;
   int _pageIndex = 0;
   int _retryCount = 0;
   bool _isLoading = false;
@@ -174,11 +173,23 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   bool _hasError = false;
   bool _isDisposed = false;
 
+  ScrollInfinityFooterType get _footerType {
+    if (_hasError) return ScrollInfinityFooterType.error;
+    if (_isLoading) return ScrollInfinityFooterType.loading;
+    if (!widget.automaticLoading && !_isEndOfList) {
+      return ScrollInfinityFooterType.manualLoad;
+    }
+    if (_isEndOfList && _itemMapper.displayItems.isEmpty) {
+      return ScrollInfinityFooterType.empty;
+    }
+    return ScrollInfinityFooterType.none;
+  }
+
   void _initialize() {
     _pageIndex = widget.initialPageIndex;
 
     if (widget.initialItems != null) {
-      _processAndAddItems(widget.initialItems!);
+      _itemMapper.addAll(widget.initialItems!, interval: widget.interval);
       _checkIfScreenIsFilledAndFetchMore();
     } else {
       unawaited(_fetchNextPage());
@@ -188,11 +199,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   Future<void> _reset() async {
     if (mounted) {
       setState(() {
-        _displayItems.clear();
-        _mappedIndices.clear();
-        _realItemsCountSinceInterval = 0;
-        _realItemCounter = 0;
-        _intervalCounter = 0;
+        _itemMapper.clear();
         _pageIndex = widget.initialPageIndex;
         _retryCount = 0;
         _isLoading = false;
@@ -213,27 +220,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
         !_isEndOfList &&
         !_hasError) {
       unawaited(_fetchNextPage());
-    }
-  }
-
-  void _processAndAddItems(List<T> newItems) {
-    if (widget.interval == null) {
-      _displayItems.addAll(newItems);
-      return;
-    }
-
-    for (final item in newItems) {
-      if (_realItemsCountSinceInterval == widget.interval) {
-        _displayItems.add(null as T);
-        _mappedIndices.add(_intervalCounter);
-        _intervalCounter++;
-        _realItemsCountSinceInterval = 0;
-      }
-
-      _displayItems.add(item);
-      _mappedIndices.add(_realItemCounter);
-      _realItemCounter++;
-      _realItemsCountSinceInterval++;
     }
   }
 
@@ -264,7 +250,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
       if (newItems != null) {
         _retryCount = 0;
-        _processAndAddItems(newItems);
+        _itemMapper.addAll(newItems, interval: widget.interval);
         _pageIndex++;
         _isEndOfList = newItems.length < widget.maxItems;
         _checkIfScreenIsFilledAndFetchMore();
@@ -290,16 +276,10 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   Widget _buildListView() {
     final hasHeader = widget.header != null;
     final headerCount = hasHeader ? 1 : 0;
-
-    final isManualLoadReady =
-        !widget.automaticLoading && !_isEndOfList && !_isLoading && !_hasError;
-
-    final hasFooter = _isLoading ||
-        _hasError ||
-        isManualLoadReady ||
-        (_isEndOfList && _displayItems.isEmpty);
-
-    final itemCount = headerCount + _displayItems.length + (hasFooter ? 1 : 0);
+    final footerType = _footerType;
+    final hasFooter = footerType != ScrollInfinityFooterType.none;
+    final displayItems = _itemMapper.displayItems;
+    final itemCount = headerCount + displayItems.length + (hasFooter ? 1 : 0);
 
     return ListView.separated(
       controller: _scrollController,
@@ -316,7 +296,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
         }
 
         final itemIndex = index - headerCount;
-        if (itemIndex >= 0 && itemIndex < _displayItems.length - 1) {
+        if (itemIndex >= 0 && itemIndex < displayItems.length - 1) {
           return widget.separatorBuilder!(context, itemIndex);
         }
 
@@ -329,33 +309,34 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
         final itemIndex = index - headerCount;
 
-        if (itemIndex < _displayItems.length) {
-          final item = _displayItems[itemIndex];
+        if (itemIndex < displayItems.length) {
+          final finalIndex = _itemMapper.indexFor(
+            itemIndex,
+            useRealItemIndex: widget.useRealItemIndex,
+            interval: widget.interval,
+          );
 
-          var finalIndex = itemIndex;
-          if (widget.useRealItemIndex && widget.interval != null) {
-            finalIndex = _mappedIndices[itemIndex];
-          }
-
-          return widget.itemBuilder(item, finalIndex);
-        }
-
-        if (_hasError) {
-          return _buildRetryWidget();
-        }
-        if (_isLoading) {
-          return _buildLoadingIndicator();
-        }
-        if (isManualLoadReady) {
-          return _buildLoadMoreWidget();
-        }
-        if (_isEndOfList && _displayItems.isEmpty) {
-          return widget.empty ?? const Center(child: Text('No items found.'));
+          return widget.itemBuilder(displayItems[itemIndex], finalIndex);
         }
 
-        return const SizedBox.shrink();
+        return _buildFooter(footerType);
       },
     );
+  }
+
+  Widget _buildFooter(ScrollInfinityFooterType footerType) {
+    switch (footerType) {
+      case ScrollInfinityFooterType.error:
+        return _buildRetryWidget();
+      case ScrollInfinityFooterType.loading:
+        return _buildLoadingIndicator();
+      case ScrollInfinityFooterType.manualLoad:
+        return _buildLoadMoreWidget();
+      case ScrollInfinityFooterType.empty:
+        return widget.empty ?? const Center(child: Text('No items found.'));
+      case ScrollInfinityFooterType.none:
+        return const SizedBox.shrink();
+    }
   }
 
   Widget _buildLoadingIndicator() {
@@ -385,14 +366,9 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
       return widget.tryAgainBuilder!(_fetchNextPage);
     }
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: ElevatedButton(
-          onPressed: _fetchNextPage,
-          child: const Text('Try Again'),
-        ),
-      ),
+    return ScrollInfinityActionButton(
+      label: 'Try Again',
+      onPressed: _fetchNextPage,
     );
   }
 
@@ -401,14 +377,9 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
       return widget.loadMoreBuilder!(_fetchNextPage);
     }
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: ElevatedButton(
-          onPressed: _fetchNextPage,
-          child: const Text('Load More'),
-        ),
-      ),
+    return ScrollInfinityActionButton(
+      label: 'Load More',
+      onPressed: _fetchNextPage,
     );
   }
 
