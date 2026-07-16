@@ -103,6 +103,49 @@ void main() {
           expect(find.byType(CircularProgressIndicator), findsNothing);
         },
       );
+
+      testWidgets(
+        'Renders initialItems immediately, without waiting for loadData',
+        (tester) async {
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                initialItems: const ['Seed 0', 'Seed 1'],
+                loadData: (page) => Completer<List<String>?>().future,
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          // A single pump (no pumpAndSettle): the seed items must already
+          // be on screen without waiting on `loadData` to resolve.
+          await tester.pump();
+
+          expect(find.text('Seed 0'), findsOneWidget);
+          expect(find.text('Seed 1'), findsOneWidget);
+        },
+      );
+
+      testWidgets(
+        'Shows the default empty message when no custom empty widget is '
+        'set',
+        (tester) async {
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                loadData: (page) => mockLoadData(page, totalItems: 0),
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          expect(find.text('No items found.'), findsOneWidget);
+        },
+      );
     });
 
     /// Tests related to fetching data and paginating through the list.
@@ -254,6 +297,70 @@ void main() {
           expect(callCount, 2);
         },
       );
+
+      testWidgets(
+        'Shows the error widget when loadData returns null',
+        (tester) async {
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                loadData: (page) async => null,
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          // Returning `null` (instead of throwing) must also surface the
+          // error state.
+          expect(find.text('Try Again'), findsOneWidget);
+        },
+      );
+
+      testWidgets(
+        'Hides the retry widget when enableRetryOnError is false',
+        (tester) async {
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                enableRetryOnError: false,
+                loadData: (page) => mockLoadData(page, throwErrorOnPage: true),
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          expect(find.text('Try Again'), findsNothing);
+        },
+      );
+
+      testWidgets(
+        'Shows the default retry-limit message when no custom widget is '
+        'set',
+        (tester) async {
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                maxRetries: 1,
+                loadData: (page) {
+                  return mockLoadData(page, throwErrorOnPage: true);
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          expect(find.text('Retry limit has been reached.'), findsOneWidget);
+        },
+      );
     });
 
     /// Tests for optional features and specific property behaviors.
@@ -394,11 +501,114 @@ void main() {
           expect(find.text('Item 29'), findsOneWidget);
         },
       );
+
+      testWidgets(
+        'Applies horizontal scrollDirection to the underlying ListView',
+        (tester) async {
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                scrollDirection: Axis.horizontal,
+                loadData: (page) {
+                  return mockLoadData(
+                    page,
+                    totalItems: 5,
+                    maxItemsPerPage: 5,
+                  );
+                },
+                itemBuilder: (item, index) {
+                  return SizedBox(width: 50, child: Text(item));
+                },
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          final listView = tester.widget<ListView>(find.byType(ListView));
+          expect(listView.scrollDirection, Axis.horizontal);
+        },
+      );
+
+      testWidgets(
+        'Applies the padding property to the underlying ListView',
+        (tester) async {
+          const padding = EdgeInsets.all(24);
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                padding: padding,
+                loadData: (page) {
+                  return mockLoadData(
+                    page,
+                    totalItems: 5,
+                    maxItemsPerPage: 5,
+                  );
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          final listView = tester.widget<ListView>(find.byType(ListView));
+          expect(listView.padding, padding);
+        },
+      );
     });
 
     /// Tests covering how the widget reacts to `didUpdateWidget` when its
     /// configuration changes while mounted.
     group('Widget Updates', () {
+      testWidgets(
+        'Resets and refetches when loadData or maxItems changes',
+        (tester) async {
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                loadData: (page) {
+                  return mockLoadData(
+                    page,
+                    totalItems: 5,
+                    maxItemsPerPage: 5,
+                  );
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+          expect(find.text('Item 4'), findsOneWidget);
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 3,
+                loadData: (page) {
+                  return mockLoadData(
+                    page,
+                    totalItems: 3,
+                    maxItemsPerPage: 3,
+                  );
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          // The old page's items are gone; the new loadData/maxItems
+          // produced a fresh, independent list starting from page 0.
+          expect(find.text('Item 4'), findsNothing);
+          expect(find.text('Item 2'), findsOneWidget);
+        },
+      );
+
       testWidgets(
         'Resets cleanly when interval changes without loadData or '
         'maxItems changing',
@@ -429,6 +639,160 @@ void main() {
           expect(tester.takeException(), isNull);
           expect(find.text('Item 0'), findsOneWidget);
           expect(find.textContaining('interval_'), findsWidgets);
+        },
+      );
+
+      testWidgets(
+        'Keeps fetched items when an unrelated property changes',
+        (tester) async {
+          Future<List<String>?> loadData(int page) {
+            return mockLoadData(page, totalItems: 5, maxItemsPerPage: 5);
+          }
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                loadData: loadData,
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+          expect(find.text('Item 0'), findsOneWidget);
+
+          // Same `loadData`/`maxItems`/`interval`; only an unrelated
+          // property changes, so no reset should occur.
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                header: const Text('New Header'),
+                loadData: loadData,
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+          await tester.pump();
+
+          expect(find.text('Item 0'), findsOneWidget);
+          expect(find.text('New Header'), findsOneWidget);
+        },
+      );
+    });
+
+    /// Tests covering widget teardown while asynchronous work is pending.
+    group('Lifecycle', () {
+      testWidgets(
+        'Disposing while a fetch is in flight does not throw',
+        (tester) async {
+          final completer = Completer<List<String>?>();
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                loadData: (page) => completer.future,
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          // Unmount while `loadData` is still pending.
+          await tester.pumpWidget(const SizedBox());
+
+          completer.complete(['Item 0']);
+          await tester.pump();
+
+          expect(tester.takeException(), isNull);
+        },
+      );
+    });
+
+    /// Tests for the widget-builder overrides of the default state widgets.
+    group('Custom State Widgets', () {
+      testWidgets(
+        'Uses the custom loading widget when provided',
+        (tester) async {
+          final completer = Completer<List<String>?>();
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                loading: const Text('Custom Loading'),
+                loadData: (page) => completer.future,
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          expect(find.text('Custom Loading'), findsOneWidget);
+          expect(find.byType(CircularProgressIndicator), findsNothing);
+
+          completer.complete([]);
+          await tester.pumpAndSettle();
+        },
+      );
+
+      testWidgets(
+        'Uses the custom tryAgainBuilder when provided',
+        (tester) async {
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                tryAgainBuilder: (action) {
+                  return ElevatedButton(
+                    onPressed: action,
+                    child: const Text('Custom Retry'),
+                  );
+                },
+                loadData: (page) {
+                  return mockLoadData(page, throwErrorOnPage: true);
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          expect(find.text('Custom Retry'), findsOneWidget);
+          expect(find.text('Try Again'), findsNothing);
+        },
+      );
+
+      testWidgets(
+        'Uses the custom loadMoreBuilder when provided',
+        (tester) async {
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                automaticLoading: false,
+                loadMoreBuilder: (action) {
+                  return ElevatedButton(
+                    onPressed: action,
+                    child: const Text('Custom Load More'),
+                  );
+                },
+                loadData: (page) {
+                  return mockLoadData(
+                    page,
+                    totalItems: 25,
+                    maxItemsPerPage: 5,
+                  );
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          expect(find.text('Custom Load More'), findsOneWidget);
+          expect(find.text('Load More'), findsNothing);
         },
       );
     });
