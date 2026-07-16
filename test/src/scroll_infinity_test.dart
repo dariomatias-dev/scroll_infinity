@@ -261,22 +261,24 @@ void main() {
       testWidgets(
         'Separators are built between items',
         (tester) async {
-          await tester.pumpWidget(buildTestableWidget(
-            ScrollInfinity<String>(
-              maxItems: 5,
-              loadData: (page) {
-                return mockLoadData(
-                  page,
-                  totalItems: 5,
-                  maxItemsPerPage: 5,
-                );
-              },
-              separatorBuilder: (context, index) {
-                return const Divider(key: Key('divider'));
-              },
-              itemBuilder: (item, index) => Text(item),
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                loadData: (page) {
+                  return mockLoadData(
+                    page,
+                    totalItems: 5,
+                    maxItemsPerPage: 5,
+                  );
+                },
+                separatorBuilder: (context, index) {
+                  return const Divider(key: Key('divider'));
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
             ),
-          ),);
+          );
 
           await tester.pumpAndSettle();
 
@@ -291,25 +293,27 @@ void main() {
         (tester) async {
           final receivedItems = <String, int>{};
 
-          await tester.pumpWidget(buildTestableWidget(
-            ScrollInfinity<String?>(
-              maxItems: 3,
-              interval: 2,
-              loadData: (page) {
-                return mockLoadData(
-                  page,
-                  totalItems: 5,
-                  maxItemsPerPage: 5,
-                );
-              },
-              itemBuilder: (item, index) {
-                final key = item ?? 'interval_$index';
-                receivedItems[key] = index;
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String?>(
+                maxItems: 3,
+                interval: 2,
+                loadData: (page) {
+                  return mockLoadData(
+                    page,
+                    totalItems: 5,
+                    maxItemsPerPage: 5,
+                  );
+                },
+                itemBuilder: (item, index) {
+                  final key = item ?? 'interval_$index';
+                  receivedItems[key] = index;
 
-                return Text(key);
-              },
+                  return Text(key);
+                },
+              ),
             ),
-          ),);
+          );
           await tester.pumpAndSettle();
 
           // Verify correct indices for both data items and interval items.
@@ -327,26 +331,28 @@ void main() {
         (tester) async {
           final receivedItems = <String, int>{};
 
-          await tester.pumpWidget(buildTestableWidget(
-            ScrollInfinity<String?>(
-              maxItems: 3,
-              interval: 2,
-              useRealItemIndex: false,
-              loadData: (page) {
-                return mockLoadData(
-                  page,
-                  totalItems: 4,
-                  maxItemsPerPage: 4,
-                );
-              },
-              itemBuilder: (item, index) {
-                final key = item ?? 'interval_$index';
-                receivedItems[key] = index;
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String?>(
+                maxItems: 3,
+                interval: 2,
+                useRealItemIndex: false,
+                loadData: (page) {
+                  return mockLoadData(
+                    page,
+                    totalItems: 4,
+                    maxItemsPerPage: 4,
+                  );
+                },
+                itemBuilder: (item, index) {
+                  final key = item ?? 'interval_$index';
+                  receivedItems[key] = index;
 
-                return Text(key);
-              },
+                  return Text(key);
+                },
+              ),
             ),
-          ),);
+          );
 
           await tester.pumpAndSettle();
 
