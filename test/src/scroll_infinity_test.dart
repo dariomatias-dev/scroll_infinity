@@ -388,6 +388,78 @@ void main() {
           expect(find.text('Item 29'), findsOneWidget);
         },
       );
+
+      testWidgets(
+        'Resets cleanly when interval changes without loadData or '
+        'maxItems changing',
+        (tester) async {
+          await tester.pumpWidget(
+            buildTestableWidget(
+              _IntervalToggleHost(
+                loadData: (page) {
+                  return mockLoadData(
+                    page,
+                    totalItems: 5,
+                    maxItemsPerPage: 5,
+                  );
+                },
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+          expect(find.text('Item 0'), findsOneWidget);
+
+          // Flips `interval` on the live widget while keeping the same
+          // `loadData`/`maxItems` references, which used to leave the
+          // internal index mapping inconsistent.
+          await tester.tap(find.byKey(const Key('toggle_interval')));
+          await tester.pumpAndSettle();
+
+          expect(tester.takeException(), isNull);
+          expect(find.text('Item 0'), findsOneWidget);
+          expect(find.textContaining('interval_'), findsWidgets);
+        },
+      );
     });
   });
+}
+
+/// Hosts a [ScrollInfinity] whose `interval` can be toggled at runtime
+/// while keeping a stable `loadData` reference, used to reproduce state
+/// resets triggered by `interval` changing alone.
+class _IntervalToggleHost extends StatefulWidget {
+  const _IntervalToggleHost({required this.loadData});
+
+  final Future<List<String>?> Function(int page) loadData;
+
+  @override
+  State<_IntervalToggleHost> createState() => _IntervalToggleHostState();
+}
+
+class _IntervalToggleHostState extends State<_IntervalToggleHost> {
+  int? _interval;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        ElevatedButton(
+          key: const Key('toggle_interval'),
+          onPressed: () => setState(
+            () => _interval = _interval == null ? 2 : null,
+          ),
+          child: const Text('Toggle interval'),
+        ),
+        Expanded(
+          child: ScrollInfinity<String?>(
+            maxItems: 5,
+            interval: _interval,
+            loadData: widget.loadData,
+            itemBuilder: (item, index) => Text(item ?? 'interval_$index'),
+          ),
+        ),
+      ],
+    );
+  }
 }
