@@ -73,17 +73,21 @@ class _ConfigScreenState extends State<ConfigScreen> {
             children: <Widget>[
               const _FieldTitle(title: 'Scroll Direction'),
               const Divider(),
-              RadioListTile<Axis>(
-                title: const Text('Vertical'),
-                value: Axis.vertical,
+              RadioGroup<Axis>(
                 groupValue: _scrollDirection,
                 onChanged: (value) => setState(() => _scrollDirection = value!),
-              ),
-              RadioListTile<Axis>(
-                title: const Text('Horizontal'),
-                value: Axis.horizontal,
-                groupValue: _scrollDirection,
-                onChanged: (value) => setState(() => _scrollDirection = value!),
+                child: const Column(
+                  children: [
+                    RadioListTile<Axis>(
+                      title: Text('Vertical'),
+                      value: Axis.vertical,
+                    ),
+                    RadioListTile<Axis>(
+                      title: Text('Horizontal'),
+                      value: Axis.horizontal,
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 24.0),
               const _FieldTitle(title: 'Data & Features'),

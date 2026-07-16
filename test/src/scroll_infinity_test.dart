@@ -14,7 +14,7 @@ Future<List<String>?> mockLoadData(
   int errorPage = 0,
 }) async {
   // Simulate network latency.
-  await Future.delayed(
+  await Future<void>.delayed(
     const Duration(
       milliseconds: 20,
     ),
@@ -38,7 +38,8 @@ Future<List<String>?> mockLoadData(
 
 /// Wraps a widget in a MaterialApp to make it testable.
 ///
-/// This is used to ensure that MaterialApp and Scaffold context is available during the test.
+/// This is used to ensure that MaterialApp and Scaffold context is
+/// available during the test.
 Widget buildTestableWidget(Widget child) {
   return MaterialApp(
     home: Scaffold(
@@ -135,7 +136,8 @@ void main() {
       );
 
       testWidgets(
-        'Displays "Load More" button and fetches on tap when automaticLoading is false',
+        'Displays "Load More" button and fetches on tap when '
+        'automaticLoading is false',
         (tester) async {
           await tester.pumpWidget(
             buildTestableWidget(
@@ -186,7 +188,7 @@ void main() {
       testWidgets(
         'Shows error widget and retries on tap',
         (tester) async {
-          int callCount = 0;
+          var callCount = 0;
 
           await tester.pumpWidget(
             buildTestableWidget(
@@ -219,7 +221,7 @@ void main() {
       testWidgets(
         'Stops retrying after maxRetries and shows limit reached widget',
         (tester) async {
-          int callCount = 0;
+          var callCount = 0;
 
           await tester.pumpWidget(
             buildTestableWidget(
@@ -274,7 +276,7 @@ void main() {
               },
               itemBuilder: (item, index) => Text(item),
             ),
-          ));
+          ),);
 
           await tester.pumpAndSettle();
 
@@ -284,7 +286,8 @@ void main() {
       );
 
       testWidgets(
-        'useRealItemIndex=true provides correct indices for items and intervals',
+        'useRealItemIndex=true provides correct indices for items and '
+        'intervals',
         (tester) async {
           final receivedItems = <String, int>{};
 
@@ -292,7 +295,6 @@ void main() {
             ScrollInfinity<String?>(
               maxItems: 3,
               interval: 2,
-              useRealItemIndex: true,
               loadData: (page) {
                 return mockLoadData(
                   page,
@@ -307,7 +309,7 @@ void main() {
                 return Text(key);
               },
             ),
-          ));
+          ),);
           await tester.pumpAndSettle();
 
           // Verify correct indices for both data items and interval items.
@@ -344,7 +346,7 @@ void main() {
                 return Text(key);
               },
             ),
-          ));
+          ),);
 
           await tester.pumpAndSettle();
 
@@ -369,7 +371,7 @@ void main() {
                 initialPageIndex: 2, // Start from page 2.
                 loadData: (page) {
                   firstCalledPage ??= page;
-                  return mockLoadData(page, maxItemsPerPage: 10);
+                  return mockLoadData(page);
                 },
                 itemBuilder: (item, index) => Text(item),
               ),

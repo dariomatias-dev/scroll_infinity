@@ -2,14 +2,17 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-/// A widget that displays a scrollable list with support for paginated data loading.
+/// A widget that displays a scrollable list with support for paginated
+/// data loading.
 class ScrollInfinity<T> extends StatefulWidget {
+  /// Creates a [ScrollInfinity] widget.
   const ScrollInfinity({
-    super.key,
-    // Core Data Handling
     required this.loadData,
     required this.itemBuilder,
     required this.maxItems,
+    super.key,
+
+    // Core Data Handling
     this.initialItems,
     this.initialPageIndex = 0,
 
@@ -44,8 +47,9 @@ class ScrollInfinity<T> extends StatefulWidget {
           'The interval must be greater than zero.',
         ),
         assert(
-          interval != null ? null is T : true,
-          'When `interval` is used, the generic type `T` must be nullable (e.g., String?).',
+          !(interval != null) || null is T,
+          'When `interval` is used, the generic type `T` must be nullable '
+          '(e.g., String?).',
         ),
         assert(
           maxRetries == null || maxRetries >= 0,
@@ -103,8 +107,9 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// Specifies an interval at which a `null` value is inserted into the list.
   final int? interval;
 
-  /// If `true`, real data items have their own index that ignores interval (`null`) items,
-  /// meaning data items and interval items have independent indexes.
+  /// If `true`, real data items have their own index that ignores interval
+  /// (`null`) items, meaning data items and interval items have independent
+  /// indexes.
   ///
   /// The default is `true`.
   final bool useRealItemIndex;
@@ -133,12 +138,14 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// Widget displayed when the initial data fetch returns an empty result.
   final Widget? empty;
 
-  /// A builder that constructs a custom 'Try Again' widget when an error occurs.
+  /// A builder that constructs a custom 'Try Again' widget when an error
+  /// occurs.
   final Widget Function(
     VoidCallback action,
   )? tryAgainBuilder;
 
-  /// A builder that constructs a custom 'Load More' widget when [automaticLoading] is `false`.
+  /// A builder that constructs a custom 'Load More' widget when
+  /// [automaticLoading] is `false`.
   final Widget Function(
     VoidCallback action,
   )? loadMoreBuilder;
@@ -174,7 +181,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
       _processAndAddItems(widget.initialItems!);
       _checkIfScreenIsFilledAndFetchMore();
     } else {
-      _fetchNextPage();
+      unawaited(_fetchNextPage());
     }
   }
 
@@ -205,7 +212,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
         !_isLoading &&
         !_isEndOfList &&
         !_hasError) {
-      _fetchNextPage();
+      unawaited(_fetchNextPage());
     }
   }
 
@@ -237,7 +244,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
           !_isEndOfList &&
           !_isLoading &&
           _scrollController.position.maxScrollExtent == 0) {
-        _fetchNextPage();
+        unawaited(_fetchNextPage());
       }
     });
   }
@@ -265,7 +272,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
         _retryCount++;
         _hasError = true;
       }
-    } catch (e) {
+    } on Object {
       if (_isDisposed) return;
       _retryCount++;
       _hasError = true;
@@ -325,7 +332,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
         if (itemIndex < _displayItems.length) {
           final item = _displayItems[itemIndex];
 
-          int finalIndex = itemIndex;
+          var finalIndex = itemIndex;
           if (widget.useRealItemIndex && widget.interval != null) {
             finalIndex = _mappedIndices[itemIndex];
           }
@@ -354,7 +361,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   Widget _buildLoadingIndicator() {
     return widget.loading ??
         const Padding(
-          padding: EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(16),
           child: Center(
             child: CircularProgressIndicator(),
           ),
@@ -368,7 +375,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
       return widget.retryLimitReached ??
           const Center(
             child: Padding(
-              padding: EdgeInsets.all(16.0),
+              padding: EdgeInsets.all(16),
               child: Text('Retry limit has been reached.'),
             ),
           );
@@ -380,7 +387,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.all(12),
         child: ElevatedButton(
           onPressed: _fetchNextPage,
           child: const Text('Try Again'),
@@ -396,7 +403,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.all(12),
         child: ElevatedButton(
           onPressed: _fetchNextPage,
           child: const Text('Load More'),
@@ -419,15 +426,16 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
 
     if (widget.loadData != oldWidget.loadData ||
         widget.maxItems != oldWidget.maxItems) {
-      _reset();
+      unawaited(_reset());
     }
   }
 
   @override
   void dispose() {
     _isDisposed = true;
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
+    _scrollController
+      ..removeListener(_onScroll)
+      ..dispose();
 
     super.dispose();
   }
