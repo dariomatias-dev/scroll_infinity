@@ -34,6 +34,7 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.interval,
     this.useRealItemIndex = true,
     this.automaticLoading = true,
+    this.loadMoreThreshold = 200,
 
     // Error Handling
     this.enableRetryOnError = true,
@@ -62,6 +63,10 @@ class ScrollInfinity<T> extends StatefulWidget {
         assert(
           maxRetries == null || maxRetries >= 0,
           'maxRetries cannot be negative.',
+        ),
+        assert(
+          loadMoreThreshold >= 0,
+          'loadMoreThreshold cannot be negative.',
         );
 
   // Core Data Handling
@@ -144,6 +149,10 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// If `false`, a 'Load More' button will be displayed at the end of the
   /// list. Defaults to `true`.
   final bool automaticLoading;
+
+  /// Distance in pixels from the end of the list at which the next page
+  /// starts loading. Defaults to `200`.
+  final double loadMoreThreshold;
 
   // Error Handling
 
@@ -255,7 +264,8 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
     if (!widget.automaticLoading) return;
 
     if (_scrollController.position.pixels >=
-            _scrollController.position.maxScrollExtent - 200 &&
+            _scrollController.position.maxScrollExtent -
+                widget.loadMoreThreshold &&
         !_isLoading &&
         !_isEndOfList &&
         !_hasError) {
