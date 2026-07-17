@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:scroll_infinity/src/interval_item_mapper.dart';
 import 'package:scroll_infinity/src/scroll_infinity_action_button.dart';
+import 'package:scroll_infinity/src/scroll_infinity_controller.dart';
 import 'package:scroll_infinity/src/scroll_infinity_footer_type.dart';
 
 /// A widget that displays a scrollable list with support for paginated
@@ -18,6 +19,7 @@ class ScrollInfinity<T> extends StatefulWidget {
     // Core Data Handling
     this.initialItems,
     this.initialPageIndex = 0,
+    this.controller,
 
     // Layout & Appearance
     this.scrollDirection = Axis.vertical,
@@ -86,6 +88,11 @@ class ScrollInfinity<T> extends StatefulWidget {
 
   /// The starting index from which to begin loading data.
   final int initialPageIndex;
+
+  /// Optional controller to trigger [ScrollInfinityController.refresh] or
+  /// [ScrollInfinityController.retry] externally and read
+  /// [ScrollInfinityController.isLoading]/[ScrollInfinityController.hasError].
+  final ScrollInfinityController? controller;
 
   // Layout & Appearance
 
@@ -177,7 +184,8 @@ class ScrollInfinity<T> extends StatefulWidget {
   State<ScrollInfinity<T>> createState() => _ScrollInfinityState<T>();
 }
 
-class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
+class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
+    implements ScrollInfinityControllerState {
   final _scrollController = ScrollController();
   final _itemMapper = IntervalItemMapper<T>();
 
@@ -187,6 +195,18 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   bool _isEndOfList = false;
   bool _hasError = false;
   bool _isDisposed = false;
+
+  @override
+  bool get isLoading => _isLoading;
+
+  @override
+  bool get hasError => _hasError;
+
+  @override
+  void refresh() => unawaited(_reset());
+
+  @override
+  void retry() => unawaited(_fetchNextPage());
 
   ScrollInfinityFooterType get _footerType {
     if (_hasError) return ScrollInfinityFooterType.error;
@@ -404,6 +424,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   void initState() {
     super.initState();
 
+    widget.controller?.attach(this);
     _initialize();
     _scrollController.addListener(_onScroll);
   }
@@ -411,6 +432,11 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   @override
   void didUpdateWidget(covariant ScrollInfinity<T> oldWidget) {
     super.didUpdateWidget(oldWidget);
+
+    if (widget.controller != oldWidget.controller) {
+      oldWidget.controller?.detach(this);
+      widget.controller?.attach(this);
+    }
 
     if (widget.loadData != oldWidget.loadData ||
         widget.maxItems != oldWidget.maxItems ||
@@ -422,6 +448,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
   @override
   void dispose() {
     _isDisposed = true;
+    widget.controller?.detach(this);
     _scrollController
       ..removeListener(_onScroll)
       ..dispose();
