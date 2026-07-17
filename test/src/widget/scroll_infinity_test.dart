@@ -225,6 +225,47 @@ void main() {
           expect(find.text('Load More'), findsNothing);
         },
       );
+
+      testWidgets(
+        'Automatically fetches the next page when scrolling within '
+        'loadMoreThreshold of the end',
+        (tester) async {
+          var callCount = 0;
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                loadData: (page) {
+                  callCount++;
+                  return mockLoadData(
+                    page,
+                    totalItems: 15,
+                    maxItemsPerPage: 5,
+                  );
+                },
+                itemBuilder: (item, index) {
+                  return SizedBox(height: 300, child: Text(item));
+                },
+              ),
+            ),
+          );
+
+          // First page fills (and overflows) the viewport, so the
+          // fill-the-screen loop stops after one fetch.
+          await tester.pumpAndSettle();
+          expect(callCount, 1);
+          expect(find.text('Item 5'), findsNothing);
+
+          // Dragging near the bottom must trigger `_onScroll` and fetch
+          // the next page automatically (no manual "Load More" tap).
+          await tester.drag(find.byType(ListView), const Offset(0, -1400));
+          await tester.pumpAndSettle();
+
+          expect(callCount, 2);
+          expect(find.text('Item 5'), findsOneWidget);
+        },
+      );
     });
 
     /// Tests related to error states and retry logic.
@@ -1027,6 +1068,46 @@ void main() {
           expect(controller.hasError, isFalse);
         },
       );
+
+      testWidgets(
+        'Detaches the old controller and attaches the new one when the '
+        'controller property changes',
+        (tester) async {
+          final controllerA = ScrollInfinityController();
+          final controllerB = ScrollInfinityController();
+
+          Widget buildWith(ScrollInfinityController controller) {
+            return buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                controller: controller,
+                loadData: (page) {
+                  return mockLoadData(page, totalItems: 5, maxItemsPerPage: 5);
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            );
+          }
+
+          await tester.pumpWidget(buildWith(controllerA));
+          await tester.pumpAndSettle();
+          expect(controllerA.isLoading, isFalse);
+
+          await tester.pumpWidget(buildWith(controllerB));
+          await tester.pumpAndSettle();
+
+          // The old controller is detached: it must report inert defaults
+          // instead of forwarding to the (now different) widget state.
+          expect(controllerA.isLoading, isFalse);
+          expect(controllerA.hasError, isFalse);
+
+          // The new controller is attached and drives the live state.
+          controllerB.refresh();
+          await tester.pump();
+          expect(controllerB.isLoading, isTrue);
+          await tester.pumpAndSettle();
+        },
+      );
     });
 
     /// Tests for the `enablePullToRefresh` property.
@@ -1156,6 +1237,54 @@ void main() {
           () => ScrollInfinity<String>(
             maxItems: 5,
             loadMoreThreshold: -1,
+            loadData: (page) async => [],
+            itemBuilder: (item, index) => Text(item),
+          ),
+          throwsAssertionError,
+        );
+      });
+
+      test('initialPageIndex cannot be negative', () {
+        expect(
+          () => ScrollInfinity<String>(
+            maxItems: 5,
+            initialPageIndex: -1,
+            loadData: (page) async => [],
+            itemBuilder: (item, index) => Text(item),
+          ),
+          throwsAssertionError,
+        );
+      });
+
+      test('interval must be greater than zero', () {
+        expect(
+          () => ScrollInfinity<String?>(
+            maxItems: 5,
+            interval: 0,
+            loadData: (page) async => [],
+            itemBuilder: (item, index) => Text(item ?? ''),
+          ),
+          throwsAssertionError,
+        );
+      });
+
+      test('interval requires a nullable generic type T', () {
+        expect(
+          () => ScrollInfinity<String>(
+            maxItems: 5,
+            interval: 2,
+            loadData: (page) async => [],
+            itemBuilder: (item, index) => Text(item),
+          ),
+          throwsAssertionError,
+        );
+      });
+
+      test('maxRetries cannot be negative', () {
+        expect(
+          () => ScrollInfinity<String>(
+            maxItems: 5,
+            maxRetries: -1,
             loadData: (page) async => [],
             itemBuilder: (item, index) => Text(item),
           ),
