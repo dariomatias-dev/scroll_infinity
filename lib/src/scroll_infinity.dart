@@ -21,6 +21,7 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.initialItems,
     this.initialPageIndex = 0,
     this.controller,
+    this.onItemsLoaded,
 
     // Layout & Appearance
     this.scrollDirection = Axis.vertical,
@@ -104,6 +105,10 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// [ScrollInfinityController.retry] externally and read
   /// [ScrollInfinityController.isLoading]/[ScrollInfinityController.hasError].
   final ScrollInfinityController? controller;
+
+  /// Called with the raw items returned by [loadData] whenever a fetch
+  /// succeeds. Useful for analytics; it does not affect the build.
+  final void Function(List<T> items)? onItemsLoaded;
 
   // Layout & Appearance
 
@@ -323,6 +328,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
         _pageIndex++;
         _isEndOfList = newItems.length < widget.maxItems;
         _checkIfScreenIsFilledAndFetchMore();
+        widget.onItemsLoaded?.call(newItems);
       } else {
         _retryCount++;
         _hasError = true;
