@@ -35,6 +35,7 @@ class ScrollInfinity<T> extends StatefulWidget {
     // Error Handling
     this.enableRetryOnError = true,
     this.maxRetries,
+    this.onError,
 
     // State-Specific Widgets
     this.loading,
@@ -141,6 +142,11 @@ class ScrollInfinity<T> extends StatefulWidget {
   ///
   /// If `null`, retries will be attempted indefinitely. The default is `null`.
   final int? maxRetries;
+
+  /// Called with the exception thrown by [loadData] whenever a fetch fails.
+  ///
+  /// Use this to log or report the real error; it does not build UI.
+  final void Function(Object error)? onError;
 
   // State-Specific Widgets
 
@@ -267,10 +273,11 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>> {
         _retryCount++;
         _hasError = true;
       }
-    } on Object {
+    } on Object catch (error) {
       if (_isDisposed) return;
       _retryCount++;
       _hasError = true;
+      widget.onError?.call(error);
     } finally {
       if (!_isDisposed) {
         _isLoading = false;
