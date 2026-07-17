@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:scroll_infinity/scroll_infinity.dart';
 
@@ -822,6 +823,345 @@ void main() {
           expect(find.text('Load More'), findsNothing);
         },
       );
+    });
+
+    /// Tests for the `onError` and `onItemsLoaded` analytics hooks.
+    group('Analytics Callbacks', () {
+      testWidgets(
+        'onError receives the exception thrown by loadData',
+        (tester) async {
+          Object? capturedError;
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                onError: (error) => capturedError = error,
+                loadData: (page) {
+                  return mockLoadData(page, throwErrorOnPage: true);
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          expect(capturedError, isA<Exception>());
+          expect(capturedError.toString(), contains('Failed to load data'));
+        },
+      );
+
+      testWidgets(
+        'onError is not called when loadData succeeds',
+        (tester) async {
+          var called = false;
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                onError: (_) => called = true,
+                loadData: (page) {
+                  return mockLoadData(page, totalItems: 5, maxItemsPerPage: 5);
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          expect(called, isFalse);
+        },
+      );
+
+      testWidgets(
+        'onItemsLoaded receives the raw items returned by loadData',
+        (tester) async {
+          final loadedBatches = <List<String>>[];
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                onItemsLoaded: loadedBatches.add,
+                loadData: (page) {
+                  return mockLoadData(page, totalItems: 5, maxItemsPerPage: 5);
+                },
+                itemBuilder: (item, index) {
+                  return SizedBox(height: 150, child: Text(item));
+                },
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          expect(loadedBatches, [
+            ['Item 0', 'Item 1', 'Item 2', 'Item 3', 'Item 4'],
+          ]);
+        },
+      );
+
+      testWidgets(
+        'onItemsLoaded is not called when loadData fails',
+        (tester) async {
+          var called = false;
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                onItemsLoaded: (_) => called = true,
+                loadData: (page) {
+                  return mockLoadData(page, throwErrorOnPage: true);
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          expect(called, isFalse);
+        },
+      );
+    });
+
+    /// Tests for driving a mounted [ScrollInfinity] via
+    /// [ScrollInfinityController].
+    group('External Controller', () {
+      testWidgets(
+        'Reflects isLoading/hasError and refresh() resets the list',
+        (tester) async {
+          final controller = ScrollInfinityController();
+          var callCount = 0;
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                controller: controller,
+                loadData: (page) {
+                  callCount++;
+                  return mockLoadData(page, totalItems: 5, maxItemsPerPage: 5);
+                },
+                itemBuilder: (item, index) {
+                  return SizedBox(height: 150, child: Text(item));
+                },
+              ),
+            ),
+          );
+
+          expect(controller.isLoading, isTrue);
+          await tester.pumpAndSettle();
+          expect(controller.isLoading, isFalse);
+          expect(controller.hasError, isFalse);
+          expect(callCount, 1);
+
+          controller.refresh();
+          await tester.pump();
+          expect(controller.isLoading, isTrue);
+
+          await tester.pumpAndSettle();
+          expect(callCount, 2);
+          expect(find.text('Item 0'), findsOneWidget);
+        },
+      );
+
+      testWidgets(
+        'retry() re-fetches after an error',
+        (tester) async {
+          final controller = ScrollInfinityController();
+          var callCount = 0;
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                controller: controller,
+                loadData: (page) {
+                  callCount++;
+                  return mockLoadData(page, throwErrorOnPage: true);
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+          expect(controller.hasError, isTrue);
+          expect(callCount, 1);
+
+          controller.retry();
+          await tester.pumpAndSettle();
+
+          expect(callCount, 2);
+        },
+      );
+
+      testWidgets(
+        'Becomes inert without throwing after ScrollInfinity is disposed',
+        (tester) async {
+          final controller = ScrollInfinityController();
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                controller: controller,
+                loadData: (page) {
+                  return mockLoadData(page, totalItems: 5, maxItemsPerPage: 5);
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          await tester.pumpWidget(const SizedBox());
+
+          expect(controller.refresh, returnsNormally);
+          expect(controller.isLoading, isFalse);
+          expect(controller.hasError, isFalse);
+        },
+      );
+    });
+
+    /// Tests for the `enablePullToRefresh` property.
+    group('Pull To Refresh', () {
+      testWidgets(
+        'Does not wrap the list in a RefreshIndicator by default',
+        (tester) async {
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                loadData: (page) {
+                  return mockLoadData(page, totalItems: 5, maxItemsPerPage: 5);
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          expect(find.byType(RefreshIndicator), findsNothing);
+        },
+      );
+
+      testWidgets(
+        'enablePullToRefresh wraps the list and refetches on pull',
+        (tester) async {
+          var callCount = 0;
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                enablePullToRefresh: true,
+                loadData: (page) {
+                  callCount++;
+                  return mockLoadData(page, totalItems: 5, maxItemsPerPage: 5);
+                },
+                itemBuilder: (item, index) {
+                  return SizedBox(height: 150, child: Text(item));
+                },
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+          expect(find.byType(RefreshIndicator), findsOneWidget);
+          expect(callCount, 1);
+
+          await tester.fling(
+            find.byType(ListView),
+            const Offset(0, 300),
+            1000,
+          );
+          await tester.pumpAndSettle();
+
+          expect(callCount, 2);
+        },
+      );
+    });
+
+    /// Tests for properties passed straight through to the underlying
+    /// [ListView].
+    group('ListView Passthrough', () {
+      testWidgets(
+        'Applies physics, shrinkWrap, primary and cacheExtent',
+        (tester) async {
+          const physics = BouncingScrollPhysics();
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                physics: physics,
+                shrinkWrap: true,
+                primary: false,
+                cacheExtent: 500,
+                loadData: (page) {
+                  return mockLoadData(page, totalItems: 5, maxItemsPerPage: 5);
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          final listView = tester.widget<ListView>(find.byType(ListView));
+          expect(listView.physics, physics);
+          expect(listView.shrinkWrap, isTrue);
+          expect(listView.primary, isFalse);
+          expect(
+            listView.scrollCacheExtent,
+            const ScrollCacheExtent.pixels(500),
+          );
+        },
+      );
+
+      testWidgets(
+        'Leaves scrollCacheExtent null when cacheExtent is not set',
+        (tester) async {
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                loadData: (page) {
+                  return mockLoadData(page, totalItems: 5, maxItemsPerPage: 5);
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          final listView = tester.widget<ListView>(find.byType(ListView));
+          expect(listView.scrollCacheExtent, isNull);
+        },
+      );
+    });
+
+    /// Tests for the `loadMoreThreshold` property.
+    group('Configuration Validation', () {
+      test('loadMoreThreshold cannot be negative', () {
+        expect(
+          () => ScrollInfinity<String>(
+            maxItems: 5,
+            loadMoreThreshold: -1,
+            loadData: (page) async => [],
+            itemBuilder: (item, index) => Text(item),
+          ),
+          throwsAssertionError,
+        );
+      });
     });
   });
 }
