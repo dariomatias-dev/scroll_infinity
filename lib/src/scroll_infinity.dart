@@ -28,6 +28,7 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.header,
     this.separatorBuilder,
     this.scrollbars = true,
+    this.enablePullToRefresh = false,
 
     // Behavioral Features
     this.interval,
@@ -121,6 +122,10 @@ class ScrollInfinity<T> extends StatefulWidget {
 
   /// Determines whether scrollbars should be displayed. Defaults to `true`.
   final bool scrollbars;
+
+  /// Wraps the list in a [RefreshIndicator] that resets and refetches from
+  /// [initialPageIndex] on pull-to-refresh. Defaults to `false`.
+  final bool enablePullToRefresh;
 
   // Behavioral Features
 
@@ -458,11 +463,20 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
 
   @override
   Widget build(BuildContext context) {
-    return ScrollConfiguration(
+    Widget child = ScrollConfiguration(
       behavior: ScrollConfiguration.of(context).copyWith(
         scrollbars: widget.scrollbars,
       ),
       child: _buildListView(),
     );
+
+    if (widget.enablePullToRefresh) {
+      child = RefreshIndicator(
+        onRefresh: _reset,
+        child: child,
+      );
+    }
+
+    return child;
   }
 }
