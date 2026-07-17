@@ -1,3 +1,5 @@
+part of 'scroll_infinity.dart';
+
 /// The kind of footer to render at the end of a paginated list.
 enum ScrollInfinityFooterType {
   /// No footer should be rendered.

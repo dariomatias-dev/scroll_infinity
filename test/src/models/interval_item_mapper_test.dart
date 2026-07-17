@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:scroll_infinity/src/interval_item_mapper.dart';
+import 'package:scroll_infinity/src/models/interval_item_mapper.dart';
 
 void main() {
   group('IntervalItemMapper', () {
