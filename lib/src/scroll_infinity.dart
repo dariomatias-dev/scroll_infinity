@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:scroll_infinity/src/interval_item_mapper.dart';
 import 'package:scroll_infinity/src/scroll_infinity_action_button.dart';
 import 'package:scroll_infinity/src/scroll_infinity_controller.dart';
@@ -29,6 +30,10 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.separatorBuilder,
     this.scrollbars = true,
     this.enablePullToRefresh = false,
+    this.physics,
+    this.shrinkWrap = false,
+    this.primary,
+    this.cacheExtent,
 
     // Behavioral Features
     this.interval,
@@ -131,6 +136,20 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// Wraps the list in a [RefreshIndicator] that resets and refetches from
   /// [initialPageIndex] on pull-to-refresh. Defaults to `false`.
   final bool enablePullToRefresh;
+
+  /// Passed directly to the underlying [ListView.physics].
+  final ScrollPhysics? physics;
+
+  /// Passed directly to the underlying [ListView.shrinkWrap].
+  /// Defaults to `false`.
+  final bool shrinkWrap;
+
+  /// Passed directly to the underlying [ListView.primary].
+  final bool? primary;
+
+  /// Cache extent, in logical pixels, passed to the underlying
+  /// [ListView] as a [ScrollCacheExtent.pixels] value.
+  final double? cacheExtent;
 
   // Behavioral Features
 
@@ -337,6 +356,12 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
       scrollDirection: widget.scrollDirection,
       reverse: widget.reverse,
       padding: widget.padding,
+      physics: widget.physics,
+      shrinkWrap: widget.shrinkWrap,
+      primary: widget.primary,
+      scrollCacheExtent: widget.cacheExtent == null
+          ? null
+          : ScrollCacheExtent.pixels(widget.cacheExtent!),
       itemCount: itemCount,
       separatorBuilder: (context, index) {
         if (widget.separatorBuilder == null) {
