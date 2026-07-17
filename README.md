@@ -5,6 +5,11 @@
 </div>
 <br>
 
+<p align="center">
+  <strong>Language:</strong>
+  <strong>English</strong> | <a href="README.pt.md">Português</a>
+</p>
+
 <h1 align="center">Scroll Infinity</h1>
 
 <p align="center">
@@ -23,7 +28,6 @@
   <img src="https://img.shields.io/pub/v/scroll_infinity.svg">
   <img src="https://img.shields.io/pub/likes/scroll_infinity">
   <img src="https://img.shields.io/pub/points/scroll_infinity">
-  <img src="https://img.shields.io/pub/popularity/scroll_infinity">
 </div>
 
 ## Table of Contents
@@ -32,10 +36,16 @@
 - [Features](#features)
 - [Built With](#built-with)
 - [Getting Started](#getting-started)
+  - [Requirements](#requirements)
+  - [Installation](#installation)
 - [Usage](#usage)
   - [Basic Vertical Scroll](#basic-vertical-scroll)
   - [Basic Horizontal Scroll](#basic-horizontal-scroll)
   - [Vertical Scroll with Interval](#vertical-scroll-with-interval)
+  - [Controller (Refresh & Retry)](#controller-refresh--retry)
+  - [Pull-to-Refresh](#pull-to-refresh)
+  - [Manual Loading](#manual-loading)
+  - [Error and Analytics Callbacks](#error-and-analytics-callbacks)
 - [Properties](#properties)
 - [Contributing](#contributing)
 - [License](#license)
@@ -67,15 +77,29 @@ It offers customization for manual/automatic loading, custom state widgets, and 
 - Insert null values at intervals (ads/dividers)
 - Retry attempts limit on error
 - Real item index mapping with intervals
+- `ScrollInfinityController` for external refresh/retry
+- Pull-to-refresh support
+- Configurable load-more trigger threshold
+- `onError` and `onItemsLoaded` callbacks for logging/analytics
+- Passthrough of `physics`, `shrinkWrap`, `primary`, and `cacheExtent` to the underlying `ListView`
 
 ## Built With
 
-- **[Flutter](https://flutter.dev/)** – A UI toolkit by Google for building beautiful, natively compiled applications for mobile, web, and desktop from a single codebase.  
-- **[Dart](https://dart.dev/)** – The programming language used for Flutter, optimized for building fast apps on any platform.
+- **[Flutter](https://flutter.dev/)** - A UI toolkit by Google for building beautiful, natively compiled applications for mobile, web, and desktop from a single codebase.  
+- **[Dart](https://dart.dev/)** - The programming language used for Flutter, optimized for building fast apps on any platform.
 
 ## Getting Started
 
-Install:
+### Requirements
+
+| Requirement | Version    |
+| ----------- | ---------- |
+| Dart SDK    | >=3.3.4    |
+| Flutter SDK | >=1.17.0   |
+
+Supports Android, iOS, web, Windows, Linux, and macOS.
+
+### Installation
 
 ```bash
 flutter pub add scroll_infinity
@@ -87,6 +111,8 @@ Pagination requests a new page when the user reaches the list end.
 If `loadData` returns `null`, the error state is shown.
 
 **Note:** Use a nullable type `T?` when using `interval`, as null values are inserted.
+
+A fully configurable demo with every property wired to UI controls is available in the [example](example) directory.
 
 ### Basic Vertical Scroll
 
@@ -255,43 +281,125 @@ class _MyAppState extends State<MyApp> {
 }
 ```
 
+### Controller (Refresh & Retry)
+
+Use a `ScrollInfinityController` to trigger `refresh()`/`retry()` from outside the widget (e.g. a button) and to read `isLoading`/`hasError`. Dispose it in `dispose()` since you created it.
+
+```dart
+final _controller = ScrollInfinityController();
+
+@override
+void dispose() {
+  _controller.dispose();
+  super.dispose();
+}
+
+@override
+Widget build(BuildContext context) {
+  return ScrollInfinity<int>(
+    controller: _controller,
+    maxItems: _maxItems,
+    loadData: _loadData,
+    itemBuilder: _itemBuilder,
+  );
+}
+
+// Elsewhere, e.g. a FloatingActionButton:
+onPressed: () => _controller.refresh(),
+```
+
+### Pull-to-Refresh
+
+Set `enablePullToRefresh` to wrap the list in a `RefreshIndicator` that resets pagination back to `initialPageIndex`.
+
+```dart
+ScrollInfinity<int>(
+  enablePullToRefresh: true,
+  maxItems: _maxItems,
+  loadData: _loadData,
+  itemBuilder: _itemBuilder,
+)
+```
+
+### Manual Loading
+
+Set `automaticLoading` to `false` to show a "Load More" button instead of fetching automatically on scroll. Customize it with `loadMoreBuilder`.
+
+```dart
+ScrollInfinity<int>(
+  automaticLoading: false,
+  loadMoreBuilder: (action) {
+    return TextButton(
+      onPressed: action,
+      child: const Text('Load more'),
+    );
+  },
+  maxItems: _maxItems,
+  loadData: _loadData,
+  itemBuilder: _itemBuilder,
+)
+```
+
+### Error and Analytics Callbacks
+
+Use `onError` to log/report the raw exception thrown by `loadData`, and `onItemsLoaded` to observe successfully fetched items (e.g. analytics). Neither affects the build.
+
+```dart
+ScrollInfinity<int>(
+  onError: (error) => log('Failed to load items', error: error),
+  onItemsLoaded: (items) => analytics.logEvent('items_loaded', {'count': items.length}),
+  maxItems: _maxItems,
+  loadData: _loadData,
+  itemBuilder: _itemBuilder,
+)
+```
+
 ## Properties
 
 **Core Data Handling**
 
-| Name             | Type                                  | Default | Description              |
-| ---------------- | ------------------------------------- | ------- | ------------------------ |
-| loadData         | `Future<List<T>?> Function(int)`      | –       | Fetch data for each page |
-| itemBuilder      | `Widget Function(T value, int index)` | –       | Builds each item         |
-| maxItems         | `int`                                 | –       | Max items per request    |
-| initialItems     | `List<T>?`                            | null    | Items before first fetch |
-| initialPageIndex | `int`                                 | 0       | Starting page index      |
+| Name             | Type                                  | Default | Description                                     |
+| ---------------- | ------------------------------------- | ------- | ------------------------------------------------ |
+| loadData         | `Future<List<T>?> Function(int)`      | -       | Fetch data for each page                         |
+| itemBuilder      | `Widget Function(T value, int index)` | -       | Builds each item                                 |
+| maxItems         | `int`                                 | -       | Max items per request                            |
+| initialItems     | `List<T>?`                            | null    | Items before first fetch                         |
+| initialPageIndex | `int`                                 | 0       | Starting page index                              |
+| controller       | `ScrollInfinityController?`           | null    | External refresh/retry and loading/error state   |
+| onItemsLoaded    | `void Function(List<T> items)?`       | null    | Called with fetched items on each successful load |
 
 **Layout & Appearance**
 
-| Name             | Type                                  | Default  | Description                                        |
-| ---------------- | ------------------------------------- | -------- | -------------------------------------------------- |
-| scrollDirection  | `Axis`                                | vertical | Scroll direction                                   |
-| reverse          | `bool`                                | false    | Reverses scroll/growth direction (e.g. chat lists) |
-| padding          | `EdgeInsetsGeometry?`                 | null     | Internal padding                                   |
-| header           | `Widget?`                             | null     | Header widget                                      |
-| separatorBuilder | `Widget Function(BuildContext, int)?` | null     | Separators                                         |
-| scrollbars       | `bool`                                | true     | Show scrollbars                                    |
+| Name                | Type                                  | Default  | Description                                        |
+| ------------------- | ------------------------------------- | -------- | -------------------------------------------------- |
+| scrollDirection     | `Axis`                                | vertical | Scroll direction                                   |
+| reverse             | `bool`                                | false    | Reverses scroll/growth direction (e.g. chat lists) |
+| padding             | `EdgeInsetsGeometry?`                 | null     | Internal padding                                   |
+| header              | `Widget?`                             | null     | Header widget                                      |
+| separatorBuilder    | `Widget Function(BuildContext, int)?` | null     | Separators                                         |
+| scrollbars          | `bool`                                | true     | Show scrollbars                                    |
+| enablePullToRefresh | `bool`                                | false    | Wraps list in a `RefreshIndicator`                 |
+| physics             | `ScrollPhysics?`                      | null     | Passed to the underlying `ListView`                |
+| shrinkWrap          | `bool`                                | false    | Passed to the underlying `ListView`                |
+| primary             | `bool?`                               | null     | Passed to the underlying `ListView`                |
+| cacheExtent         | `double?`                             | null     | Passed to the underlying `ListView`                |
 
 **Behavioral Features**
 
-| Name             | Type   | Default | Description                  |
-| ---------------- | ------ | ------- | ---------------------------- |
-| interval         | `int?` | null    | Null item insertion interval |
-| useRealItemIndex | `bool` | true    | Independent indexing         |
-| automaticLoading | `bool` | true    | Auto-fetch on scroll         |
+| Name              | Type     | Default | Description                                     |
+| ----------------- | -------- | ------- | ------------------------------------------------ |
+| interval          | `int?`   | null    | Null item insertion interval                     |
+| useRealItemIndex  | `bool`   | true    | Independent indexing                             |
+| automaticLoading  | `bool`   | true    | Auto-fetch on scroll                             |
+| loadMoreThreshold | `double` | 200     | Distance from list end that triggers the next page |
 
 **Error Handling**
 
-| Name               | Type   | Default | Description |
-| ------------------ | ------ | ------- | ----------- |
-| enableRetryOnError | `bool` | true    | Allow retry |
-| maxRetries         | `int?` | null    | Retry limit |
+| Name               | Type                          | Default | Description                        |
+| ------------------ | ----------------------------- | ------- | ----------------------------------- |
+| enableRetryOnError | `bool`                        | true    | Allow retry                         |
+| maxRetries         | `int?`                        | null    | Retry limit                         |
+| onError            | `void Function(Object error)?` | null    | Called with the exception on failure |
 
 **State-Specific Widgets**
 
@@ -334,8 +442,8 @@ Distributed under the MIT License. See the [LICENSE](LICENSE) file for more info
 
 Developed by **Dário Matias**:
 
-- **Portfolio**: [dariomatias-dev](https://dariomatias-dev.com)
-- **GitHub**: [dariomatias-dev](https://github.com/dariomatias-dev)
-- **Email**: [matiasdario75@gmail.com](mailto:matiasdario75@gmail.com)
-- **Instagram**: [@dariomatias_dev](https://instagram.com/dariomatias_dev)
-- **LinkedIn**: [linkedin.com/in/dariomatias-dev](https://linkedin.com/in/dariomatias-dev)
+- Portfolio: [https://dariomatias-dev.com](https://dariomatias-dev.com)
+- GitHub: [https://github.com/dariomatias-dev](https://github.com/dariomatias-dev)
+- Email: [matiasdario75@gmail.com](mailto:matiasdario75@gmail.com)
+- Instagram: [https://instagram.com/dariomatias_dev](https://instagram.com/dariomatias_dev)
+- LinkedIn: [https://linkedin.com/in/dariomatias-dev](https://linkedin.com/in/dariomatias-dev)
