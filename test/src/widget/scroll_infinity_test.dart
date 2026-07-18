@@ -1170,6 +1170,66 @@ void main() {
       );
     });
 
+    /// Tests guarding against stale fetches racing a refresh.
+    group('Refresh Race Condition', () {
+      testWidgets(
+        'Discards an in-flight fetch that resolves after refresh',
+        (tester) async {
+          final requestedPages = <int>[];
+          final completers = <Completer<List<String>?>>[];
+          final controller = ScrollInfinityController();
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 2,
+                controller: controller,
+                loadData: (page) {
+                  requestedPages.add(page);
+                  final completer = Completer<List<String>?>();
+                  completers.add(completer);
+                  return completer.future;
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          // The initial fetch for page 0 is in flight.
+          expect(requestedPages, [0]);
+
+          // Refreshing while that fetch is pending starts a second fetch
+          // for page 0.
+          controller.refresh();
+          await tester.pump();
+          expect(requestedPages, [0, 0]);
+
+          // The stale fetch resolves after the refresh: its batch must be
+          // discarded instead of polluting the cleared list.
+          completers[0].complete(['Stale A', 'Stale B']);
+          await tester.pump();
+          expect(find.text('Stale A'), findsNothing);
+
+          // The post-refresh fetch resolves and only its items are shown.
+          completers[1].complete(['Fresh A', 'Fresh B']);
+          await tester.pump();
+          expect(find.text('Fresh A'), findsOneWidget);
+          expect(find.text('Fresh B'), findsOneWidget);
+          expect(find.text('Stale A'), findsNothing);
+          expect(find.text('Stale B'), findsNothing);
+
+          // The list does not fill the screen, so the next page is fetched
+          // automatically. It must be page 1: the stale fetch must not have
+          // advanced the page index.
+          await tester.pump();
+          expect(requestedPages, [0, 0, 1]);
+
+          completers[2].complete([]);
+          await tester.pump();
+        },
+      );
+    });
+
     /// Tests for properties passed straight through to the underlying
     /// [ListView].
     group('ListView Passthrough', () {

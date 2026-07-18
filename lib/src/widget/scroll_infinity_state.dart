@@ -7,6 +7,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
 
   int _pageIndex = 0;
   int _retryCount = 0;
+  int _fetchGeneration = 0;
   bool _isLoading = false;
   bool _isEndOfList = false;
   bool _hasError = false;
@@ -50,6 +51,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
   Future<void> _reset() async {
     if (mounted) {
       setState(() {
+        _fetchGeneration++;
         _itemMapper.clear();
         _pageIndex = widget.initialPageIndex;
         _retryCount = 0;
@@ -90,6 +92,8 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
   Future<void> _fetchNextPage() async {
     if (_isLoading || _isEndOfList || _isDisposed) return;
 
+    final generation = _fetchGeneration;
+
     setState(() {
       _isLoading = true;
       _hasError = false;
@@ -98,7 +102,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
     try {
       final newItems = await widget.loadData(_pageIndex);
 
-      if (_isDisposed) return;
+      if (_isDisposed || generation != _fetchGeneration) return;
 
       if (newItems != null) {
         _retryCount = 0;
@@ -112,12 +116,12 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
         _hasError = true;
       }
     } on Object catch (error) {
-      if (_isDisposed) return;
+      if (_isDisposed || generation != _fetchGeneration) return;
       _retryCount++;
       _hasError = true;
       widget.onError?.call(error);
     } finally {
-      if (!_isDisposed) {
+      if (!_isDisposed && generation == _fetchGeneration) {
         _isLoading = false;
       }
     }
