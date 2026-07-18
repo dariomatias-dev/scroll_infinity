@@ -55,34 +55,35 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.tryAgainBuilder,
     this.loadMoreBuilder,
     this.retryLimitReached,
-  })  : assert(
-          initialPageIndex >= 0,
-          'The initial page index cannot be less than zero.',
-        ),
-        assert(
-          interval == null || interval > 0,
-          'The interval must be greater than zero.',
-        ),
-        assert(
-          !(interval != null) || null is T,
-          'When `interval` is used, the generic type `T` must be nullable '
-          '(e.g., String?).',
-        ),
-        assert(
-          maxRetries == null || maxRetries >= 0,
-          'maxRetries cannot be negative.',
-        ),
-        assert(
-          loadMoreThreshold >= 0,
-          'loadMoreThreshold cannot be negative.',
-        );
+  }) : assert(
+         initialPageIndex >= 0,
+         'The initial page index cannot be less than zero.',
+       ),
+       assert(
+         interval == null || interval > 0,
+         'The interval must be greater than zero.',
+       ),
+       assert(
+         !(interval != null) || null is T,
+         'When `interval` is used, the generic type `T` must be nullable '
+         '(e.g., String?).',
+       ),
+       assert(
+         maxRetries == null || maxRetries >= 0,
+         'maxRetries cannot be negative.',
+       ),
+       assert(
+         loadMoreThreshold >= 0,
+         'loadMoreThreshold cannot be negative.',
+       );
 
   // Core Data Handling
 
   /// Callback responsible for fetching data for each page.
   final Future<List<T>?> Function(
     int pageIndex,
-  ) loadData;
+  )
+  loadData;
 
   /// Builder function responsible for rendering each item in the list.
   ///
@@ -97,7 +98,8 @@ class ScrollInfinity<T> extends StatefulWidget {
   final Widget Function(
     T value,
     int index,
-  ) itemBuilder;
+  )
+  itemBuilder;
 
   /// The maximum number of items to retrieve per request.
   final int maxItems;
@@ -138,13 +140,14 @@ class ScrollInfinity<T> extends StatefulWidget {
 
   /// A builder that inserts separators between list items.
   ///
-  /// `index` is always the raw display position (0-based, counting only
-  /// data items) — unlike [itemBuilder]'s `index`, it is not affected by
-  /// [useRealItemIndex] or [interval].
+  /// `index` is always the raw display position (0-based, interval
+  /// placeholders included) — unlike [itemBuilder]'s `index`, it is not
+  /// affected by [useRealItemIndex].
   final Widget Function(
     BuildContext context,
     int index,
-  )? separatorBuilder;
+  )?
+  separatorBuilder;
 
   /// Determines whether scrollbars should be displayed. Defaults to `true`.
   final bool scrollbars;
@@ -215,13 +218,15 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// occurs.
   final Widget Function(
     VoidCallback action,
-  )? tryAgainBuilder;
+  )?
+  tryAgainBuilder;
 
   /// A builder that constructs a custom 'Load More' widget when
   /// [automaticLoading] is `false`.
   final Widget Function(
     VoidCallback action,
-  )? loadMoreBuilder;
+  )?
+  loadMoreBuilder;
 
   /// A widget to display when the [maxRetries] limit has been reached.
   ///

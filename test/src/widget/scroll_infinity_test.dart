@@ -1101,7 +1101,7 @@ void main() {
       );
 
       testWidgets(
-        'retry() ignores maxRetries once the limit is reached',
+        'retry() is a no-op once the maxRetries limit is reached',
         (tester) async {
           final controller = ScrollInfinityController();
           var callCount = 0;
@@ -1522,7 +1522,6 @@ void main() {
           throwsAssertionError,
         );
       });
-
     });
   });
 }
