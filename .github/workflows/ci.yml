@@ -38,7 +38,7 @@ jobs:
           fail_ci_if_error: false
 
   analyze-example:
-    name: Analyze example app
+    name: Analyze & test example app
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -57,3 +57,6 @@ jobs:
 
       - name: Analyze
         run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
