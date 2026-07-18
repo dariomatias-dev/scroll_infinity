@@ -380,7 +380,7 @@ ScrollInfinity<int>(
 | Nome             | Tipo                                  | Padrão | Descrição                                        |
 | ---------------- | ------------------------------------- | ------ | -------------------------------------------------- |
 | loadData         | `Future<List<T>?> Function(int)`      | -      | Busca os dados de cada página                     |
-| itemBuilder      | `Widget Function(T value, int index)` | -      | Constrói cada item                                 |
+| itemBuilder      | `Widget Function(T value, int index)` | -      | Constrói cada item. `index` é mapeado por `useRealItemIndex`/`interval` |
 | maxItems         | `int`                                 | -      | Máximo de itens por requisição                     |
 | initialItems     | `List<T>?`                            | null   | Itens antes da primeira busca                      |
 | initialPageIndex | `int`                                 | 0      | Índice da página inicial                           |
@@ -395,7 +395,7 @@ ScrollInfinity<int>(
 | reverse             | `bool`                                | false    | Inverte a direção de rolagem/crescimento (ex.: chats)  |
 | padding             | `EdgeInsetsGeometry?`                 | null     | Preenchimento interno                                  |
 | header              | `Widget?`                             | null     | Widget de cabeçalho                                    |
-| separatorBuilder    | `Widget Function(BuildContext, int)?` | null     | Separadores                                            |
+| separatorBuilder    | `Widget Function(BuildContext, int)?` | null     | Separadores. `index` é a posição de exibição crua, sem mapeamento por `useRealItemIndex`/`interval` |
 | scrollbars          | `bool`                                | true     | Exibe scrollbars                                       |
 | enablePullToRefresh | `bool`                                | false    | Envolve a lista em um `RefreshIndicator`               |
 | physics             | `ScrollPhysics?`                      | null     | Passado para o `ListView` interno                      |

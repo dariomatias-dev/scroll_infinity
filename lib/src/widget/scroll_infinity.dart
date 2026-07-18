@@ -89,6 +89,11 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// When an interval is used, `value` will be `null` for interval items.
   /// A nullable type must be used for `T`
   /// (e.g., `String?`) if `interval` is non-null.
+  ///
+  /// `index` is mapped according to [useRealItemIndex] and [interval] (see
+  /// [useRealItemIndex] for details). This differs from
+  /// [separatorBuilder]'s `index`, which is always the raw display
+  /// position and ignores both properties.
   final Widget Function(
     T value,
     int index,
@@ -132,6 +137,10 @@ class ScrollInfinity<T> extends StatefulWidget {
   final Widget? header;
 
   /// A builder that inserts separators between list items.
+  ///
+  /// `index` is always the raw display position (0-based, counting only
+  /// data items) — unlike [itemBuilder]'s `index`, it is not affected by
+  /// [useRealItemIndex] or [interval].
   final Widget Function(
     BuildContext context,
     int index,

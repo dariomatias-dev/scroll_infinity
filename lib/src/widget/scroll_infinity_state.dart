@@ -37,14 +37,14 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
     return ScrollInfinityFooterType.none;
   }
 
-  void _initialize() {
+  Future<void> _initialize() async {
     _pageIndex = widget.initialPageIndex;
 
     if (widget.initialItems != null) {
       _itemMapper.addAll(widget.initialItems!, interval: widget.interval);
       _checkIfScreenIsFilledAndFetchMore();
     } else {
-      unawaited(_fetchNextPage());
+      await _fetchNextPage();
     }
   }
 
@@ -60,7 +60,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
         _hasError = false;
       });
 
-      _initialize();
+      await _initialize();
     }
   }
 
@@ -83,6 +83,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
           widget.automaticLoading &&
           !_isEndOfList &&
           !_isLoading &&
+          _scrollController.hasClients &&
           _scrollController.position.maxScrollExtent == 0) {
         unawaited(_fetchNextPage());
       }
@@ -219,7 +220,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
     super.initState();
 
     widget.controller?.attach(this);
-    _initialize();
+    unawaited(_initialize());
     _scrollController.addListener(_onScroll);
   }
 

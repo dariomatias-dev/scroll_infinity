@@ -380,7 +380,7 @@ ScrollInfinity<int>(
 | Name             | Type                                  | Default | Description                                     |
 | ---------------- | ------------------------------------- | ------- | ------------------------------------------------ |
 | loadData         | `Future<List<T>?> Function(int)`      | -       | Fetch data for each page                         |
-| itemBuilder      | `Widget Function(T value, int index)` | -       | Builds each item                                 |
+| itemBuilder      | `Widget Function(T value, int index)` | -       | Builds each item. `index` is mapped by `useRealItemIndex`/`interval` |
 | maxItems         | `int`                                 | -       | Max items per request                            |
 | initialItems     | `List<T>?`                            | null    | Items before first fetch                         |
 | initialPageIndex | `int`                                 | 0       | Starting page index                              |
@@ -395,7 +395,7 @@ ScrollInfinity<int>(
 | reverse             | `bool`                                | false    | Reverses scroll/growth direction (e.g. chat lists) |
 | padding             | `EdgeInsetsGeometry?`                 | null     | Internal padding                                   |
 | header              | `Widget?`                             | null     | Header widget                                      |
-| separatorBuilder    | `Widget Function(BuildContext, int)?` | null     | Separators                                         |
+| separatorBuilder    | `Widget Function(BuildContext, int)?` | null     | Separators. `index` is the raw display position, unaffected by `useRealItemIndex`/`interval` |
 | scrollbars          | `bool`                                | true     | Show scrollbars                                    |
 | enablePullToRefresh | `bool`                                | false    | Wraps list in a `RefreshIndicator`                 |
 | physics             | `ScrollPhysics?`                      | null     | Passed to the underlying `ListView`                |

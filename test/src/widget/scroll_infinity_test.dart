@@ -1292,6 +1292,55 @@ void main() {
           expect(callCount, 2);
         },
       );
+
+      testWidgets(
+        'onRefresh future stays pending until the refetch completes',
+        (tester) async {
+          final completers = <Completer<List<String>?>>[];
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                enablePullToRefresh: true,
+                loadData: (page) {
+                  final completer = Completer<List<String>?>();
+                  completers.add(completer);
+                  return completer.future;
+                },
+                itemBuilder: (item, index) {
+                  return SizedBox(height: 150, child: Text(item));
+                },
+              ),
+            ),
+          );
+
+          // Resolve the initial fetch.
+          completers[0].complete(['Item 0']);
+          await tester.pumpAndSettle();
+
+          final refreshIndicator = tester.widget<RefreshIndicator>(
+            find.byType(RefreshIndicator),
+          );
+
+          var refreshCompleted = false;
+          unawaited(
+            refreshIndicator.onRefresh().then((_) {
+              refreshCompleted = true;
+            }),
+          );
+          await tester.pump();
+
+          // The refetch triggered by refresh() is still in flight: the
+          // RefreshIndicator's spinner must not be dismissed yet.
+          expect(refreshCompleted, isFalse);
+
+          completers[1].complete(['Item 0']);
+          await tester.pump();
+
+          expect(refreshCompleted, isTrue);
+        },
+      );
     });
 
     /// Tests guarding against stale fetches racing a refresh.
