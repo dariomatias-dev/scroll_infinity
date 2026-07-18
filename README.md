@@ -81,7 +81,7 @@ It offers customization for manual/automatic loading, custom state widgets, and 
 - Pull-to-refresh support
 - Configurable load-more trigger threshold
 - `onError` and `onItemsLoaded` callbacks for logging/analytics
-- Passthrough of `physics`, `shrinkWrap`, `primary`, and `cacheExtent` to the underlying `ListView`
+- Passthrough of `physics`, `shrinkWrap`, and `cacheExtent` to the underlying `ListView`
 
 ## Built With
 
@@ -381,7 +381,6 @@ ScrollInfinity<int>(
 | enablePullToRefresh | `bool`                                | false    | Wraps list in a `RefreshIndicator`                 |
 | physics             | `ScrollPhysics?`                      | null     | Passed to the underlying `ListView`                |
 | shrinkWrap          | `bool`                                | false    | Passed to the underlying `ListView`                |
-| primary             | `bool?`                               | null     | Passed to the underlying `ListView`                |
 | cacheExtent         | `double?`                             | null     | Passed to the underlying `ListView`                |
 
 **Behavioral Features**

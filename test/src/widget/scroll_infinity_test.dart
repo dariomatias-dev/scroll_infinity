@@ -1234,7 +1234,7 @@ void main() {
     /// [ListView].
     group('ListView Passthrough', () {
       testWidgets(
-        'Applies physics, shrinkWrap, primary and cacheExtent',
+        'Applies physics, shrinkWrap and cacheExtent',
         (tester) async {
           const physics = BouncingScrollPhysics();
 
@@ -1244,7 +1244,6 @@ void main() {
                 maxItems: 5,
                 physics: physics,
                 shrinkWrap: true,
-                primary: false,
                 cacheExtent: 500,
                 loadData: (page) {
                   return mockLoadData(page, totalItems: 5, maxItemsPerPage: 5);
@@ -1259,7 +1258,6 @@ void main() {
           final listView = tester.widget<ListView>(find.byType(ListView));
           expect(listView.physics, physics);
           expect(listView.shrinkWrap, isTrue);
-          expect(listView.primary, isFalse);
           expect(
             listView.scrollCacheExtent,
             const ScrollCacheExtent.pixels(500),
@@ -1351,6 +1349,7 @@ void main() {
           throwsAssertionError,
         );
       });
+
     });
   });
 }

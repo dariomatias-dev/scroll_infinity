@@ -36,7 +36,6 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.enablePullToRefresh = false,
     this.physics,
     this.shrinkWrap = false,
-    this.primary,
     this.cacheExtent,
 
     // Behavioral Features
@@ -151,9 +150,6 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// Passed directly to the underlying [ListView.shrinkWrap].
   /// Defaults to `false`.
   final bool shrinkWrap;
-
-  /// Passed directly to the underlying [ListView.primary].
-  final bool? primary;
 
   /// Cache extent, in logical pixels, passed to the underlying
   /// [ListView] as a [ScrollCacheExtent.pixels] value.

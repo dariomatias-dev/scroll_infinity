@@ -146,7 +146,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
       padding: widget.padding,
       physics: widget.physics,
       shrinkWrap: widget.shrinkWrap,
-      primary: widget.primary,
       scrollCacheExtent: widget.cacheExtent == null
           ? null
           : ScrollCacheExtent.pixels(widget.cacheExtent!),

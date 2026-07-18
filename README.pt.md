@@ -81,7 +81,7 @@ Oferece customização para carregamento manual/automático, widgets de estado p
 - Suporte a pull-to-refresh
 - Limite configurável para disparo do carregamento da próxima página
 - Callbacks `onError` e `onItemsLoaded` para logs/analytics
-- Passthrough de `physics`, `shrinkWrap`, `primary` e `cacheExtent` para o `ListView` interno
+- Passthrough de `physics`, `shrinkWrap` e `cacheExtent` para o `ListView` interno
 
 ## Construído Com
 
@@ -381,7 +381,6 @@ ScrollInfinity<int>(
 | enablePullToRefresh | `bool`                                | false    | Envolve a lista em um `RefreshIndicator`               |
 | physics             | `ScrollPhysics?`                      | null     | Passado para o `ListView` interno                      |
 | shrinkWrap          | `bool`                                | false    | Passado para o `ListView` interno                      |
-| primary             | `bool?`                               | null     | Passado para o `ListView` interno                      |
 | cacheExtent         | `double?`                             | null     | Passado para o `ListView` interno                      |
 
 **Recursos Comportamentais**
