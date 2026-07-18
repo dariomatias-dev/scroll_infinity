@@ -310,8 +310,9 @@ class _DisplayScreenState extends State<DisplayScreen> {
 
     // Simulate the end of the list
     final isListEnd = pageIndex > 3 && _random.nextInt(4) == 0;
-    final itemCount =
-        isListEnd ? _random.nextInt(widget.maxItems) : widget.maxItems;
+    final itemCount = isListEnd
+        ? _random.nextInt(widget.maxItems)
+        : widget.maxItems;
 
     return List.generate(itemCount, (index) {
       return Color.fromARGB(
@@ -364,8 +365,9 @@ class _DisplayScreenState extends State<DisplayScreen> {
           child: Text(
             'Item $index',
             style: TextStyle(
-              color:
-                  value.computeLuminance() > 0.5 ? Colors.black : Colors.white,
+              color: value.computeLuminance() > 0.5
+                  ? Colors.black
+                  : Colors.white,
             ),
           ),
         );

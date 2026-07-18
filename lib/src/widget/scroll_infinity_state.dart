@@ -96,8 +96,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
   Future<void> _fetchNextPage() async {
     if (_isLoading || _isEndOfList || _isDisposed) return;
 
-    if (_hasError &&
-        (!widget.enableRetryOnError || _retryLimitReached)) {
+    if (_hasError && (!widget.enableRetryOnError || _retryLimitReached)) {
       return;
     }
 
