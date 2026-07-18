@@ -634,7 +634,7 @@ void main() {
     /// configuration changes while mounted.
     group('Widget Updates', () {
       testWidgets(
-        'Resets and refetches when loadData or maxItems changes',
+        'Resets and refetches when maxItems changes',
         (tester) async {
           await tester.pumpWidget(
             buildTestableWidget(
@@ -708,6 +708,42 @@ void main() {
           expect(tester.takeException(), isNull);
           expect(find.text('Item 0'), findsOneWidget);
           expect(find.textContaining('interval_'), findsWidgets);
+        },
+      );
+
+      testWidgets(
+        'Does not reset when only the loadData reference changes',
+        (tester) async {
+          // Simulates a parent widget passing a new closure on every
+          // rebuild (e.g. an inline `loadData: (page) => ...`), which
+          // used to be compared by identity and wrongly reset the list.
+          var callCount = 0;
+
+          Widget build() {
+            return buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                loadData: (page) {
+                  callCount++;
+                  return mockLoadData(page, totalItems: 3, maxItemsPerPage: 5);
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            );
+          }
+
+          await tester.pumpWidget(build());
+          await tester.pumpAndSettle();
+          expect(find.text('Item 0'), findsOneWidget);
+          expect(callCount, 1);
+
+          // Rebuild with a brand-new closure instance but the same
+          // maxItems/interval: no reset, no refetch.
+          await tester.pumpWidget(build());
+          await tester.pump();
+
+          expect(find.text('Item 0'), findsOneWidget);
+          expect(callCount, 1);
         },
       );
 

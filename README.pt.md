@@ -43,6 +43,7 @@
   - [Rolagem Horizontal Básica](#rolagem-horizontal-básica)
   - [Rolagem Vertical com Intervalo](#rolagem-vertical-com-intervalo)
   - [Controller (Refresh & Retry)](#controller-refresh--retry)
+  - [Trocando a Fonte de Dados](#trocando-a-fonte-de-dados)
   - [Pull-to-Refresh](#pull-to-refresh)
   - [Carregamento Manual](#carregamento-manual)
   - [Callbacks de Erro e Analytics](#callbacks-de-erro-e-analytics)
@@ -306,6 +307,24 @@ Widget build(BuildContext context) {
 
 // Em outro lugar, ex.: um FloatingActionButton:
 onPressed: () => _controller.refresh(),
+```
+
+### Trocando a Fonte de Dados
+
+`loadData` é uma `Function`, então passar uma closure inline (ex.: `loadData: (page) => ...`) cria uma nova instância a cada rebuild — comparar por identidade resetaria a lista a cada `setState` do widget pai, o que raramente é o comportamento desejado. Por isso, trocar apenas `loadData` **não** reseta a lista.
+
+Para carregar um conjunto de dados diferente (ex.: mudar categoria ou termo de busca), use uma das opções:
+
+- Chame `_controller.refresh()` explicitamente quando a fonte mudar, ou
+- Dê ao `ScrollInfinity` uma nova `Key` (ex.: `ValueKey(categoria)`) para o Flutter remontá-lo do zero.
+
+```dart
+ScrollInfinity<int>(
+  key: ValueKey(_categoria),
+  maxItems: _maxItems,
+  loadData: (page) => _loadData(_categoria, page),
+  itemBuilder: _itemBuilder,
+)
 ```
 
 ### Pull-to-Refresh

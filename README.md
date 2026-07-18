@@ -43,6 +43,7 @@
   - [Basic Horizontal Scroll](#basic-horizontal-scroll)
   - [Vertical Scroll with Interval](#vertical-scroll-with-interval)
   - [Controller (Refresh & Retry)](#controller-refresh--retry)
+  - [Switching Data Sources](#switching-data-sources)
   - [Pull-to-Refresh](#pull-to-refresh)
   - [Manual Loading](#manual-loading)
   - [Error and Analytics Callbacks](#error-and-analytics-callbacks)
@@ -306,6 +307,24 @@ Widget build(BuildContext context) {
 
 // Elsewhere, e.g. a FloatingActionButton:
 onPressed: () => _controller.refresh(),
+```
+
+### Switching Data Sources
+
+`loadData` is a `Function`, so passing an inline closure (e.g. `loadData: (page) => ...`) creates a new instance on every rebuild — comparing it by identity would reset the list on every parent `setState`, which is rarely what you want. Because of that, changing `loadData` alone does **not** reset the list.
+
+To load a different data set (e.g. switching category or search query), either:
+
+- Call `_controller.refresh()` explicitly when the source changes, or
+- Give the `ScrollInfinity` a new `Key` (e.g. `ValueKey(category)`) so Flutter remounts it from scratch.
+
+```dart
+ScrollInfinity<int>(
+  key: ValueKey(_category),
+  maxItems: _maxItems,
+  loadData: (page) => _loadData(_category, page),
+  itemBuilder: _itemBuilder,
+)
 ```
 
 ### Pull-to-Refresh

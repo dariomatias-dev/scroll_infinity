@@ -229,8 +229,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
       widget.controller?.attach(this);
     }
 
-    if (widget.loadData != oldWidget.loadData ||
-        widget.maxItems != oldWidget.maxItems ||
+    if (widget.maxItems != oldWidget.maxItems ||
         widget.interval != oldWidget.interval) {
       unawaited(_reset());
     }
