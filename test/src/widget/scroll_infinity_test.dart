@@ -1043,6 +1043,72 @@ void main() {
       );
 
       testWidgets(
+        'retry() ignores maxRetries once the limit is reached',
+        (tester) async {
+          final controller = ScrollInfinityController();
+          var callCount = 0;
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                maxRetries: 1,
+                controller: controller,
+                loadData: (page) {
+                  callCount++;
+                  return mockLoadData(page, throwErrorOnPage: true);
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+          expect(callCount, 1);
+
+          // The initial failed attempt already set retryCount to 1, which
+          // meets maxRetries (1): the limit is reached, so retry() must be
+          // a no-op instead of firing another request.
+          controller.retry();
+          await tester.pumpAndSettle();
+
+          expect(callCount, 1);
+          expect(controller.hasError, isTrue);
+        },
+      );
+
+      testWidgets(
+        'retry() does nothing when enableRetryOnError is false',
+        (tester) async {
+          final controller = ScrollInfinityController();
+          var callCount = 0;
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                enableRetryOnError: false,
+                controller: controller,
+                loadData: (page) {
+                  callCount++;
+                  return mockLoadData(page, throwErrorOnPage: true);
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+          expect(callCount, 1);
+
+          controller.retry();
+          await tester.pumpAndSettle();
+
+          expect(callCount, 1);
+        },
+      );
+
+      testWidgets(
         'Becomes inert without throwing after ScrollInfinity is disposed',
         (tester) async {
           final controller = ScrollInfinityController();

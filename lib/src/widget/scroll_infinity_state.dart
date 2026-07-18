@@ -89,8 +89,16 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
     });
   }
 
+  bool get _retryLimitReached =>
+      widget.maxRetries != null && _retryCount >= widget.maxRetries!;
+
   Future<void> _fetchNextPage() async {
     if (_isLoading || _isEndOfList || _isDisposed) return;
+
+    if (_hasError &&
+        (!widget.enableRetryOnError || _retryLimitReached)) {
+      return;
+    }
 
     final generation = _fetchGeneration;
 
