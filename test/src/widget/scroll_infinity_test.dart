@@ -930,6 +930,28 @@ void main() {
       );
 
       testWidgets(
+        'onError receives a synthetic exception when loadData returns null',
+        (tester) async {
+          Object? capturedError;
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                onError: (error) => capturedError = error,
+                loadData: (page) async => null,
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          expect(capturedError, isA<Exception>());
+        },
+      );
+
+      testWidgets(
         'onError is not called when loadData succeeds',
         (tester) async {
           var called = false;

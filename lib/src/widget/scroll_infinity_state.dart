@@ -122,6 +122,9 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
       } else {
         _retryCount++;
         _hasError = true;
+        widget.onError?.call(
+          Exception('loadData returned null for page $_pageIndex.'),
+        );
       }
     } on Object catch (error) {
       if (_isDisposed || generation != _fetchGeneration) return;

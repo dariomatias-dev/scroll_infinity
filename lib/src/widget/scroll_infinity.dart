@@ -187,7 +187,9 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// If `null`, retries will be attempted indefinitely. The default is `null`.
   final int? maxRetries;
 
-  /// Called with the exception thrown by [loadData] whenever a fetch fails.
+  /// Called whenever a fetch fails: with the exception thrown by
+  /// [loadData], or with a synthetic [Exception] when [loadData] returns
+  /// `null` instead of throwing.
   ///
   /// Use this to log or report the real error; it does not build UI.
   final void Function(Object error)? onError;

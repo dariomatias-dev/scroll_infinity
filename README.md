@@ -361,7 +361,7 @@ ScrollInfinity<int>(
 
 ### Error and Analytics Callbacks
 
-Use `onError` to log/report the raw exception thrown by `loadData`, and `onItemsLoaded` to observe successfully fetched items (e.g. analytics). Neither affects the build.
+Use `onError` to log/report failures — the exception thrown by `loadData`, or a synthetic `Exception` when `loadData` returns `null` instead of throwing — and `onItemsLoaded` to observe successfully fetched items (e.g. analytics). Neither affects the build.
 
 ```dart
 ScrollInfinity<int>(
@@ -417,7 +417,7 @@ ScrollInfinity<int>(
 | ------------------ | ----------------------------- | ------- | ----------------------------------- |
 | enableRetryOnError | `bool`                        | true    | Allow retry                         |
 | maxRetries         | `int?`                        | null    | Retry limit                         |
-| onError            | `void Function(Object error)?` | null    | Called with the exception on failure |
+| onError            | `void Function(Object error)?` | null    | Called on failure, with the thrown exception or a synthetic one when `loadData` returns `null` |
 
 **State-Specific Widgets**
 
