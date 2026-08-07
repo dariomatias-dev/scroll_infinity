@@ -296,6 +296,82 @@ void main() {
           expect(find.text('Item 5'), findsOneWidget);
         },
       );
+
+      testWidgets(
+        'Does not fetch while the scroll stays outside loadMoreThreshold',
+        (tester) async {
+          var callCount = 0;
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                loadMoreThreshold: 0,
+                loadData: (page) {
+                  callCount++;
+                  return mockLoadData(
+                    page,
+                    totalItems: 15,
+                    maxItemsPerPage: 5,
+                  );
+                },
+                itemBuilder: (item, index) {
+                  return SizedBox(height: 300, child: Text(item));
+                },
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+          expect(callCount, 1);
+
+          // 5 items of 300px in a 600px viewport leave 900px of scroll.
+          // A 300px drag stops well short of the end, and with a zero
+          // threshold that must not fetch anything.
+          await tester.drag(find.byType(ListView), const Offset(0, -300));
+          await tester.pumpAndSettle();
+          expect(callCount, 1);
+
+          // Reaching the very end does fetch, proving the drag above was
+          // a real scroll and not a no-op. The delta overshoots the
+          // remaining extent because touch slop eats part of a drag.
+          await tester.drag(find.byType(ListView), const Offset(0, -1400));
+          await tester.pumpAndSettle();
+          expect(callCount, 2);
+        },
+      );
+
+      testWidgets(
+        'A page shorter than maxItems ends the list',
+        (tester) async {
+          var callCount = 0;
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                loadData: (page) {
+                  callCount++;
+                  return mockLoadData(
+                    page,
+                    totalItems: 3,
+                  );
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          // 3 items for a 10-item page means the source is exhausted: no
+          // fill-the-screen fetch, no loading footer, no empty state.
+          expect(callCount, 1);
+          expect(find.text('Item 2'), findsOneWidget);
+          expect(find.byType(CircularProgressIndicator), findsNothing);
+          expect(find.text('No items found.'), findsNothing);
+        },
+      );
     });
 
     /// Tests related to error states and retry logic.
@@ -405,6 +481,87 @@ void main() {
       );
 
       testWidgets(
+        'Retries indefinitely when maxRetries is null',
+        (tester) async {
+          var callCount = 0;
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                loadData: (page) {
+                  callCount++;
+                  throw Exception('Failed to load data');
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+          expect(callCount, 1);
+
+          for (var i = 0; i < 3; i++) {
+            await tester.tap(find.text('Try Again'));
+            await tester.pumpAndSettle();
+          }
+
+          // No limit is ever reached: the retry trigger stays available.
+          expect(callCount, 4);
+          expect(find.text('Try Again'), findsOneWidget);
+          expect(find.text('Retry limit has been reached.'), findsNothing);
+        },
+      );
+
+      testWidgets(
+        'An error replaces the "Load More" button when automaticLoading '
+        'is off',
+        (tester) async {
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                automaticLoading: false,
+                loadData: (page) => mockLoadData(page, throwErrorOnPage: true),
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          // A "Load More" button after an error would be inert, since the
+          // error path owns the next fetch.
+          expect(find.text('Try Again'), findsOneWidget);
+          expect(find.text('Load More'), findsNothing);
+        },
+      );
+
+      testWidgets(
+        'A failed first fetch shows the error footer, not the empty state',
+        (tester) async {
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                maxRetries: 0,
+                empty: const Text('Nothing here'),
+                loadData: (page) => mockLoadData(page, throwErrorOnPage: true),
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          // The list is empty, but it is empty because of an error: the
+          // empty state must not claim the data source returned nothing.
+          expect(find.text('Retry limit has been reached.'), findsOneWidget);
+          expect(find.text('Nothing here'), findsNothing);
+        },
+      );
+
+      testWidgets(
         'Shows the error widget when loadData returns null',
         (tester) async {
           await tester.pumpWidget(
@@ -501,6 +658,152 @@ void main() {
 
           // With 5 items, there should be 4 separators.
           expect(find.byKey(const Key('divider')), findsNWidgets(4));
+        },
+      );
+
+      testWidgets(
+        'separatorBuilder receives raw display indices and none follows '
+        'the header',
+        (tester) async {
+          final separatorIndices = <int>[];
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 3,
+                header: const Text('My Header'),
+                loadData: (page) {
+                  return mockLoadData(
+                    page,
+                    totalItems: 3,
+                    maxItemsPerPage: 3,
+                  );
+                },
+                separatorBuilder: (context, index) {
+                  separatorIndices.add(index);
+                  return const Divider(key: Key('divider'));
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          // 3 items produce 2 separators, indexed from the first item: the
+          // header occupies a slot but is not separated from item 0.
+          expect(find.byKey(const Key('divider')), findsNWidgets(2));
+          expect(separatorIndices.toSet(), {0, 1});
+        },
+      );
+
+      testWidgets(
+        'interval places holders inside initialItems too',
+        (tester) async {
+          final completer = Completer<List<String?>?>();
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String?>(
+                maxItems: 10,
+                interval: 2,
+                initialItems: const ['a', 'b', 'c'],
+                loadData: (page) => completer.future,
+                itemBuilder: (item, index) {
+                  return Text(item ?? 'AD $index');
+                },
+              ),
+            ),
+          );
+
+          await tester.pump();
+
+          // Seed items go through the same mapper as fetched pages, so a
+          // placeholder lands after every 2 real items.
+          expect(find.text('AD 0'), findsOneWidget);
+          expect(find.text('c'), findsOneWidget);
+
+          completer.complete(<String?>[]);
+          await tester.pumpAndSettle();
+        },
+      );
+
+      testWidgets(
+        'Paginates in a reverse list',
+        (tester) async {
+          var callCount = 0;
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                reverse: true,
+                loadData: (page) {
+                  callCount++;
+                  return mockLoadData(
+                    page,
+                    totalItems: 15,
+                    maxItemsPerPage: 5,
+                  );
+                },
+                itemBuilder: (item, index) {
+                  return SizedBox(height: 300, child: Text(item));
+                },
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+          expect(callCount, 1);
+          expect(find.text('Item 5'), findsNothing);
+
+          // In a chat-style list the next page lies toward the list's
+          // start, which is reached by dragging in the opposite direction.
+          await tester.drag(find.byType(ListView), const Offset(0, 1400));
+          await tester.pumpAndSettle();
+
+          expect(callCount, 2);
+          expect(find.text('Item 5'), findsOneWidget);
+        },
+      );
+
+      testWidgets(
+        'scrollbars: false suppresses the scrollbar the behavior would add',
+        (tester) async {
+          Widget build({required bool scrollbars}) {
+            return MaterialApp(
+              // MaterialScrollBehavior only adds a scrollbar on desktop
+              // platforms, so the `false` case below is meaningful.
+              theme: ThemeData(platform: TargetPlatform.linux),
+              home: Scaffold(
+                body: ScrollInfinity<String>(
+                  maxItems: 5,
+                  scrollbars: scrollbars,
+                  loadData: (page) {
+                    return mockLoadData(
+                      page,
+                      totalItems: 25,
+                      maxItemsPerPage: 5,
+                    );
+                  },
+                  itemBuilder: (item, index) => SizedBox(
+                    height: 100,
+                    child: Text(item),
+                  ),
+                ),
+              ),
+            );
+          }
+
+          // On desktop the default behavior does add a scrollbar, so the
+          // `false` case below is meaningful.
+          await tester.pumpWidget(build(scrollbars: true));
+          await tester.pumpAndSettle();
+          expect(find.byType(Scrollbar), findsOneWidget);
+
+          await tester.pumpWidget(build(scrollbars: false));
+          await tester.pumpAndSettle();
+          expect(find.byType(Scrollbar), findsNothing);
         },
       );
 
@@ -819,6 +1122,40 @@ void main() {
       );
 
       testWidgets(
+        'Does not reset when initialItems changes',
+        (tester) async {
+          final completer = Completer<List<String>?>();
+
+          Widget build(List<String> initialItems) {
+            return buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                initialItems: initialItems,
+                loadData: (page) => completer.future,
+                itemBuilder: (item, index) => Text(item),
+              ),
+            );
+          }
+
+          await tester.pumpWidget(build(const ['Seed a']));
+          await tester.pump();
+          expect(find.text('Seed a'), findsOneWidget);
+
+          await tester.pumpWidget(build(const ['Seed b']));
+          await tester.pump();
+
+          // initialItems is applied on init and on reset only: a plain
+          // rebuild must not swap the items already on screen.
+          expect(find.text('Seed a'), findsOneWidget);
+          expect(find.text('Seed b'), findsNothing);
+
+          // Settle the pending fetch before the widget is disposed.
+          completer.complete([]);
+          await tester.pumpAndSettle();
+        },
+      );
+
+      testWidgets(
         'Does not reset when only the loadData reference changes',
         (tester) async {
           // Simulates a parent widget passing a new closure on every
@@ -950,6 +1287,8 @@ void main() {
       testWidgets(
         'Uses the custom tryAgainBuilder when provided',
         (tester) async {
+          var callCount = 0;
+
           await tester.pumpWidget(
             buildTestableWidget(
               ScrollInfinity<String>(
@@ -961,7 +1300,10 @@ void main() {
                   );
                 },
                 loadData: (page) {
-                  return mockLoadData(page, throwErrorOnPage: true);
+                  callCount++;
+                  // Only the first attempt fails, so the retry succeeds
+                  // and replaces the footer with the loaded page.
+                  return mockLoadData(page, throwErrorOnPage: callCount == 1);
                 },
                 itemBuilder: (item, index) => Text(item),
               ),
@@ -972,6 +1314,14 @@ void main() {
 
           expect(find.text('Custom Retry'), findsOneWidget);
           expect(find.text('Try Again'), findsNothing);
+
+          // The `action` passed to the builder must perform the retry.
+          await tester.tap(find.text('Custom Retry'));
+          await tester.pumpAndSettle();
+
+          expect(callCount, greaterThan(1));
+          expect(find.text('Item 0'), findsOneWidget);
+          expect(find.text('Custom Retry'), findsNothing);
         },
       );
 
@@ -1005,6 +1355,14 @@ void main() {
 
           expect(find.text('Custom Load More'), findsOneWidget);
           expect(find.text('Load More'), findsNothing);
+          expect(find.text('Item 5'), findsNothing);
+
+          // The `action` passed to the builder must load the next page.
+          await tester.tap(find.text('Custom Load More'));
+          await tester.pumpAndSettle();
+
+          expect(find.text('Item 5'), findsOneWidget);
+          expect(find.text('Custom Load More'), findsOneWidget);
         },
       );
     });
@@ -1276,6 +1634,72 @@ void main() {
           await tester.pumpAndSettle();
 
           expect(requestedPages, [0]);
+        },
+      );
+
+      testWidgets(
+        'refresh() restores retries after the limit was reached',
+        (tester) async {
+          final controller = ScrollInfinityController();
+          var callCount = 0;
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                maxRetries: 0,
+                controller: controller,
+                loadData: (page) {
+                  callCount++;
+                  // Only the first attempt fails.
+                  return mockLoadData(page, throwErrorOnPage: callCount == 1);
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+          expect(callCount, 1);
+          expect(controller.hasError, isTrue);
+
+          // The limit blocks retry(), but refresh() starts a new attempt
+          // budget instead of staying stuck on the exhausted one.
+          controller.retry();
+          await tester.pumpAndSettle();
+          expect(callCount, 1);
+
+          controller.refresh();
+          await tester.pumpAndSettle();
+
+          expect(controller.hasError, isFalse);
+          expect(find.text('Item 0'), findsOneWidget);
+        },
+      );
+
+      testWidgets(
+        'Asserts when one controller is attached to two lists',
+        (tester) async {
+          final controller = ScrollInfinityController();
+
+          Widget buildList() {
+            return Expanded(
+              child: ScrollInfinity<String>(
+                maxItems: 10,
+                controller: controller,
+                loadData: (page) async => <String>[],
+                itemBuilder: (item, index) => Text(item),
+              ),
+            );
+          }
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              Column(children: [buildList(), buildList()]),
+            ),
+          );
+
+          expect(tester.takeException(), isAssertionError);
         },
       );
 
