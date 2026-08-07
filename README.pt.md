@@ -284,9 +284,23 @@ class _MyAppState extends State<MyApp> {
 
 ### Controller (Refresh & Retry)
 
-Use um `ScrollInfinityController` para disparar `refresh()`/`retry()` de fora do widget (ex.: um botão) e para ler `isLoading`/`hasError`. Faça o dispose no `dispose()`, já que você criou a instância.
+Use um `ScrollInfinityController` para disparar `refresh()`/`retry()` de fora do widget (ex.: um botão) e para ler `isLoading`/`hasError`. O dispose cabe a quem criou a instância e deve ser feito no `dispose()`.
 
 `retry()` refaz a requisição da página que falhou. Não faz nada quando a última busca teve sucesso ou quando o limite de `maxRetries` foi atingido — nesses casos, use `refresh()` para reiniciar a lista.
+
+Para controlar a posição do scroll em vez da paginação, passe um `ScrollController` comum em `scrollController`. A lista usa um interno quando o parâmetro é omitido, e nunca faz dispose do controller recebido.
+
+```dart
+final _scrollController = ScrollController();
+
+void _scrollToTop() {
+  _scrollController.animateTo(
+    0,
+    duration: const Duration(milliseconds: 300),
+    curve: Curves.easeOut,
+  );
+}
+```
 
 ```dart
 final _controller = ScrollInfinityController();
@@ -387,6 +401,7 @@ ScrollInfinity<int>(
 | initialItems     | `List<T>?`                            | null   | Itens antes da primeira busca. Não avança a paginação: defina `initialPageIndex` após eles para não buscar a mesma página de novo. Aplicado apenas na inicialização e no reset |
 | initialPageIndex | `int`                                 | 0      | Índice da página inicial. Alterá-lo reinicia a lista |
 | controller       | `ScrollInfinityController?`           | null   | Refresh/retry externos e estado de loading/erro    |
+| scrollController | `ScrollController?`                   | null   | Posição de scroll externa (voltar ao topo, offset). Pertence ao chamador; usa um interno quando nulo |
 | onItemsLoaded    | `void Function(List<T> items)?`       | null   | Chamado com os itens de cada busca bem-sucedida    |
 
 **Layout e Aparência**

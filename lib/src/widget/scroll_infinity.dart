@@ -24,6 +24,7 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.initialItems,
     this.initialPageIndex = 0,
     this.controller,
+    this.scrollController,
     this.onItemsLoaded,
 
     // Layout & Appearance
@@ -126,6 +127,18 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// [ScrollInfinityController.retry] externally and read
   /// [ScrollInfinityController.isLoading]/[ScrollInfinityController.hasError].
   final ScrollInfinityController? controller;
+
+  /// Controls the position the list is scrolled to.
+  ///
+  /// Supply one to scroll programmatically (e.g. back to the top), to read
+  /// the current offset, or to share the position with another widget. When
+  /// `null`, an internal controller is used instead.
+  ///
+  /// The caller owns the instance it passes: it is never disposed by
+  /// [ScrollInfinity] and must outlive the widget or be replaced before it
+  /// is disposed. This is the list's scroll position only — use [controller]
+  /// to drive pagination.
+  final ScrollController? scrollController;
 
   /// Called with the raw items returned by [loadData] whenever a fetch
   /// succeeds. Useful for analytics; it does not affect the build.

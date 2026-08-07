@@ -516,6 +516,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
   static const _totalPages = 5;
 
   final _controller = ScrollInfinityController();
+  final _scrollController = ScrollController();
   final _random = Random();
 
   ExampleConfig get _config => widget.config;
@@ -525,8 +526,20 @@ class _DisplayScreenState extends State<DisplayScreen> {
   @override
   void dispose() {
     _controller.dispose();
+    // ScrollInfinity never disposes a caller-supplied controller.
+    _scrollController.dispose();
 
     super.dispose();
+  }
+
+  void _scrollToStart() {
+    unawaited(
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      ),
+    );
   }
 
   /// Simulates a network request to fetch paginated data.
@@ -626,6 +639,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
       loadData: _loadData,
       itemBuilder: _buildItem,
       controller: _controller,
+      scrollController: _scrollController,
       onError: _onError,
       onItemsLoaded: _onItemsLoaded,
       // Layout
@@ -736,6 +750,11 @@ class _DisplayScreenState extends State<DisplayScreen> {
       appBar: AppBar(
         title: const Text('ScrollInfinity Example'),
         actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.vertical_align_top),
+            onPressed: _scrollToStart,
+            tooltip: 'Scroll To Start',
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _controller.refresh,

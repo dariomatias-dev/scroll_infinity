@@ -178,6 +178,38 @@ void main() {
     );
 
     testWidgets(
+      'The app bar action scrolls the list back to the start',
+      (tester) async {
+        await tester.pumpWidget(
+          const MaterialApp(home: ConfigScreen()),
+        );
+
+        await toggleOption(tester, 'Simulate Errors');
+        await openExample(tester);
+        await tester.pump(const Duration(seconds: 2));
+
+        final scrollable = inExample(find.byType(Scrollable));
+        await tester.scrollUntilVisible(
+          find.text('Item 7'),
+          100,
+          scrollable: scrollable,
+        );
+        expect(find.text('Item 0'), findsNothing);
+
+        // Scrolling to the end triggers a fetch; let it land so no mock
+        // network timer is left pending.
+        await tester.pump(const Duration(seconds: 2));
+
+        // Driven through the external ScrollController the screen owns.
+        await tester.tap(find.byTooltip('Scroll To Start'));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+
+        expect(find.text('Item 0'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
       'Custom builders replace the default Load More button',
       (tester) async {
         await tester.pumpWidget(

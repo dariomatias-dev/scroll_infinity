@@ -73,8 +73,8 @@ class ScrollInfinityController {
   /// `ScrollInfinity.maxRetries` limit has been reached.
   void retry() => _state?.retry();
 
-  /// Releases this controller. Call this only if you created the
-  /// controller yourself and it is not managed by an ancestor widget.
+  /// Releases this controller. Call this only when the controller was
+  /// created by the caller and is not managed by an ancestor widget.
   void dispose() {
     _state = null;
   }

@@ -288,6 +288,20 @@ Use a `ScrollInfinityController` to trigger `refresh()`/`retry()` from outside t
 
 `retry()` re-requests the page that failed. It is a no-op when the last fetch succeeded or once `maxRetries` is exhausted — use `refresh()` to restart the list instead.
 
+To drive the scroll position instead of pagination, pass a plain `ScrollController` to `scrollController`. The list uses an internal one when you omit it, and never disposes the one you pass.
+
+```dart
+final _scrollController = ScrollController();
+
+void _scrollToTop() {
+  _scrollController.animateTo(
+    0,
+    duration: const Duration(milliseconds: 300),
+    curve: Curves.easeOut,
+  );
+}
+```
+
 ```dart
 final _controller = ScrollInfinityController();
 
@@ -387,6 +401,7 @@ ScrollInfinity<int>(
 | initialItems     | `List<T>?`                            | null    | Items before first fetch. Does not advance pagination: set `initialPageIndex` past them to avoid refetching the same page. Applied on init and on reset only |
 | initialPageIndex | `int`                                 | 0       | Starting page index. Changing it resets the list  |
 | controller       | `ScrollInfinityController?`           | null    | External refresh/retry and loading/error state   |
+| scrollController | `ScrollController?`                   | null    | External scroll position (scroll-to-top, offset). Owned by the caller; internal one is used when null |
 | onItemsLoaded    | `void Function(List<T> items)?`       | null    | Called with fetched items on each successful load |
 
 **Layout & Appearance**

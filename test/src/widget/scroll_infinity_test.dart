@@ -1772,6 +1772,151 @@ void main() {
     });
 
     /// Tests for the `enablePullToRefresh` property.
+    /// Tests for the optional external `scrollController`.
+    group('External ScrollController', () {
+      Widget buildList({
+        ScrollController? scrollController,
+        VoidCallback? onFetch,
+      }) {
+        return buildTestableWidget(
+          ScrollInfinity<String>(
+            maxItems: 5,
+            scrollController: scrollController,
+            loadData: (page) {
+              onFetch?.call();
+              return mockLoadData(page, totalItems: 15, maxItemsPerPage: 5);
+            },
+            itemBuilder: (item, index) {
+              return SizedBox(height: 300, child: Text(item));
+            },
+          ),
+        );
+      }
+
+      testWidgets(
+        'Drives the list position and reports the current offset',
+        (tester) async {
+          final scrollController = ScrollController();
+          addTearDown(scrollController.dispose);
+
+          await tester.pumpWidget(
+            buildList(scrollController: scrollController),
+          );
+          await tester.pumpAndSettle();
+
+          expect(scrollController.offset, 0);
+
+          scrollController.jumpTo(600);
+          await tester.pumpAndSettle();
+          expect(scrollController.offset, 600);
+
+          // Scroll-to-top, the case an internal-only controller cannot
+          // serve.
+          scrollController.jumpTo(0);
+          await tester.pumpAndSettle();
+          expect(scrollController.offset, 0);
+          expect(find.text('Item 0'), findsOneWidget);
+        },
+      );
+
+      testWidgets(
+        'Paginates when the external controller reaches the end',
+        (tester) async {
+          final scrollController = ScrollController();
+          addTearDown(scrollController.dispose);
+
+          var callCount = 0;
+
+          await tester.pumpWidget(
+            buildList(
+              scrollController: scrollController,
+              onFetch: () => callCount++,
+            ),
+          );
+          await tester.pumpAndSettle();
+          expect(callCount, 1);
+
+          scrollController.jumpTo(scrollController.position.maxScrollExtent);
+          await tester.pumpAndSettle();
+
+          expect(callCount, 2);
+          expect(find.text('Item 5'), findsOneWidget);
+        },
+      );
+
+      testWidgets(
+        'Leaves a caller-supplied controller usable after disposal',
+        (tester) async {
+          final scrollController = ScrollController();
+
+          await tester.pumpWidget(
+            buildList(scrollController: scrollController),
+          );
+          await tester.pumpAndSettle();
+
+          await tester.pumpWidget(buildTestableWidget(const SizedBox()));
+          await tester.pumpAndSettle();
+
+          // The widget must not dispose what it does not own: disposing it
+          // here would throw if ScrollInfinity had already done so.
+          scrollController.dispose();
+        },
+      );
+
+      testWidgets(
+        'Moves the scroll listener when the controller is swapped',
+        (tester) async {
+          final first = ScrollController();
+          final second = ScrollController();
+          addTearDown(first.dispose);
+          addTearDown(second.dispose);
+
+          var callCount = 0;
+
+          await tester.pumpWidget(
+            buildList(
+              scrollController: first,
+              onFetch: () => callCount++,
+            ),
+          );
+          await tester.pumpAndSettle();
+          expect(callCount, 1);
+
+          await tester.pumpWidget(
+            buildList(
+              scrollController: second,
+              onFetch: () => callCount++,
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          // Pagination must follow the new controller.
+          second.jumpTo(second.position.maxScrollExtent);
+          await tester.pumpAndSettle();
+
+          expect(callCount, 2);
+          expect(find.text('Item 5'), findsOneWidget);
+        },
+      );
+
+      testWidgets(
+        'Falls back to an internal controller when none is supplied',
+        (tester) async {
+          var callCount = 0;
+
+          await tester.pumpWidget(buildList(onFetch: () => callCount++));
+          await tester.pumpAndSettle();
+
+          expect(callCount, 1);
+
+          await tester.drag(find.byType(ListView), const Offset(0, -1400));
+          await tester.pumpAndSettle();
+
+          expect(callCount, 2);
+        },
+      );
+    });
+
     group('Pull To Refresh', () {
       testWidgets(
         'Does not wrap the list in a RefreshIndicator by default',

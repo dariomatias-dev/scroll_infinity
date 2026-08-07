@@ -2,8 +2,11 @@ part of 'scroll_infinity.dart';
 
 class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
     implements ScrollInfinityControllerState {
-  final _scrollController = ScrollController();
   final _itemMapper = IntervalItemMapper<T>();
+
+  /// Created only when the caller does not supply one, and disposed with
+  /// this state. A caller-supplied controller is never disposed here.
+  ScrollController? _ownedScrollController;
 
   /// Maximum number of consecutive fetches triggered solely to fill the
   /// viewport. Guards against an unbounded fetch loop when the list never
@@ -19,6 +22,12 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
   bool _isEndOfList = false;
   bool _hasError = false;
   bool _isDisposed = false;
+
+  /// The controller driving the list: the caller's when supplied, otherwise
+  /// one owned by this state.
+  ScrollController get _scrollController =>
+      widget.scrollController ??
+      (_ownedScrollController ??= ScrollController());
 
   @override
   bool get isLoading => _isLoading;
@@ -263,6 +272,21 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
       widget.controller?.attach(this);
     }
 
+    if (widget.scrollController != oldWidget.scrollController) {
+      (oldWidget.scrollController ?? _ownedScrollController)?.removeListener(
+        _onScroll,
+      );
+
+      // Switching to a caller-supplied controller retires the owned one;
+      // switching back to `null` lets the getter create a fresh one.
+      if (widget.scrollController != null) {
+        _ownedScrollController?.dispose();
+        _ownedScrollController = null;
+      }
+
+      _scrollController.addListener(_onScroll);
+    }
+
     // `initialItems` is deliberately absent: it is a list instance that many
     // callers rebuild inline, so comparing it here would reset the list on
     // every rebuild. It is applied on init and on reset only.
@@ -277,9 +301,10 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
   void dispose() {
     _isDisposed = true;
     widget.controller?.detach(this);
-    _scrollController
-      ..removeListener(_onScroll)
-      ..dispose();
+    (widget.scrollController ?? _ownedScrollController)?.removeListener(
+      _onScroll,
+    );
+    _ownedScrollController?.dispose();
 
     super.dispose();
   }
