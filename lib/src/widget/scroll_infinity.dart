@@ -105,9 +105,22 @@ class ScrollInfinity<T> extends StatefulWidget {
   final int maxItems;
 
   /// A list of items displayed before the first data fetch is initiated.
+  ///
+  /// These items do **not** advance pagination: the first fetch still asks
+  /// [loadData] for [initialPageIndex]. If [initialItems] already holds the
+  /// contents of a page, set [initialPageIndex] to the page after it (e.g.
+  /// `initialPageIndex: 1`) so that page is not fetched twice.
+  ///
+  /// Applied when the widget is first built and on every reset (pull-to-
+  /// refresh, [ScrollInfinityController.refresh], or a change to [maxItems],
+  /// [interval] or [initialPageIndex]). Passing a different list on a plain
+  /// rebuild has no effect.
   final List<T>? initialItems;
 
   /// The starting index from which to begin loading data.
+  ///
+  /// Changing it after the first build resets the list and restarts
+  /// pagination from the new index.
   final int initialPageIndex;
 
   /// Optional controller to trigger [ScrollInfinityController.refresh] or
@@ -195,6 +208,10 @@ class ScrollInfinity<T> extends StatefulWidget {
   final bool enableRetryOnError;
 
   /// Maximum number of retries after a failed data fetch.
+  ///
+  /// The first failure is not a retry, so `maxRetries: 2` allows up to three
+  /// requests for the same page (one initial attempt plus two retries) before
+  /// [retryLimitReached] is shown. With `0`, the failure is final.
   ///
   /// If `null`, retries will be attempted indefinitely. The default is `null`.
   final int? maxRetries;

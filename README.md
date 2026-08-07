@@ -286,6 +286,8 @@ class _MyAppState extends State<MyApp> {
 
 Use a `ScrollInfinityController` to trigger `refresh()`/`retry()` from outside the widget (e.g. a button) and to read `isLoading`/`hasError`. Dispose it in `dispose()` since you created it.
 
+`retry()` re-requests the page that failed. It is a no-op when the last fetch succeeded, when `enableRetryOnError` is `false`, or once `maxRetries` is exhausted — use `refresh()` to restart the list instead.
+
 ```dart
 final _controller = ScrollInfinityController();
 
@@ -382,8 +384,8 @@ ScrollInfinity<int>(
 | loadData         | `Future<List<T>?> Function(int)`      | -       | Fetch data for each page                         |
 | itemBuilder      | `Widget Function(T value, int index)` | -       | Builds each item. `index` is mapped by `useRealItemIndex`/`interval` |
 | maxItems         | `int`                                 | -       | Max items per request                            |
-| initialItems     | `List<T>?`                            | null    | Items before first fetch                         |
-| initialPageIndex | `int`                                 | 0       | Starting page index                              |
+| initialItems     | `List<T>?`                            | null    | Items before first fetch. Does not advance pagination: set `initialPageIndex` past them to avoid refetching the same page. Applied on init and on reset only |
+| initialPageIndex | `int`                                 | 0       | Starting page index. Changing it resets the list  |
 | controller       | `ScrollInfinityController?`           | null    | External refresh/retry and loading/error state   |
 | onItemsLoaded    | `void Function(List<T> items)?`       | null    | Called with fetched items on each successful load |
 
@@ -416,7 +418,7 @@ ScrollInfinity<int>(
 | Name               | Type                          | Default | Description                        |
 | ------------------ | ----------------------------- | ------- | ----------------------------------- |
 | enableRetryOnError | `bool`                        | true    | Allow retry                         |
-| maxRetries         | `int?`                        | null    | Retry limit                         |
+| maxRetries         | `int?`                        | null    | Retries allowed after a failed fetch, not counting the initial attempt (`0` makes the failure final) |
 | onError            | `void Function(Object error)?` | null    | Called on failure, with the thrown exception or a synthetic one when `loadData` returns `null` |
 
 **State-Specific Widgets**

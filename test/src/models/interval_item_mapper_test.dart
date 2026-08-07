@@ -91,5 +91,25 @@ void main() {
       // Counters restart from zero, matching a fresh mapper's output.
       expect(mapper.displayItems, ['x', 'y', null, 'z']);
     });
+
+    test('displayItems cannot be mutated by callers', () {
+      final mapper = IntervalItemMapper<String>()
+        ..addAll(['a'], interval: null);
+
+      expect(
+        () => mapper.displayItems.add('b'),
+        throwsUnsupportedError,
+      );
+      expect(mapper.displayItems, ['a']);
+    });
+
+    test('displayItems reflects later additions', () {
+      final mapper = IntervalItemMapper<String>();
+      final items = mapper.displayItems;
+
+      mapper.addAll(['a', 'b'], interval: null);
+
+      expect(items, ['a', 'b']);
+    });
   });
 }

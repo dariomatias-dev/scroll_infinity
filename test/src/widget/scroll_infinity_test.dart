@@ -129,6 +129,36 @@ void main() {
       );
 
       testWidgets(
+        'initialItems do not advance pagination: the first fetch uses '
+        'initialPageIndex',
+        (tester) async {
+          final requestedPages = <int>[];
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                initialItems: const ['Seed 0'],
+                initialPageIndex: 1,
+                loadData: (page) {
+                  requestedPages.add(page);
+                  return mockLoadData(page);
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          // The seed items stand in for page 0, so the caller sets
+          // initialPageIndex to 1 and page 0 is never requested.
+          expect(requestedPages.first, 1);
+          expect(find.text('Seed 0'), findsOneWidget);
+        },
+      );
+
+      testWidgets(
         'Shows the default empty message when no custom empty widget is '
         'set',
         (tester) async {
@@ -271,6 +301,35 @@ void main() {
     /// Tests related to error states and retry logic.
     group('Error Handling and Retries', () {
       testWidgets(
+        'Stops the viewport-fill loop when the list never becomes '
+        'scrollable',
+        (tester) async {
+          var callCount = 0;
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                loadData: (page) async {
+                  callCount++;
+                  return List.generate(10, (i) => 'Item $i');
+                },
+                // Zero-extent items keep maxScrollExtent at 0 forever, so
+                // the auto-fill check would otherwise fetch endlessly.
+                itemBuilder: (item, index) => const SizedBox.shrink(),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          // One initial fetch plus at most _maxViewportFillFetches (10)
+          // fetches attempting to fill the viewport.
+          expect(callCount, 11);
+        },
+      );
+
+      testWidgets(
         'Shows error widget and retries on tap',
         (tester) async {
           var callCount = 0;
@@ -312,7 +371,7 @@ void main() {
             buildTestableWidget(
               ScrollInfinity<String>(
                 maxItems: 10,
-                maxRetries: 2, // Limit to 2 total attempts.
+                maxRetries: 2, // The initial attempt plus 2 retries.
                 retryLimitReached: const Text('No more retries allowed'),
                 loadData: (page) {
                   callCount++;
@@ -323,20 +382,25 @@ void main() {
             ),
           );
 
-          // Attempt 1 (initial load fails). retryCount becomes 1.
+          // Initial load fails. It is not a retry, so retries left: 2.
           await tester.pumpAndSettle();
           expect(find.text('Try Again'), findsOneWidget);
           expect(callCount, 1);
 
-          // Attempt 2 (tap fails). retryCount becomes 2.
+          // Retry 1 fails.
+          await tester.tap(find.text('Try Again'));
+          await tester.pumpAndSettle();
+          expect(find.text('Try Again'), findsOneWidget);
+          expect(callCount, 2);
+
+          // Retry 2 fails, exhausting maxRetries (2).
           await tester.tap(find.text('Try Again'));
           await tester.pumpAndSettle();
 
-          // Now retryCount (2) >= maxRetries (2), so the limit is reached.
           expect(find.text('Try Again'), findsNothing);
           expect(find.text('No more retries allowed'), findsOneWidget);
-          // Verify that the load function was not called a third time.
-          expect(callCount, 2);
+          // Verify that the load function was not called a fourth time.
+          expect(callCount, 3);
         },
       );
 
@@ -389,7 +453,7 @@ void main() {
             buildTestableWidget(
               ScrollInfinity<String>(
                 maxItems: 10,
-                maxRetries: 1,
+                maxRetries: 0,
                 loadData: (page) {
                   return mockLoadData(page, throwErrorOnPage: true);
                 },
@@ -675,6 +739,45 @@ void main() {
           // produced a fresh, independent list starting from page 0.
           expect(find.text('Item 4'), findsNothing);
           expect(find.text('Item 2'), findsOneWidget);
+        },
+      );
+
+      testWidgets(
+        'Resets and refetches when initialPageIndex changes',
+        (tester) async {
+          final requestedPages = <int>[];
+
+          Widget build(int initialPageIndex) {
+            return buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                initialPageIndex: initialPageIndex,
+                loadData: (page) {
+                  requestedPages.add(page);
+                  return mockLoadData(page);
+                },
+                // Tall enough that one page fills the viewport, so no
+                // auto-fill fetch follows the requested page.
+                itemBuilder: (item, index) => SizedBox(
+                  height: 100,
+                  child: Text(item),
+                ),
+              ),
+            );
+          }
+
+          await tester.pumpWidget(build(0));
+          await tester.pumpAndSettle();
+          expect(requestedPages.first, 0);
+          expect(find.text('Item 0'), findsOneWidget);
+
+          await tester.pumpWidget(build(2));
+          await tester.pumpAndSettle();
+
+          // The list restarted from the new index: page 0's items are gone.
+          expect(requestedPages.last, 2);
+          expect(find.text('Item 0'), findsNothing);
+          expect(find.text('Item 20'), findsOneWidget);
         },
       );
 
@@ -1110,7 +1213,7 @@ void main() {
             buildTestableWidget(
               ScrollInfinity<String>(
                 maxItems: 10,
-                maxRetries: 1,
+                maxRetries: 0,
                 controller: controller,
                 loadData: (page) {
                   callCount++;
@@ -1124,9 +1227,8 @@ void main() {
           await tester.pumpAndSettle();
           expect(callCount, 1);
 
-          // The initial failed attempt already set retryCount to 1, which
-          // meets maxRetries (1): the limit is reached, so retry() must be
-          // a no-op instead of firing another request.
+          // maxRetries is 0, so the initial failure is final: retry() must
+          // be a no-op instead of firing another request.
           controller.retry();
           await tester.pumpAndSettle();
 
@@ -1163,6 +1265,44 @@ void main() {
           await tester.pumpAndSettle();
 
           expect(callCount, 1);
+        },
+      );
+
+      testWidgets(
+        'retry() is a no-op when the last fetch succeeded',
+        (tester) async {
+          final controller = ScrollInfinityController();
+          final requestedPages = <int>[];
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                controller: controller,
+                loadData: (page) {
+                  requestedPages.add(page);
+                  return mockLoadData(page);
+                },
+                // Tall enough that the first page fills the viewport, so
+                // no auto-fill fetch follows it.
+                itemBuilder: (item, index) => SizedBox(
+                  height: 100,
+                  child: Text(item),
+                ),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+          expect(controller.hasError, isFalse);
+          expect(requestedPages, [0]);
+
+          // Without an error there is nothing to retry: retry() must not
+          // advance pagination.
+          controller.retry();
+          await tester.pumpAndSettle();
+
+          expect(requestedPages, [0]);
         },
       );
 

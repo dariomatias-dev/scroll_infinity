@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 /// Builds a display list from paginated data, optionally interspersing
 /// `null` placeholder items every `interval` real items.
 ///
@@ -12,9 +14,16 @@ class IntervalItemMapper<T> {
   int _realItemCounter = 0;
   int _placeholderCounter = 0;
 
+  late final UnmodifiableListView<T> _displayItemsView = UnmodifiableListView(
+    _displayItems,
+  );
+
   /// The items to render, in display order (data items interleaved with
   /// `null` placeholders whenever an `interval` is supplied to [addAll]).
-  List<T> get displayItems => _displayItems;
+  ///
+  /// The returned list is an unmodifiable view over the internal list: it
+  /// reflects later [addAll]/[clear] calls but cannot be mutated by callers.
+  List<T> get displayItems => _displayItemsView;
 
   /// Appends [newItems], inserting a `null` placeholder every [interval]
   /// real items. When [interval] is `null`, items are appended as-is.

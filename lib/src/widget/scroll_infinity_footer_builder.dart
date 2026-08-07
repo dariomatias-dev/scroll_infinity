@@ -12,8 +12,6 @@ extension _ScrollInfinityFooterBuilder<T> on _ScrollInfinityState<T> {
   }
 
   Widget _buildRetryWidget() {
-    if (!widget.enableRetryOnError) return const SizedBox.shrink();
-
     if (_retryLimitReached) {
       return widget.retryLimitReached ??
           const Center(

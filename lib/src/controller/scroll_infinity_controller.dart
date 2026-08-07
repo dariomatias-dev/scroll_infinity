@@ -18,6 +18,8 @@ abstract class ScrollInfinityControllerState {
   void refresh();
 
   /// Retries fetching the current page after an error.
+  ///
+  /// A no-op when the last fetch did not fail.
   void retry();
 }
 
@@ -66,6 +68,10 @@ class ScrollInfinityController {
   void refresh() => _state?.refresh();
 
   /// Retries fetching the current page after an error.
+  ///
+  /// A no-op when the last fetch did not fail, when retrying is disabled via
+  /// `ScrollInfinity.enableRetryOnError`, or once the
+  /// `ScrollInfinity.maxRetries` limit has been reached.
   void retry() => _state?.retry();
 
   /// Releases this controller. Call this only if you created the
