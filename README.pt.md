@@ -441,7 +441,7 @@ ScrollInfinity<int>(
 | ----------------- | --------------------------------- | ------ | -------------------------------------- |
 | loading           | `Widget?`                         | null   | Widget do estado de carregamento       |
 | empty             | `Widget?`                         | null   | Widget do estado vazio                 |
-| tryAgainBuilder   | `Widget Function(VoidCallback)?`  | null   | Widget de "Tentar Novamente"           |
+| tryAgainBuilder   | `Widget Function(Object, VoidCallback)?`  | null   | Widget de "Tentar Novamente", construído com a falha que causou o estado de erro |
 | loadMoreBuilder   | `Widget Function(VoidCallback)?`  | null   | Widget de "Carregar Mais"              |
 | retryLimitReached | `Widget?`                         | null   | Widget de limite de tentativas atingido |
 

@@ -11,9 +11,9 @@ extension _ScrollInfinityFooterBuilder<T> on _ScrollInfinityState<T> {
         );
   }
 
-  Widget _buildRetryWidget() {
+  Widget _buildRetryWidget(Object error) {
     if (widget.tryAgainBuilder != null) {
-      return widget.tryAgainBuilder!(_fetchNextPage);
+      return widget.tryAgainBuilder!(error, _fetchNextPage);
     }
 
     return ScrollInfinityActionButton(

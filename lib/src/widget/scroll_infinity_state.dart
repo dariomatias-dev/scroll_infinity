@@ -20,8 +20,12 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
   int _viewportFillFetches = 0;
   bool _isLoading = false;
   bool _isEndOfList = false;
-  bool _hasError = false;
   bool _isDisposed = false;
+
+  /// The failure from the last fetch attempt, or `null` when it succeeded.
+  /// Single source for both [hasError] and the error handed to
+  /// `tryAgainBuilder`, so the two can never disagree.
+  Object? _error;
 
   /// The controller driving the list: the caller's when supplied, otherwise
   /// one owned by this state.
@@ -33,20 +37,20 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
   bool get isLoading => _isLoading;
 
   @override
-  bool get hasError => _hasError;
+  bool get hasError => _error != null;
 
   @override
   void refresh() => unawaited(_reset());
 
   @override
   void retry() {
-    if (!_hasError) return;
+    if (!hasError) return;
 
     unawaited(_fetchNextPage());
   }
 
   _ScrollInfinityFooterType get _footerType {
-    if (_hasError) {
+    if (hasError) {
       return _retryLimitReached
           ? _ScrollInfinityFooterType.retryLimitReached
           : _ScrollInfinityFooterType.error;
@@ -82,7 +86,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
         _viewportFillFetches = 0;
         _isLoading = false;
         _isEndOfList = false;
-        _hasError = false;
+        _error = null;
       });
 
       await _initialize();
@@ -97,7 +101,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
                 widget.loadMoreThreshold &&
         !_isLoading &&
         !_isEndOfList &&
-        !_hasError) {
+        !hasError) {
       unawaited(_fetchNextPage());
     }
   }
@@ -130,13 +134,13 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
   Future<void> _fetchNextPage() async {
     if (_isLoading || _isEndOfList || _isDisposed) return;
 
-    if (_hasError && _retryLimitReached) return;
+    if (hasError && _retryLimitReached) return;
 
     final generation = _fetchGeneration;
 
     setState(() {
       _isLoading = true;
-      _hasError = false;
+      _error = null;
     });
 
     try {
@@ -153,15 +157,13 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
         widget.onItemsLoaded?.call(newItems);
       } else {
         _retryCount++;
-        _hasError = true;
-        widget.onError?.call(
-          Exception('loadData returned null for page $_pageIndex.'),
-        );
+        _error = Exception('loadData returned null for page $_pageIndex.');
+        widget.onError?.call(_error!);
       }
     } on Object catch (error) {
       if (_isDisposed || generation != _fetchGeneration) return;
       _retryCount++;
-      _hasError = true;
+      _error = error;
       widget.onError?.call(error);
     } finally {
       if (!_isDisposed && generation == _fetchGeneration) {
@@ -234,7 +236,8 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
   Widget _buildFooter(_ScrollInfinityFooterType footerType) {
     switch (footerType) {
       case _ScrollInfinityFooterType.error:
-        return _buildRetryWidget();
+        // The error footer is only selected while `_error` is set.
+        return _buildRetryWidget(_error!);
       case _ScrollInfinityFooterType.retryLimitReached:
         return widget.retryLimitReached ??
             const Center(

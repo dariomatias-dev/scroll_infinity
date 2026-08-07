@@ -247,7 +247,15 @@ class ScrollInfinity<T> extends StatefulWidget {
 
   /// A builder that constructs a custom 'Try Again' widget when an error
   /// occurs.
+  ///
+  /// `error` is the failure that caused this state — the exception thrown
+  /// by [loadData], or a synthetic [Exception] when [loadData] returned
+  /// `null` — so the message can be tailored to the kind of failure.
+  /// Calling `action` retries the failed page.
+  ///
+  /// This renders the error; use [onError] to log or report it.
   final Widget Function(
+    Object error,
     VoidCallback action,
   )?
   tryAgainBuilder;

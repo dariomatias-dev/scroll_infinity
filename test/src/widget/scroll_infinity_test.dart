@@ -1293,7 +1293,7 @@ void main() {
             buildTestableWidget(
               ScrollInfinity<String>(
                 maxItems: 10,
-                tryAgainBuilder: (action) {
+                tryAgainBuilder: (error, action) {
                   return ElevatedButton(
                     onPressed: action,
                     child: const Text('Custom Retry'),
@@ -1322,6 +1322,63 @@ void main() {
           expect(callCount, greaterThan(1));
           expect(find.text('Item 0'), findsOneWidget);
           expect(find.text('Custom Retry'), findsNothing);
+        },
+      );
+
+      testWidgets(
+        'tryAgainBuilder receives the exception thrown by loadData',
+        (tester) async {
+          final failure = Exception('No connection');
+          Object? receivedError;
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                tryAgainBuilder: (error, action) {
+                  receivedError = error;
+                  return Text('Failed: $error');
+                },
+                loadData: (page) async => throw failure,
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          // The very instance thrown, so callers can branch on its type.
+          expect(receivedError, same(failure));
+          expect(find.text('Failed: $failure'), findsOneWidget);
+        },
+      );
+
+      testWidgets(
+        'tryAgainBuilder receives a synthetic error when loadData returns '
+        'null',
+        (tester) async {
+          Object? receivedError;
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                tryAgainBuilder: (error, action) {
+                  receivedError = error;
+                  return const Text('Custom Retry');
+                },
+                loadData: (page) async => null,
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          // A `null` return has no exception of its own, so the widget
+          // supplies one instead of handing the builder a null error.
+          expect(receivedError, isException);
+          expect(find.text('Custom Retry'), findsOneWidget);
         },
       );
 

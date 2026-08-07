@@ -711,14 +711,27 @@ class _DisplayScreenState extends State<DisplayScreen> {
             }
           : null,
       tryAgainBuilder: customBuilders
-          ? (action) {
+          ? (error, action) {
               return Padding(
                 padding: const EdgeInsets.all(8),
                 child: Center(
-                  child: OutlinedButton.icon(
-                    onPressed: action,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Please Try Again'),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      // The mock alternates between throwing and returning
+                      // `null`, so the message differs per failure.
+                      Text(
+                        '$error',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton.icon(
+                        onPressed: action,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Please Try Again'),
+                      ),
+                    ],
                   ),
                 ),
               );
