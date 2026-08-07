@@ -35,7 +35,7 @@ class ExampleConfig {
     required this.enableInitialItems,
     required this.automaticLoading,
     required this.simulateErrors,
-    required this.enableRetryOnError,
+    required this.enableRetry,
     required this.enableRetryLimit,
     required this.enableCustomBuilders,
   });
@@ -89,8 +89,9 @@ class ExampleConfig {
   /// Whether the mock data source randomly fails.
   final bool simulateErrors;
 
-  /// Whether retrying is allowed after a failed fetch.
-  final bool enableRetryOnError;
+  /// Whether retrying is allowed after a failed fetch. When `false`, the
+  /// list is built with `maxRetries: 0`.
+  final bool enableRetry;
 
   /// Whether [maxRetries] is enforced.
   final bool enableRetryLimit;
@@ -128,7 +129,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
   bool _enableInterval = false;
   bool _useRealItemIndex = true;
   bool _simulateErrors = true;
-  bool _enableRetryOnError = true;
+  bool _enableRetry = true;
   bool _enableRetryLimit = false;
   bool _enableCustomBuilders = false;
 
@@ -164,7 +165,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
       enableInitialItems: _enableInitialItems,
       automaticLoading: _automaticLoading,
       simulateErrors: _simulateErrors,
-      enableRetryOnError: _enableRetryOnError,
+      enableRetry: _enableRetry,
       enableRetryLimit: _enableRetryLimit,
       enableCustomBuilders: _enableCustomBuilders,
     );
@@ -318,10 +319,10 @@ class _ConfigScreenState extends State<ConfigScreen> {
               if (_simulateErrors) ...[
                 _buildSwitch(
                   title: 'Enable Retry',
-                  value: _enableRetryOnError,
-                  onChanged: (value) => _enableRetryOnError = value,
+                  value: _enableRetry,
+                  onChanged: (value) => _enableRetry = value,
                 ),
-                if (_enableRetryOnError) ...[
+                if (_enableRetry) ...[
                   _buildSwitch(
                     title: 'Enable Retries Limit',
                     value: _enableRetryLimit,
@@ -657,8 +658,13 @@ class _DisplayScreenState extends State<DisplayScreen> {
       automaticLoading: _config.automaticLoading,
       loadMoreThreshold: _config.loadMoreThreshold,
       // Error Handling
-      enableRetryOnError: _config.enableRetryOnError,
-      maxRetries: _config.enableRetryLimit ? _config.maxRetries : null,
+      // `maxRetries: 0` makes the first failure final, which is how a list
+      // opts out of retrying entirely.
+      maxRetries: !_config.enableRetry
+          ? 0
+          : _config.enableRetryLimit
+          ? _config.maxRetries
+          : null,
       // Custom State Widgets
       loading: customBuilders
           ? const Center(
@@ -704,7 +710,11 @@ class _DisplayScreenState extends State<DisplayScreen> {
               );
             }
           : null,
-      retryLimitReached: customBuilders
+      // With retrying off there is no limit to announce, so the slot is
+      // emptied to fail silently.
+      retryLimitReached: !_config.enableRetry
+          ? const SizedBox.shrink()
+          : customBuilders
           ? const Card(
               margin: EdgeInsets.all(16),
               child: Padding(

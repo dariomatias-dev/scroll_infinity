@@ -69,8 +69,7 @@ class ScrollInfinityController {
 
   /// Retries fetching the current page after an error.
   ///
-  /// A no-op when the last fetch did not fail, when retrying is disabled via
-  /// `ScrollInfinity.enableRetryOnError`, or once the
+  /// A no-op when the last fetch did not fail, or once the
   /// `ScrollInfinity.maxRetries` limit has been reached.
   void retry() => _state?.retry();
 

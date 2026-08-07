@@ -286,7 +286,7 @@ class _MyAppState extends State<MyApp> {
 
 Use a `ScrollInfinityController` to trigger `refresh()`/`retry()` from outside the widget (e.g. a button) and to read `isLoading`/`hasError`. Dispose it in `dispose()` since you created it.
 
-`retry()` re-requests the page that failed. It is a no-op when the last fetch succeeded, when `enableRetryOnError` is `false`, or once `maxRetries` is exhausted — use `refresh()` to restart the list instead.
+`retry()` re-requests the page that failed. It is a no-op when the last fetch succeeded or once `maxRetries` is exhausted — use `refresh()` to restart the list instead.
 
 ```dart
 final _controller = ScrollInfinityController();
@@ -417,8 +417,7 @@ ScrollInfinity<int>(
 
 | Name               | Type                          | Default | Description                        |
 | ------------------ | ----------------------------- | ------- | ----------------------------------- |
-| enableRetryOnError | `bool`                        | true    | Allow retry                         |
-| maxRetries         | `int?`                        | null    | Retries allowed after a failed fetch, not counting the initial attempt (`0` makes the failure final) |
+| maxRetries         | `int?`                        | null    | Retries allowed after a failed fetch, not counting the initial attempt. `0` makes the failure final; pair it with `retryLimitReached: const SizedBox.shrink()` to fail silently |
 | onError            | `void Function(Object error)?` | null    | Called on failure, with the thrown exception or a synthetic one when `loadData` returns `null` |
 
 **State-Specific Widgets**

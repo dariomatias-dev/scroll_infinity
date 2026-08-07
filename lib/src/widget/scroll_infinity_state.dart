@@ -38,9 +38,9 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
 
   _ScrollInfinityFooterType get _footerType {
     if (_hasError) {
-      return widget.enableRetryOnError
-          ? _ScrollInfinityFooterType.error
-          : _ScrollInfinityFooterType.none;
+      return _retryLimitReached
+          ? _ScrollInfinityFooterType.retryLimitReached
+          : _ScrollInfinityFooterType.error;
     }
     if (_isLoading) return _ScrollInfinityFooterType.loading;
     if (!widget.automaticLoading && !_isEndOfList) {
@@ -121,9 +121,7 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
   Future<void> _fetchNextPage() async {
     if (_isLoading || _isEndOfList || _isDisposed) return;
 
-    if (_hasError && (!widget.enableRetryOnError || _retryLimitReached)) {
-      return;
-    }
+    if (_hasError && _retryLimitReached) return;
 
     final generation = _fetchGeneration;
 
@@ -228,6 +226,14 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
     switch (footerType) {
       case _ScrollInfinityFooterType.error:
         return _buildRetryWidget();
+      case _ScrollInfinityFooterType.retryLimitReached:
+        return widget.retryLimitReached ??
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Text('Retry limit has been reached.'),
+              ),
+            );
       case _ScrollInfinityFooterType.loading:
         return _buildLoadingIndicator();
       case _ScrollInfinityFooterType.manualLoad:

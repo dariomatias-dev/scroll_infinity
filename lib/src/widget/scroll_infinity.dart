@@ -45,7 +45,6 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.loadMoreThreshold = 200,
 
     // Error Handling
-    this.enableRetryOnError = true,
     this.maxRetries,
     this.onError,
 
@@ -204,14 +203,16 @@ class ScrollInfinity<T> extends StatefulWidget {
 
   // Error Handling
 
-  /// Indicates whether retrying is allowed when an error occurs.
-  final bool enableRetryOnError;
-
   /// Maximum number of retries after a failed data fetch.
   ///
   /// The first failure is not a retry, so `maxRetries: 2` allows up to three
   /// requests for the same page (one initial attempt plus two retries) before
-  /// [retryLimitReached] is shown. With `0`, the failure is final.
+  /// [retryLimitReached] is shown.
+  ///
+  /// With `0` the first failure is final: no retry trigger is offered and
+  /// [ScrollInfinityController.retry] becomes a no-op. Pair it with
+  /// `retryLimitReached: const SizedBox.shrink()` to fail silently, leaving
+  /// error reporting to [onError].
   ///
   /// If `null`, retries will be attempted indefinitely. The default is `null`.
   final int? maxRetries;
@@ -247,7 +248,8 @@ class ScrollInfinity<T> extends StatefulWidget {
 
   /// A widget to display when the [maxRetries] limit has been reached.
   ///
-  /// If not provided, a default message is shown.
+  /// If not provided, a default message is shown. Use
+  /// `const SizedBox.shrink()` to show nothing at all.
   final Widget? retryLimitReached;
 
   @override

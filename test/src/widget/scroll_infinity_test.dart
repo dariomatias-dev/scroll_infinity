@@ -426,13 +426,14 @@ void main() {
       );
 
       testWidgets(
-        'Hides the retry widget when enableRetryOnError is false',
+        'maxRetries: 0 with an empty retryLimitReached fails silently',
         (tester) async {
           await tester.pumpWidget(
             buildTestableWidget(
               ScrollInfinity<String>(
                 maxItems: 10,
-                enableRetryOnError: false,
+                maxRetries: 0,
+                retryLimitReached: const SizedBox.shrink(),
                 loadData: (page) => mockLoadData(page, throwErrorOnPage: true),
                 itemBuilder: (item, index) => Text(item),
               ),
@@ -441,7 +442,10 @@ void main() {
 
           await tester.pumpAndSettle();
 
+          // No retry trigger and no limit message: the failure surfaces
+          // through `onError` only.
           expect(find.text('Try Again'), findsNothing);
+          expect(find.text('Retry limit has been reached.'), findsNothing);
         },
       );
 
@@ -1234,37 +1238,6 @@ void main() {
 
           expect(callCount, 1);
           expect(controller.hasError, isTrue);
-        },
-      );
-
-      testWidgets(
-        'retry() does nothing when enableRetryOnError is false',
-        (tester) async {
-          final controller = ScrollInfinityController();
-          var callCount = 0;
-
-          await tester.pumpWidget(
-            buildTestableWidget(
-              ScrollInfinity<String>(
-                maxItems: 10,
-                enableRetryOnError: false,
-                controller: controller,
-                loadData: (page) {
-                  callCount++;
-                  return mockLoadData(page, throwErrorOnPage: true);
-                },
-                itemBuilder: (item, index) => Text(item),
-              ),
-            ),
-          );
-
-          await tester.pumpAndSettle();
-          expect(callCount, 1);
-
-          controller.retry();
-          await tester.pumpAndSettle();
-
-          expect(callCount, 1);
         },
       );
 

@@ -8,8 +8,12 @@ enum _ScrollInfinityFooterType {
   /// The loading indicator, shown while fetching another page.
   loading,
 
-  /// The retry widget, shown after a failed fetch.
+  /// The retry trigger, shown after a failed fetch that may be retried.
   error,
+
+  /// The retry-limit message, shown after a failed fetch once no retries
+  /// are left.
+  retryLimitReached,
 
   /// The manual "load more" trigger, shown when automatic loading is off.
   manualLoad,

@@ -12,16 +12,6 @@ extension _ScrollInfinityFooterBuilder<T> on _ScrollInfinityState<T> {
   }
 
   Widget _buildRetryWidget() {
-    if (_retryLimitReached) {
-      return widget.retryLimitReached ??
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('Retry limit has been reached.'),
-            ),
-          );
-    }
-
     if (widget.tryAgainBuilder != null) {
       return widget.tryAgainBuilder!(_fetchNextPage);
     }
