@@ -103,6 +103,8 @@ Oferece customização para carregamento manual/automático, widgets de estado p
 
 Suporta Android, iOS, web, Windows, Linux e macOS.
 
+> **Atenção:** o SDK mínimo foi elevado para **Dart 3.12 / Flutter 3.44**. Em SDKs mais antigos (como o Flutter 3.35) o `flutter pub get` não conseguirá resolver as dependências — atualize o SDK antes ou permaneça no `scroll_infinity: 0.5.2`.
+
 ### Instalação
 
 ```bash

@@ -1,3 +1,112 @@
+# Changelog
+
+## [Unreleased]
+
+> **Minimum SDK requirement raised.** This release requires **Dart `>=3.12.0 <4.0.0`** and **Flutter `>=3.44.0`**. On older toolchains — such as Flutter 3.35 — `flutter pub get` fails to resolve. Upgrade the SDK before updating, or remain on `scroll_infinity: 0.5.2`.
+
+### Added
+
+- `ScrollInfinityController` for driving the list from outside the widget, exposing `refresh()`, `retry()`, and the `hasReachedEnd` getter.
+- `scrollController` property, accepting an external `ScrollController` for scroll-to-top and offset reading.
+- `enablePullToRefresh` property, wrapping the list in a `RefreshIndicator`.
+- `reverse` property for reversed scroll direction, such as chat-style lists.
+- `loadMoreThreshold` property, configuring the distance from the list end that triggers the next page.
+- `onError` callback, exposing the failure that caused the error state for logging and reporting.
+- `onItemsLoaded` callback, reporting each loaded page for analytics.
+- `onEndOfList` callback, fired when pagination reaches the last page.
+- Passthrough of `physics`, `shrinkWrap`, `cacheExtent`, `itemExtent`, `prototypeItem`, `addAutomaticKeepAlives`, `keyboardDismissBehavior`, and `restorationId` to the underlying `ListView`.
+- Spanish translation (`README.es.md`), alongside the English and Portuguese READMEs, with a unified language switcher.
+- Continuous integration workflow pinned to Flutter 3.44.6, running both the package and example test suites.
+
+### Changed
+
+- **BREAKING.** Raised the minimum SDK to Dart 3.12 / Flutter 3.44.
+- **BREAKING.** `tryAgainBuilder` now receives the failure as its first argument, changing its signature from `(VoidCallback action)` to `(Object error, VoidCallback action)`.
+- **BREAKING.** Changing the `loadData` closure no longer resets the list. `didUpdateWidget` no longer compares the `loadData` reference, so parent rebuilds that recreate the closure no longer discard loaded pages. Only `maxItems` and `interval` — both safe value comparisons — still trigger a reset.
+- Reorganized `lib/src` into layered folders and split the core widget into smaller components.
+- Moved retry-limit state into the footer enum, leaving the builder extension responsible only for mapping footer states to widgets.
+- Adopted the `very_good_analysis` lint set and Dart 3.12 tall-style formatting.
+- Expanded the example into a configurable demo covering the full API surface.
+
+### Removed
+
+- **BREAKING.** `enableRetryOnError`, superseded by `maxRetries`.
+
+### Fixed
+
+- Stale results from a superseded fetch no longer overwrite fresh state. A generation counter incremented on reset invalidates in-flight fetches, discarding their results, errors, and loading-state cleanup.
+- `maxRetries` is now enforced when retrying through `retry()`, not only through the built-in retry button.
+- `onError` is now invoked when `loadData` returns `null`, not only when it throws.
+- Reset now awaits the refetch, and the scroll controller is guarded while unattached.
+- State is now reset when `interval` changes, even when `loadData` and `maxItems` are unchanged.
+
+### Performance
+
+- `ListView.builder` is used instead of `ListView.separated` when separators are disabled, avoiding the separator layer entirely.
+
+### Migration Guide
+
+#### `tryAgainBuilder` signature
+
+The builder now receives the failure that caused the error state, so the message can be tailored to the kind of failure. When `loadData` returns `null`, a synthetic `Exception` is passed, so `error` is never null.
+
+```dart
+// Before
+tryAgainBuilder: (action) => ElevatedButton(
+  onPressed: action,
+  child: const Text('Try again'),
+),
+
+// After
+tryAgainBuilder: (error, action) => Column(
+  mainAxisSize: MainAxisSize.min,
+  children: [
+    Text('$error'),
+    ElevatedButton(
+      onPressed: action,
+      child: const Text('Try again'),
+    ),
+  ],
+),
+```
+
+#### `loadData` no longer resets the list
+
+If you relied on swapping the `loadData` closure to load a different data source, request the reset explicitly — either with a new `Key`, which remounts the widget from scratch, or with `controller.refresh()`, which keeps the same instance.
+
+```dart
+// Before: recreating the closure reset the list implicitly.
+ScrollInfinity(
+  loadData: (pageIndex) => api.fetch(category, pageIndex),
+)
+
+// After: remount on a data source change.
+ScrollInfinity(
+  key: ValueKey(category),
+  loadData: (pageIndex) => api.fetch(category, pageIndex),
+)
+
+// Or, keeping the same widget instance:
+controller.refresh();
+```
+
+#### `enableRetryOnError` removed
+
+Replace the boolean flag with the attempt counter. `maxRetries: 0` disables retrying; pass an empty `retryLimitReached` widget to suppress the limit message.
+
+```dart
+// Before
+ScrollInfinity(
+  enableRetryOnError: false,
+)
+
+// After
+ScrollInfinity(
+  maxRetries: 0,
+  retryLimitReached: const SizedBox.shrink(),
+)
+```
+
 ## [0.5.2] - 2025-08-13
 
 - **Documentation Update**: Standardized the README documentation to align with the formatting and style of other projects.
