@@ -53,12 +53,18 @@ class IntervalItemMapper<T> {
   /// When [useRealItemIndex] is `true` and [interval] is non-null, returns
   /// the item's independent index within its own kind (data item or
   /// placeholder). Otherwise, returns [displayIndex] unchanged.
+  ///
+  /// Items appended with a `null` interval carry no independent index, so
+  /// [displayIndex] is also returned when the two modes were mixed without
+  /// a [clear] in between.
   int indexFor(
     int displayIndex, {
     required bool useRealItemIndex,
     required int? interval,
   }) {
-    if (useRealItemIndex && interval != null) {
+    if (useRealItemIndex &&
+        interval != null &&
+        _mappedIndices.length == _displayItems.length) {
       return _mappedIndices[displayIndex];
     }
     return displayIndex;

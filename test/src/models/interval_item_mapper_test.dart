@@ -79,6 +79,42 @@ void main() {
       },
     );
 
+    test(
+      'indexFor falls back to the display index when interval modes are '
+      'mixed',
+      () {
+        // `ScrollInfinity` clears the mapper whenever `interval` changes, so
+        // this only guards direct use: items added without an interval have
+        // no independent index to report.
+        final mapper = IntervalItemMapper<String?>()
+          ..addAll(['a', 'b'], interval: null)
+          ..addAll(['c', 'd'], interval: 2);
+
+        for (var i = 0; i < mapper.displayItems.length; i++) {
+          expect(mapper.indexFor(i, useRealItemIndex: true, interval: 2), i);
+        }
+      },
+    );
+
+    test('addAll with an empty list leaves the display list untouched', () {
+      final mapper = IntervalItemMapper<String?>()
+        ..addAll(['a', 'b'], interval: 2)
+        ..addAll([], interval: 2);
+
+      expect(mapper.displayItems, ['a', 'b']);
+
+      // The pending placeholder is still owed to the next real item.
+      mapper.addAll(['c'], interval: 2);
+      expect(mapper.displayItems, ['a', 'b', null, 'c']);
+    });
+
+    test('interval of 1 places a placeholder between every item', () {
+      final mapper = IntervalItemMapper<String?>()
+        ..addAll(['a', 'b', 'c'], interval: 1);
+
+      expect(mapper.displayItems, ['a', null, 'b', null, 'c']);
+    });
+
     test('clear resets items and counters', () {
       final mapper = IntervalItemMapper<String?>()
         ..addAll(['a', 'b', 'c'], interval: 2)

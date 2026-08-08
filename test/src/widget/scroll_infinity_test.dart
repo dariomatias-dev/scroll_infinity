@@ -634,6 +634,69 @@ void main() {
           expect(find.text('Retry limit has been reached.'), findsOneWidget);
         },
       );
+
+      testWidgets(
+        'A successful fetch restores the retry budget for the next page',
+        (tester) async {
+          var firstPageAttempts = 0;
+          var secondPageAttempts = 0;
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 2,
+                maxRetries: 1,
+                // Manual loading keeps every fetch explicit, so the retry
+                // count is not moved by a viewport-fill fetch.
+                automaticLoading: false,
+                loadData: (page) async {
+                  if (page == 0) {
+                    firstPageAttempts++;
+
+                    if (firstPageAttempts == 1) {
+                      throw Exception('Failed to load page 0');
+                    }
+
+                    return ['Item 0', 'Item 1'];
+                  }
+
+                  secondPageAttempts++;
+                  throw Exception('Failed to load page 1');
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          // First failure of page 0: one retry is still allowed.
+          expect(find.text('Try Again'), findsOneWidget);
+
+          await tester.tap(find.text('Try Again'));
+          await tester.pumpAndSettle();
+
+          expect(find.text('Item 0'), findsOneWidget);
+          expect(find.text('Load More'), findsOneWidget);
+
+          await tester.tap(find.text('Load More'));
+          await tester.pumpAndSettle();
+
+          // The retry budget is per attempt streak, not cumulative: the
+          // success on page 0 cleared the earlier failure, so this first
+          // failure of page 1 still offers a retry.
+          expect(secondPageAttempts, 1);
+          expect(find.text('Try Again'), findsOneWidget);
+          expect(find.text('Retry limit has been reached.'), findsNothing);
+
+          await tester.tap(find.text('Try Again'));
+          await tester.pumpAndSettle();
+
+          // Two consecutive failures do exhaust `maxRetries: 1`.
+          expect(secondPageAttempts, 2);
+          expect(find.text('Retry limit has been reached.'), findsOneWidget);
+        },
+      );
     });
 
     /// Tests for optional features and specific property behaviors.
@@ -1051,6 +1114,213 @@ void main() {
 
           final listView = tester.widget<ListView>(find.byType(ListView));
           expect(listView.reverse, isTrue);
+        },
+      );
+
+      testWidgets(
+        'No separator is built between the last item and the footer',
+        (tester) async {
+          final separatorIndices = <int>[];
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 3,
+                automaticLoading: false,
+                loadData: (page) {
+                  return mockLoadData(
+                    page,
+                    maxItemsPerPage: 3,
+                  );
+                },
+                separatorBuilder: (context, index) {
+                  separatorIndices.add(index);
+                  return const Divider(key: Key('divider'));
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          // The 'Load More' footer occupies a slot, but the slot between it
+          // and the last item must stay empty: 3 items still yield only 2
+          // separators.
+          expect(find.text('Load More'), findsOneWidget);
+          expect(find.byKey(const Key('divider')), findsNWidgets(2));
+          expect(separatorIndices.toSet(), {0, 1});
+        },
+      );
+
+      testWidgets(
+        'No separator is built between the last item and an error footer',
+        (tester) async {
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 3,
+                loadData: (page) {
+                  return mockLoadData(
+                    page,
+                    maxItemsPerPage: 3,
+                    throwErrorOnPage: true,
+                    errorPage: 1,
+                  );
+                },
+                separatorBuilder: (context, index) {
+                  return const Divider(key: Key('divider'));
+                },
+                itemBuilder: (item, index) {
+                  return SizedBox(height: 100, child: Text(item));
+                },
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          expect(find.text('Try Again'), findsOneWidget);
+          expect(find.byKey(const Key('divider')), findsNWidgets(2));
+        },
+      );
+
+      testWidgets(
+        'interval keeps its spacing across a page boundary',
+        (tester) async {
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String?>(
+                maxItems: 3,
+                interval: 2,
+                automaticLoading: false,
+                loadData: (page) async {
+                  return page == 0
+                      ? <String?>['a', 'b', 'c']
+                      : <String?>['d', 'e'];
+                },
+                // An icon-only footer keeps the rendered `Text` widgets to
+                // the list items alone.
+                loadMoreBuilder: (action) {
+                  return IconButton(
+                    onPressed: action,
+                    icon: const Icon(Icons.add),
+                  );
+                },
+                itemBuilder: (item, index) => Text(item ?? '-'),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          List<String?> renderedItems() {
+            return tester
+                .widgetList<Text>(find.byType(Text))
+                .map((text) => text.data)
+                .toList();
+          }
+
+          expect(renderedItems(), ['a', 'b', '-', 'c']);
+
+          await tester.tap(find.byIcon(Icons.add));
+          await tester.pumpAndSettle();
+
+          // The placeholder counter carries over: 'c' and 'd' complete the
+          // next pair, so the placeholder lands between 'd' and 'e' rather
+          // than restarting at the page boundary.
+          expect(renderedItems(), ['a', 'b', '-', 'c', 'd', '-', 'e']);
+        },
+      );
+
+      testWidgets(
+        'An empty first page shows the empty state, not "Load More"',
+        (tester) async {
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                automaticLoading: false,
+                loadData: (page) => mockLoadData(page, totalItems: 0),
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          expect(find.text('No items found.'), findsOneWidget);
+          expect(find.text('Load More'), findsNothing);
+        },
+      );
+
+      testWidgets(
+        'Paginates a horizontal list when scrolled to the end',
+        (tester) async {
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                scrollDirection: Axis.horizontal,
+                loadData: (page) {
+                  return mockLoadData(
+                    page,
+                    totalItems: 15,
+                    maxItemsPerPage: 5,
+                  );
+                },
+                itemBuilder: (item, index) {
+                  return SizedBox(width: 300, child: Text(item));
+                },
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          expect(find.text('Item 5'), findsNothing);
+
+          await tester.drag(find.byType(ListView), const Offset(-1000, 0));
+          await tester.pumpAndSettle();
+
+          // Reaching the end along the horizontal axis triggers the fetch.
+          await tester.drag(find.byType(ListView), const Offset(-1000, 0));
+          await tester.pumpAndSettle();
+
+          expect(find.text('Item 5'), findsOneWidget);
+        },
+      );
+
+      testWidgets(
+        'A page longer than maxItems does not end the list',
+        (tester) async {
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                automaticLoading: false,
+                loadData: (page) async {
+                  return page == 0
+                      ? List.generate(7, (index) => 'Item $index')
+                      : ['Item 7', 'Item 8'];
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          // 7 >= maxItems, so pagination continues.
+          expect(find.text('Item 6'), findsOneWidget);
+          expect(find.text('Load More'), findsOneWidget);
+
+          await tester.tap(find.text('Load More'));
+          await tester.pumpAndSettle();
+
+          // The short second page ends it.
+          expect(find.text('Item 8'), findsOneWidget);
+          expect(find.text('Load More'), findsNothing);
         },
       );
     });
@@ -1693,6 +1963,29 @@ void main() {
           expect(endCount, 2);
         },
       );
+
+      testWidgets(
+        'onEndOfList fires after onItemsLoaded for the same page',
+        (tester) async {
+          final events = <String>[];
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                onItemsLoaded: (items) => events.add('items:${items.length}'),
+                onEndOfList: () => events.add('end'),
+                loadData: (page) => mockLoadData(page, totalItems: 3),
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          expect(events, ['items:3', 'end']);
+        },
+      );
     });
 
     /// Tests for driving a mounted [ScrollInfinity] via
@@ -2008,6 +2301,54 @@ void main() {
           await tester.pumpAndSettle();
         },
       );
+
+      testWidgets(
+        'dispose() releases the attached state and makes the controller '
+        'inert',
+        (tester) async {
+          final controller = ScrollInfinityController();
+          var callCount = 0;
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                controller: controller,
+                loadData: (page) {
+                  callCount++;
+                  return mockLoadData(page, totalItems: 3);
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          expect(callCount, 1);
+          expect(controller.hasReachedEnd, isTrue);
+
+          controller.dispose();
+
+          // Disposal drops the reference to the still-mounted state: the
+          // getters fall back to their defaults and the commands are no-ops.
+          expect(controller.hasReachedEnd, isFalse);
+          expect(controller.isLoading, isFalse);
+          expect(controller.hasError, isFalse);
+
+          controller
+            ..refresh()
+            ..retry();
+          await tester.pumpAndSettle();
+
+          expect(callCount, 1);
+          expect(find.text('Item 0'), findsOneWidget);
+
+          // Unmounting a list whose controller was already disposed must not
+          // throw when the state detaches itself.
+          await tester.pumpWidget(const SizedBox());
+          expect(tester.takeException(), isNull);
+        },
+      );
     });
 
     /// Tests for the `enablePullToRefresh` property.
@@ -2164,6 +2505,47 @@ void main() {
           await tester.pumpAndSettle();
 
           expect(callCount, 2);
+        },
+      );
+
+      testWidgets(
+        'Takes over with an internal controller when the external one is '
+        'removed',
+        (tester) async {
+          final external = ScrollController();
+          var callCount = 0;
+
+          await tester.pumpWidget(
+            buildList(
+              scrollController: external,
+              onFetch: () => callCount++,
+            ),
+          );
+          await tester.pumpAndSettle();
+          expect(callCount, 1);
+          expect(external.hasClients, isTrue);
+
+          await tester.pumpWidget(buildList(onFetch: () => callCount++));
+          await tester.pumpAndSettle();
+
+          // The list detaches from the caller's controller, which stays the
+          // caller's to dispose.
+          expect(external.hasClients, isFalse);
+          expect(external.dispose, returnsNormally);
+
+          // Pagination keeps working through the internal controller that
+          // replaced it.
+          await tester.drag(find.byType(ListView), const Offset(0, -1400));
+          await tester.pumpAndSettle();
+
+          expect(callCount, 2);
+
+          // The second page landed in the list driven by the internal
+          // controller.
+          final listView = tester.widget<ListView>(find.byType(ListView));
+          final delegate =
+              listView.childrenDelegate as SliverChildBuilderDelegate;
+          expect(delegate.childCount, 10);
         },
       );
     });
@@ -2489,6 +2871,56 @@ void main() {
 
           final listView = tester.widget<ListView>(find.byType(ListView));
           expect(listView.scrollCacheExtent, isNull);
+        },
+      );
+
+      testWidgets(
+        'restorationId restores the scroll offset across a restart',
+        (tester) async {
+          double currentOffset() {
+            return tester
+                .state<ScrollableState>(
+                  find.descendant(
+                    of: find.byType(ListView),
+                    matching: find.byType(Scrollable),
+                  ),
+                )
+                .position
+                .pixels;
+          }
+
+          await tester.pumpWidget(
+            MaterialApp(
+              restorationScopeId: 'app',
+              home: Scaffold(
+                body: ScrollInfinity<String>(
+                  maxItems: 10,
+                  restorationId: 'scroll-infinity',
+                  // Seeding the list keeps the restored offset within a
+                  // content extent that exists on the very first frame.
+                  initialItems: List.generate(10, (index) => 'Item $index'),
+                  loadData: (page) async => <String>[],
+                  itemBuilder: (item, index) {
+                    return SizedBox(height: 200, child: Text(item));
+                  },
+                ),
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          expect(currentOffset(), 0);
+
+          await tester.drag(find.byType(ListView), const Offset(0, -400));
+          await tester.pumpAndSettle();
+
+          final offsetBeforeRestart = currentOffset();
+          expect(offsetBeforeRestart, greaterThan(0));
+
+          await tester.restartAndRestore();
+          await tester.pumpAndSettle();
+
+          expect(currentOffset(), offsetBeforeRestart);
         },
       );
     });
