@@ -41,8 +41,12 @@ Future<List<String>?> mockLoadData(
 ///
 /// This is used to ensure that MaterialApp and Scaffold context is
 /// available during the test.
-Widget buildTestableWidget(Widget child) {
+///
+/// Pass [restorationScopeId] to make the subtree restorable, which state
+/// restoration tests need.
+Widget buildTestableWidget(Widget child, {String? restorationScopeId}) {
   return MaterialApp(
+    restorationScopeId: restorationScopeId,
     home: Scaffold(
       body: Directionality(
         textDirection: TextDirection.ltr,
@@ -54,7 +58,7 @@ Widget buildTestableWidget(Widget child) {
 
 void main() {
   group('ScrollInfinity', () {
-    /// Tests related to the initial rendering and state of the widget.
+    // Tests related to the initial rendering and state of the widget.
     group('Initial State and Rendering', () {
       testWidgets(
         'Renders header and initial loading indicator',
@@ -72,7 +76,6 @@ void main() {
             ),
           );
 
-          // Verify header and loading indicator are present.
           expect(find.text('My Header'), findsOneWidget);
           expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
@@ -96,10 +99,8 @@ void main() {
             ),
           );
 
-          // Wait for the initial load to complete.
           await tester.pumpAndSettle();
 
-          // Verify the empty state widget is displayed.
           expect(find.text('No Data Found'), findsOneWidget);
           expect(find.byType(CircularProgressIndicator), findsNothing);
         },
@@ -179,7 +180,7 @@ void main() {
       );
     });
 
-    /// Tests related to fetching data and paginating through the list.
+    // Tests related to fetching data and paginating through the list.
     group('Data Loading and Pagination', () {
       testWidgets(
         'Fetches and displays the first page of items',
@@ -202,7 +203,6 @@ void main() {
 
           await tester.pumpAndSettle();
 
-          // Verify the first page of items is displayed.
           expect(find.text('Item 0'), findsOneWidget);
           expect(find.text('Item 4'), findsOneWidget);
           expect(find.text('Item 5'), findsNothing);
@@ -235,22 +235,19 @@ void main() {
             ),
           );
 
-          // Load the first page.
           await tester.pumpAndSettle();
           expect(find.text('Item 0'), findsOneWidget);
           expect(find.text('Item 5'), findsNothing);
           expect(find.text('Load More'), findsOneWidget);
 
-          // Attempt to scroll to load (should not work).
+          // Scrolling must not paginate while loading is manual.
           await tester.drag(find.byType(ListView), const Offset(0, -800));
           await tester.pumpAndSettle();
           expect(find.text('Item 5'), findsNothing);
 
-          // Tap the button to load more.
           await tester.tap(find.text('Load More'));
           await tester.pumpAndSettle();
 
-          // Verify the second page was loaded.
           expect(find.text('Item 5'), findsOneWidget);
           expect(find.text('Load More'), findsNothing);
         },
@@ -380,7 +377,7 @@ void main() {
       );
     });
 
-    /// Tests related to error states and retry logic.
+    // Tests related to error states and retry logic.
     group('Error Handling and Retries', () {
       testWidgets(
         'Stops the viewport-fill loop when the list never becomes '
@@ -429,16 +426,14 @@ void main() {
             ),
           );
 
-          // Wait for the error to occur.
           await tester.pumpAndSettle();
           expect(find.text('Try Again'), findsOneWidget);
           expect(callCount, 1);
 
-          // Retry the operation.
           await tester.tap(find.text('Try Again'));
           await tester.pumpAndSettle();
 
-          // Verify the retry attempts are counted correctly.
+          // The retry keeps failing, so the trigger stays on screen.
           expect(find.text('Try Again'), findsOneWidget);
           expect(callCount, 2);
         },
@@ -481,7 +476,6 @@ void main() {
 
           expect(find.text('Try Again'), findsNothing);
           expect(find.text('No more retries allowed'), findsOneWidget);
-          // Verify that the load function was not called a fourth time.
           expect(callCount, 3);
         },
       );
@@ -638,8 +632,7 @@ void main() {
       testWidgets(
         'A successful fetch restores the retry budget for the next page',
         (tester) async {
-          var firstPageAttempts = 0;
-          var secondPageAttempts = 0;
+          final attemptsByPage = <int, int>{};
 
           await tester.pumpWidget(
             buildTestableWidget(
@@ -649,19 +642,18 @@ void main() {
                 // Manual loading keeps every fetch explicit, so the retry
                 // count is not moved by a viewport-fill fetch.
                 automaticLoading: false,
-                loadData: (page) async {
-                  if (page == 0) {
-                    firstPageAttempts++;
+                loadData: (page) {
+                  final attempt = (attemptsByPage[page] ?? 0) + 1;
+                  attemptsByPage[page] = attempt;
 
-                    if (firstPageAttempts == 1) {
-                      throw Exception('Failed to load page 0');
-                    }
-
-                    return ['Item 0', 'Item 1'];
-                  }
-
-                  secondPageAttempts++;
-                  throw Exception('Failed to load page 1');
+                  // Page 0 fails once and then succeeds; page 1 always fails.
+                  return mockLoadData(
+                    page,
+                    totalItems: 4,
+                    maxItemsPerPage: 2,
+                    throwErrorOnPage: page == 1 || attempt == 1,
+                    errorPage: page,
+                  );
                 },
                 itemBuilder: (item, index) => Text(item),
               ),
@@ -685,7 +677,7 @@ void main() {
           // The retry budget is per attempt streak, not cumulative: the
           // success on page 0 cleared the earlier failure, so this first
           // failure of page 1 still offers a retry.
-          expect(secondPageAttempts, 1);
+          expect(attemptsByPage[1], 1);
           expect(find.text('Try Again'), findsOneWidget);
           expect(find.text('Retry limit has been reached.'), findsNothing);
 
@@ -693,13 +685,13 @@ void main() {
           await tester.pumpAndSettle();
 
           // Two consecutive failures do exhaust `maxRetries: 1`.
-          expect(secondPageAttempts, 2);
+          expect(attemptsByPage[1], 2);
           expect(find.text('Retry limit has been reached.'), findsOneWidget);
         },
       );
     });
 
-    /// Tests for optional features and specific property behaviors.
+    // Tests for optional features and specific property behaviors.
     group('Feature-Specific Properties', () {
       testWidgets(
         'Separators are built between items',
@@ -912,8 +904,6 @@ void main() {
             );
           }
 
-          // On desktop the default behavior does add a scrollbar, so the
-          // `false` case below is meaningful.
           await tester.pumpWidget(build(scrollbars: true));
           await tester.pumpAndSettle();
           expect(find.byType(Scrollbar), findsOneWidget);
@@ -953,7 +943,6 @@ void main() {
           );
           await tester.pumpAndSettle();
 
-          // Verify correct indices for both data items and interval items.
           expect(receivedItems['Item 0'], 0);
           expect(receivedItems['Item 1'], 1);
           expect(receivedItems['interval_0'], 0); // First interval, index 0.
@@ -993,7 +982,6 @@ void main() {
 
           await tester.pumpAndSettle();
 
-          // Verify list-based continuous indices.
           expect(receivedItems['Item 0'], 0);
           expect(receivedItems['Item 1'], 1);
           expect(receivedItems['interval_2'], 2); // Null item is at index 2.
@@ -1023,10 +1011,9 @@ void main() {
 
           await tester.pumpAndSettle();
 
-          // Verify the first call was for the correct page.
           expect(firstCalledPage, 2);
 
-          // Verify items are from page 2 (items 20-29).
+          // Page 2 of 10-item pages holds items 20 to 29.
           expect(find.text('Item 20'), findsOneWidget);
           expect(find.text('Item 29'), findsOneWidget);
         },
@@ -1194,10 +1181,12 @@ void main() {
                 maxItems: 3,
                 interval: 2,
                 automaticLoading: false,
-                loadData: (page) async {
-                  return page == 0
-                      ? <String?>['a', 'b', 'c']
-                      : <String?>['d', 'e'];
+                loadData: (page) {
+                  return mockLoadData(
+                    page,
+                    totalItems: 5,
+                    maxItemsPerPage: 3,
+                  );
                 },
                 // An icon-only footer keeps the rendered `Text` widgets to
                 // the list items alone.
@@ -1207,7 +1196,7 @@ void main() {
                     icon: const Icon(Icons.add),
                   );
                 },
-                itemBuilder: (item, index) => Text(item ?? '-'),
+                itemBuilder: (item, index) => Text(item ?? 'interval'),
               ),
             ),
           );
@@ -1221,15 +1210,28 @@ void main() {
                 .toList();
           }
 
-          expect(renderedItems(), ['a', 'b', '-', 'c']);
+          expect(renderedItems(), [
+            'Item 0',
+            'Item 1',
+            'interval',
+            'Item 2',
+          ]);
 
           await tester.tap(find.byIcon(Icons.add));
           await tester.pumpAndSettle();
 
-          // The placeholder counter carries over: 'c' and 'd' complete the
-          // next pair, so the placeholder lands between 'd' and 'e' rather
-          // than restarting at the page boundary.
-          expect(renderedItems(), ['a', 'b', '-', 'c', 'd', '-', 'e']);
+          // The placeholder counter carries over: 'Item 2' and 'Item 3'
+          // complete the next pair, so the placeholder lands between them
+          // and 'Item 4' rather than restarting at the page boundary.
+          expect(renderedItems(), [
+            'Item 0',
+            'Item 1',
+            'interval',
+            'Item 2',
+            'Item 3',
+            'interval',
+            'Item 4',
+          ]);
         },
       );
 
@@ -1299,10 +1301,12 @@ void main() {
               ScrollInfinity<String>(
                 maxItems: 5,
                 automaticLoading: false,
-                loadData: (page) async {
-                  return page == 0
-                      ? List.generate(7, (index) => 'Item $index')
-                      : ['Item 7', 'Item 8'];
+                loadData: (page) {
+                  return mockLoadData(
+                    page,
+                    totalItems: 9,
+                    maxItemsPerPage: 7,
+                  );
                 },
                 itemBuilder: (item, index) => Text(item),
               ),
@@ -1325,8 +1329,8 @@ void main() {
       );
     });
 
-    /// Tests covering how the widget reacts to `didUpdateWidget` when its
-    /// configuration changes while mounted.
+    // Tests covering how the widget reacts to `didUpdateWidget` when its
+    // configuration changes while mounted.
     group('Widget Updates', () {
       testWidgets(
         'Resets and refetches when maxItems changes',
@@ -1554,7 +1558,7 @@ void main() {
       );
     });
 
-    /// Tests covering widget teardown while asynchronous work is pending.
+    // Tests covering widget teardown while asynchronous work is pending.
     group('Lifecycle', () {
       testWidgets(
         'Disposing while a fetch is in flight does not throw',
@@ -1582,7 +1586,7 @@ void main() {
       );
     });
 
-    /// Tests for the widget-builder overrides of the default state widgets.
+    // Tests for the widget-builder overrides of the default state widgets.
     group('Custom State Widgets', () {
       testWidgets(
         'Uses the custom loading widget when provided',
@@ -1748,7 +1752,7 @@ void main() {
       );
     });
 
-    /// Tests for the `onError` and `onItemsLoaded` analytics hooks.
+    // Tests for the `onError`, `onItemsLoaded` and `onEndOfList` hooks.
     group('Analytics Callbacks', () {
       testWidgets(
         'onError receives the exception thrown by loadData',
@@ -1988,8 +1992,8 @@ void main() {
       );
     });
 
-    /// Tests for driving a mounted [ScrollInfinity] via
-    /// [ScrollInfinityController].
+    // Tests for driving a mounted `ScrollInfinity` via
+    // `ScrollInfinityController`.
     group('External Controller', () {
       testWidgets(
         'Reflects isLoading/hasError and refresh() resets the list',
@@ -2351,8 +2355,7 @@ void main() {
       );
     });
 
-    /// Tests for the `enablePullToRefresh` property.
-    /// Tests for the optional external `scrollController`.
+    // Tests for the optional external `scrollController`.
     group('External ScrollController', () {
       Widget buildList({
         ScrollController? scrollController,
@@ -2550,6 +2553,7 @@ void main() {
       );
     });
 
+    // Tests for the `enablePullToRefresh` property.
     group('Pull To Refresh', () {
       testWidgets(
         'Does not wrap the list in a RefreshIndicator by default',
@@ -2658,7 +2662,7 @@ void main() {
       );
     });
 
-    /// Tests guarding against stale fetches racing a refresh.
+    // Tests guarding against stale fetches racing a refresh.
     group('Refresh Race Condition', () {
       testWidgets(
         'Discards an in-flight fetch that resolves after refresh',
@@ -2718,8 +2722,8 @@ void main() {
       );
     });
 
-    /// Tests for properties passed straight through to the underlying
-    /// [ListView].
+    // Tests for properties passed straight through to the underlying
+    // `ListView`.
     group('ListView Passthrough', () {
       testWidgets(
         'Applies physics, shrinkWrap and cacheExtent',
@@ -2890,20 +2894,18 @@ void main() {
           }
 
           await tester.pumpWidget(
-            MaterialApp(
+            buildTestableWidget(
               restorationScopeId: 'app',
-              home: Scaffold(
-                body: ScrollInfinity<String>(
-                  maxItems: 10,
-                  restorationId: 'scroll-infinity',
-                  // Seeding the list keeps the restored offset within a
-                  // content extent that exists on the very first frame.
-                  initialItems: List.generate(10, (index) => 'Item $index'),
-                  loadData: (page) async => <String>[],
-                  itemBuilder: (item, index) {
-                    return SizedBox(height: 200, child: Text(item));
-                  },
-                ),
+              ScrollInfinity<String>(
+                maxItems: 10,
+                restorationId: 'scroll-infinity',
+                // Seeding the list keeps the restored offset within a
+                // content extent that exists on the very first frame.
+                initialItems: List.generate(10, (index) => 'Item $index'),
+                loadData: (page) async => <String>[],
+                itemBuilder: (item, index) {
+                  return SizedBox(height: 200, child: Text(item));
+                },
               ),
             ),
           );
@@ -2925,7 +2927,8 @@ void main() {
       );
     });
 
-    /// Tests for the `loadMoreThreshold` property.
+    // Tests for the constructor assertions guarding invalid property
+    // combinations.
     group('Configuration Validation', () {
       test('loadMoreThreshold cannot be negative', () {
         expect(
