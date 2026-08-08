@@ -223,6 +223,11 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
         physics: widget.physics,
         shrinkWrap: widget.shrinkWrap,
         scrollCacheExtent: cacheExtent,
+        itemExtent: widget.itemExtent,
+        prototypeItem: widget.prototypeItem,
+        addAutomaticKeepAlives: widget.addAutomaticKeepAlives,
+        keyboardDismissBehavior: widget.keyboardDismissBehavior,
+        restorationId: widget.restorationId,
         itemCount: itemCount,
         itemBuilder: itemBuilder,
       );
@@ -236,6 +241,9 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
       physics: widget.physics,
       shrinkWrap: widget.shrinkWrap,
       scrollCacheExtent: cacheExtent,
+      addAutomaticKeepAlives: widget.addAutomaticKeepAlives,
+      keyboardDismissBehavior: widget.keyboardDismissBehavior,
+      restorationId: widget.restorationId,
       itemCount: itemCount,
       separatorBuilder: (context, index) {
         if (hasHeader && index == 0) {

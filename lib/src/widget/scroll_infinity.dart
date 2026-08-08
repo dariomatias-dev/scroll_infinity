@@ -39,6 +39,11 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.physics,
     this.shrinkWrap = false,
     this.cacheExtent,
+    this.itemExtent,
+    this.prototypeItem,
+    this.addAutomaticKeepAlives = true,
+    this.keyboardDismissBehavior,
+    this.restorationId,
 
     // Behavioral Features
     this.interval,
@@ -76,6 +81,17 @@ class ScrollInfinity<T> extends StatefulWidget {
        assert(
          loadMoreThreshold >= 0,
          'loadMoreThreshold cannot be negative.',
+       ),
+       assert(
+         itemExtent == null || prototypeItem == null,
+         'You can only pass one of itemExtent and prototypeItem.',
+       ),
+       assert(
+         (itemExtent == null && prototypeItem == null) ||
+             separatorBuilder == null,
+         'itemExtent and prototypeItem cannot be combined with '
+         'separatorBuilder, because separators do not share the item '
+         'extent.',
        );
 
   // Core Data Handling
@@ -203,6 +219,39 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// Cache extent, in logical pixels, passed to the underlying
   /// [ListView] as a [ScrollCacheExtent.pixels] value.
   final double? cacheExtent;
+
+  /// Forces every child to the given extent along the scroll axis, which
+  /// lets the list skip measuring them.
+  ///
+  /// Applies to [header] and to the footer widgets as well, not only to
+  /// the items. Cannot be combined with [prototypeItem] or with
+  /// [separatorBuilder].
+  final double? itemExtent;
+
+  /// Sizes every child after this widget's extent along the scroll axis.
+  ///
+  /// The same caveats as [itemExtent] apply: it also constrains [header]
+  /// and the footer, and cannot be combined with [itemExtent] or with
+  /// [separatorBuilder].
+  final Widget? prototypeItem;
+
+  /// Whether to wrap each child in an [AutomaticKeepAlive].
+  ///
+  /// Passed to the underlying [ListView]. Defaults to `true`; set it to
+  /// `false` when no child needs to stay alive while scrolled away.
+  final bool addAutomaticKeepAlives;
+
+  /// How the list dismisses the on-screen keyboard while dragging.
+  ///
+  /// Passed to the underlying [ListView]. When `null`, the ambient
+  /// [ScrollBehavior] decides.
+  final ScrollViewKeyboardDismissBehavior? keyboardDismissBehavior;
+
+  /// Restoration ID for the underlying [ListView]'s scroll offset.
+  ///
+  /// Saves and restores the scroll position across state restoration; the
+  /// loaded pages themselves are not restored.
+  final String? restorationId;
 
   // Behavioral Features
 

@@ -2372,6 +2372,105 @@ void main() {
       );
 
       testWidgets(
+        'Applies itemExtent, keep-alives, keyboard dismissal and '
+        'restorationId',
+        (tester) async {
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                itemExtent: 80,
+                addAutomaticKeepAlives: false,
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                restorationId: 'list',
+                loadData: (page) {
+                  return mockLoadData(page, totalItems: 5, maxItemsPerPage: 5);
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          final listView = tester.widget<ListView>(find.byType(ListView));
+          final delegate =
+              listView.childrenDelegate as SliverChildBuilderDelegate;
+
+          expect(listView.itemExtent, 80);
+          expect(listView.prototypeItem, isNull);
+          expect(delegate.addAutomaticKeepAlives, isFalse);
+          expect(
+            listView.keyboardDismissBehavior,
+            ScrollViewKeyboardDismissBehavior.onDrag,
+          );
+          expect(listView.restorationId, 'list');
+        },
+      );
+
+      testWidgets(
+        'Applies prototypeItem',
+        (tester) async {
+          const prototype = SizedBox(height: 42);
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                prototypeItem: prototype,
+                loadData: (page) {
+                  return mockLoadData(page, totalItems: 5, maxItemsPerPage: 5);
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          final listView = tester.widget<ListView>(find.byType(ListView));
+          expect(listView.prototypeItem, same(prototype));
+          expect(tester.getSize(find.text('Item 0')).height, 42);
+        },
+      );
+
+      testWidgets(
+        'Passes the shared properties through the separated list too',
+        (tester) async {
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                addAutomaticKeepAlives: false,
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                restorationId: 'separated-list',
+                separatorBuilder: (context, index) => const Divider(),
+                loadData: (page) {
+                  return mockLoadData(page, totalItems: 5, maxItemsPerPage: 5);
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          final listView = tester.widget<ListView>(find.byType(ListView));
+          final delegate =
+              listView.childrenDelegate as SliverChildBuilderDelegate;
+
+          expect(delegate.addAutomaticKeepAlives, isFalse);
+          expect(
+            listView.keyboardDismissBehavior,
+            ScrollViewKeyboardDismissBehavior.onDrag,
+          );
+          expect(listView.restorationId, 'separated-list');
+        },
+      );
+
+      testWidgets(
         'Leaves scrollCacheExtent null when cacheExtent is not set',
         (tester) async {
           await tester.pumpWidget(
@@ -2437,6 +2536,45 @@ void main() {
           () => ScrollInfinity<String>(
             maxItems: 5,
             interval: 2,
+            loadData: (page) async => [],
+            itemBuilder: (item, index) => Text(item),
+          ),
+          throwsAssertionError,
+        );
+      });
+
+      test('itemExtent and prototypeItem are mutually exclusive', () {
+        expect(
+          () => ScrollInfinity<String>(
+            maxItems: 5,
+            itemExtent: 80,
+            prototypeItem: const SizedBox(height: 42),
+            loadData: (page) async => [],
+            itemBuilder: (item, index) => Text(item),
+          ),
+          throwsAssertionError,
+        );
+      });
+
+      test('itemExtent cannot be combined with separatorBuilder', () {
+        expect(
+          () => ScrollInfinity<String>(
+            maxItems: 5,
+            itemExtent: 80,
+            separatorBuilder: (context, index) => const Divider(),
+            loadData: (page) async => [],
+            itemBuilder: (item, index) => Text(item),
+          ),
+          throwsAssertionError,
+        );
+      });
+
+      test('prototypeItem cannot be combined with separatorBuilder', () {
+        expect(
+          () => ScrollInfinity<String>(
+            maxItems: 5,
+            prototypeItem: const SizedBox(height: 42),
+            separatorBuilder: (context, index) => const Divider(),
             loadData: (page) async => [],
             itemBuilder: (item, index) => Text(item),
           ),

@@ -422,6 +422,11 @@ ScrollInfinity<int>(
 | physics             | `ScrollPhysics?`                      | null     | Passed to the underlying `ListView`                |
 | shrinkWrap          | `bool`                                | false    | Passed to the underlying `ListView`                |
 | cacheExtent         | `double?`                             | null     | Passed to the underlying `ListView`                |
+| itemExtent          | `double?`                             | null     | Fixed extent for every child, header and footer included. Not allowed with `prototypeItem` or `separatorBuilder` |
+| prototypeItem       | `Widget?`                             | null     | Sizes every child after this widget. Same restrictions as `itemExtent` |
+| addAutomaticKeepAlives | `bool`                             | true     | Passed to the underlying `ListView`                |
+| keyboardDismissBehavior | `ScrollViewKeyboardDismissBehavior?` | null  | Keyboard dismissal while dragging; falls back to the ambient `ScrollBehavior` |
+| restorationId       | `String?`                             | null     | Restores the scroll offset (not the loaded pages)  |
 
 **Behavioral Features**
 

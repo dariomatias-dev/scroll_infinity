@@ -422,6 +422,11 @@ ScrollInfinity<int>(
 | physics             | `ScrollPhysics?`                      | null     | Passado para o `ListView` interno                      |
 | shrinkWrap          | `bool`                                | false    | Passado para o `ListView` interno                      |
 | cacheExtent         | `double?`                             | null     | Passado para o `ListView` interno                      |
+| itemExtent          | `double?`                             | null     | Extensão fixa para todo filho, incluindo header e rodapé. Não permitido com `prototypeItem` nem `separatorBuilder` |
+| prototypeItem       | `Widget?`                             | null     | Dimensiona todo filho conforme este widget. Mesmas restrições de `itemExtent` |
+| addAutomaticKeepAlives | `bool`                             | true     | Passado para o `ListView` interno                      |
+| keyboardDismissBehavior | `ScrollViewKeyboardDismissBehavior?` | null  | Fechamento do teclado ao arrastar; sem valor, decide o `ScrollBehavior` do contexto |
+| restorationId       | `String?`                             | null     | Restaura a posição de scroll (não as páginas carregadas) |
 
 **Recursos Comportamentais**
 
