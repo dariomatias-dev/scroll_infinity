@@ -293,6 +293,12 @@ void main() {
           await tester.pumpAndSettle();
 
           expect(callCount, 2);
+
+          // The fetched page sits past the previous end, so reaching it
+          // takes another drag.
+          await tester.drag(find.byType(ListView), const Offset(0, -600));
+          await tester.pumpAndSettle();
+
           expect(find.text('Item 5'), findsOneWidget);
         },
       );
@@ -662,6 +668,50 @@ void main() {
       );
 
       testWidgets(
+        'Builds no separator slots when separatorBuilder is null',
+        (tester) async {
+          int childCountOf(WidgetTester tester) {
+            final listView = tester.widget<ListView>(find.byType(ListView));
+            final delegate =
+                listView.childrenDelegate as SliverChildBuilderDelegate;
+
+            return delegate.childCount!;
+          }
+
+          Widget build({bool withSeparators = false}) {
+            return buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 5,
+                separatorBuilder: withSeparators
+                    ? (context, index) => const Divider()
+                    : null,
+                loadData: (page) {
+                  return mockLoadData(
+                    page,
+                    totalItems: 5,
+                    maxItemsPerPage: 5,
+                  );
+                },
+                itemBuilder: (item, index) => Text(item),
+              ),
+            );
+          }
+
+          await tester.pumpWidget(build());
+          await tester.pumpAndSettle();
+
+          // 5 items and nothing else: a separated list would report
+          // 2n - 1 slots, half of them empty placeholders.
+          expect(childCountOf(tester), 5);
+
+          await tester.pumpWidget(build(withSeparators: true));
+          await tester.pumpAndSettle();
+
+          expect(childCountOf(tester), 9);
+        },
+      );
+
+      testWidgets(
         'separatorBuilder receives raw display indices and none follows '
         'the header',
         (tester) async {
@@ -763,6 +813,10 @@ void main() {
           await tester.pumpAndSettle();
 
           expect(callCount, 2);
+
+          await tester.drag(find.byType(ListView), const Offset(0, 600));
+          await tester.pumpAndSettle();
+
           expect(find.text('Item 5'), findsOneWidget);
         },
       );
@@ -1897,6 +1951,12 @@ void main() {
           await tester.pumpAndSettle();
 
           expect(callCount, 2);
+
+          // The fetched page starts where the first one ended: 5 items of
+          // 300px.
+          scrollController.jumpTo(1500);
+          await tester.pumpAndSettle();
+
           expect(find.text('Item 5'), findsOneWidget);
         },
       );
@@ -1952,6 +2012,12 @@ void main() {
           await tester.pumpAndSettle();
 
           expect(callCount, 2);
+
+          // The fetched page starts where the first one ended: 5 items of
+          // 300px.
+          second.jumpTo(1500);
+          await tester.pumpAndSettle();
+
           expect(find.text('Item 5'), findsOneWidget);
         },
       );

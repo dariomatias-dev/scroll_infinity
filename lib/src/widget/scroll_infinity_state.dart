@@ -183,6 +183,47 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
     final hasFooter = footerType != _ScrollInfinityFooterType.none;
     final displayItems = _itemMapper.displayItems;
     final itemCount = headerCount + displayItems.length + (hasFooter ? 1 : 0);
+    final separatorBuilder = widget.separatorBuilder;
+
+    final cacheExtent = widget.cacheExtent == null
+        ? null
+        : ScrollCacheExtent.pixels(widget.cacheExtent!);
+
+    Widget itemBuilder(BuildContext context, int index) {
+      if (hasHeader && index == 0) {
+        return widget.header!;
+      }
+
+      final itemIndex = index - headerCount;
+
+      if (itemIndex < displayItems.length) {
+        final finalIndex = _itemMapper.indexFor(
+          itemIndex,
+          useRealItemIndex: widget.useRealItemIndex,
+          interval: widget.interval,
+        );
+
+        return widget.itemBuilder(displayItems[itemIndex], finalIndex);
+      }
+
+      return _buildFooter(footerType);
+    }
+
+    // Without separators, `ListView.separated` would still build (and lay
+    // out) a placeholder between every pair of items.
+    if (separatorBuilder == null) {
+      return ListView.builder(
+        controller: _scrollController,
+        scrollDirection: widget.scrollDirection,
+        reverse: widget.reverse,
+        padding: widget.padding,
+        physics: widget.physics,
+        shrinkWrap: widget.shrinkWrap,
+        scrollCacheExtent: cacheExtent,
+        itemCount: itemCount,
+        itemBuilder: itemBuilder,
+      );
+    }
 
     return ListView.separated(
       controller: _scrollController,
@@ -191,45 +232,21 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
       padding: widget.padding,
       physics: widget.physics,
       shrinkWrap: widget.shrinkWrap,
-      scrollCacheExtent: widget.cacheExtent == null
-          ? null
-          : ScrollCacheExtent.pixels(widget.cacheExtent!),
+      scrollCacheExtent: cacheExtent,
       itemCount: itemCount,
       separatorBuilder: (context, index) {
-        if (widget.separatorBuilder == null) {
-          return const SizedBox.shrink();
-        }
-
         if (hasHeader && index == 0) {
           return const SizedBox.shrink();
         }
 
         final itemIndex = index - headerCount;
         if (itemIndex >= 0 && itemIndex < displayItems.length - 1) {
-          return widget.separatorBuilder!(context, itemIndex);
+          return separatorBuilder(context, itemIndex);
         }
 
         return const SizedBox.shrink();
       },
-      itemBuilder: (context, index) {
-        if (hasHeader && index == 0) {
-          return widget.header!;
-        }
-
-        final itemIndex = index - headerCount;
-
-        if (itemIndex < displayItems.length) {
-          final finalIndex = _itemMapper.indexFor(
-            itemIndex,
-            useRealItemIndex: widget.useRealItemIndex,
-            interval: widget.interval,
-          );
-
-          return widget.itemBuilder(displayItems[itemIndex], finalIndex);
-        }
-
-        return _buildFooter(footerType);
-      },
+      itemBuilder: itemBuilder,
     );
   }
 
