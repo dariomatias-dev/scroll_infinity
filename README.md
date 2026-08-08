@@ -7,7 +7,7 @@
 
 <p align="center">
   <strong>Language:</strong>
-  <strong>English</strong> | <a href="README.pt.md">Português</a>
+  <strong>English</strong> | <a href="README.pt.md">Português (BR)</a>
 </p>
 
 <h1 align="center">Scroll Infinity</h1>
