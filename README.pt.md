@@ -79,10 +79,13 @@ Oferece customização para carregamento manual/automático, widgets de estado p
 - Limite de tentativas de retry em caso de erro
 - Mapeamento do índice real dos itens com intervalos
 - `ScrollInfinityController` para refresh/retry externos
+- `ScrollController` externo para voltar ao topo e ler o offset
 - Suporte a pull-to-refresh
 - Limite configurável para disparo do carregamento da próxima página
 - Callbacks `onError` e `onItemsLoaded` para logs/analytics
-- Passthrough de `physics`, `shrinkWrap` e `cacheExtent` para o `ListView` interno
+- Callback `onEndOfList` e getter `hasReachedEnd` para a última página
+- A falha que causou o estado de erro é entregue ao `tryAgainBuilder`
+- Passthrough de `physics`, `shrinkWrap`, `cacheExtent`, `itemExtent`, `prototypeItem`, `addAutomaticKeepAlives`, `keyboardDismissBehavior` e `restorationId` para o `ListView` interno
 
 ## Construído Com
 
@@ -93,10 +96,10 @@ Oferece customização para carregamento manual/automático, widgets de estado p
 
 ### Requisitos
 
-| Requisito   | Versão     |
-| ----------- | ---------- |
-| Dart SDK    | >=3.3.4    |
-| Flutter SDK | >=1.17.0   |
+| Requisito   | Versão          |
+| ----------- | --------------- |
+| Dart SDK    | >=3.12.0 <4.0.0 |
+| Flutter SDK | >=3.44.0        |
 
 Suporta Android, iOS, web, Windows, Linux e macOS.
 
