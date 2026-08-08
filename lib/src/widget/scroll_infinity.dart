@@ -26,6 +26,7 @@ class ScrollInfinity<T> extends StatefulWidget {
     this.controller,
     this.scrollController,
     this.onItemsLoaded,
+    this.onEndOfList,
 
     // Layout & Appearance
     this.scrollDirection = Axis.vertical,
@@ -143,6 +144,17 @@ class ScrollInfinity<T> extends StatefulWidget {
   /// Called with the raw items returned by [loadData] whenever a fetch
   /// succeeds. Useful for analytics; it does not affect the build.
   final void Function(List<T> items)? onItemsLoaded;
+
+  /// Called once the last page has been loaded — that is, when [loadData]
+  /// returns fewer items than [maxItems], including when the very first
+  /// page comes back short or empty.
+  ///
+  /// Fires after [onItemsLoaded] for that page, and only once per
+  /// pagination cycle: a reset (pull-to-refresh,
+  /// [ScrollInfinityController.refresh], or a change to [maxItems],
+  /// [interval] or [initialPageIndex]) starts a new cycle that can reach
+  /// the end again.
+  final VoidCallback? onEndOfList;
 
   // Layout & Appearance
 

@@ -379,10 +379,13 @@ ScrollInfinity<int>(
 
 Use `onError` para logar/reportar falhas — a exceção lançada por `loadData`, ou uma `Exception` sintética quando `loadData` retorna `null` em vez de lançar — e `onItemsLoaded` para observar os itens buscados com sucesso (ex.: analytics). Nenhum dos dois afeta o build.
 
+`onEndOfList` dispara quando a última página chega, ou seja, quando `loadData` retorna menos itens que `maxItems`. Um reset inicia um novo ciclo, que pode chegar ao fim outra vez. Para ler esse mesmo estado em vez de reagir a ele, use `ScrollInfinityController.hasReachedEnd`.
+
 ```dart
 ScrollInfinity<int>(
   onError: (error) => log('Falha ao carregar itens', error: error),
   onItemsLoaded: (items) => analytics.logEvent('items_loaded', {'count': items.length}),
+  onEndOfList: () => log('Todas as páginas carregadas'),
   maxItems: _maxItems,
   loadData: _loadData,
   itemBuilder: _itemBuilder,
@@ -403,6 +406,7 @@ ScrollInfinity<int>(
 | controller       | `ScrollInfinityController?`           | null   | Refresh/retry externos e estado de loading/erro    |
 | scrollController | `ScrollController?`                   | null   | Posição de scroll externa (voltar ao topo, offset). Pertence ao chamador; usa um interno quando nulo |
 | onItemsLoaded    | `void Function(List<T> items)?`       | null   | Chamado com os itens de cada busca bem-sucedida    |
+| onEndOfList      | `VoidCallback?`                       | null   | Chamado quando a última página é carregada         |
 
 **Layout e Aparência**
 

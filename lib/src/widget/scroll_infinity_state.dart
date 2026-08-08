@@ -40,6 +40,9 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
   bool get hasError => _error != null;
 
   @override
+  bool get hasReachedEnd => _isEndOfList;
+
+  @override
   void refresh() => unawaited(_reset());
 
   @override
@@ -155,6 +158,8 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
         _isEndOfList = newItems.length < widget.maxItems;
         _checkIfScreenIsFilledAndFetchMore();
         widget.onItemsLoaded?.call(newItems);
+
+        if (_isEndOfList) widget.onEndOfList?.call();
       } else {
         _retryCount++;
         _error = Exception('loadData returned null for page $_pageIndex.');
@@ -209,8 +214,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
       return _buildFooter(footerType);
     }
 
-    // Without separators, `ListView.separated` would still build (and lay
-    // out) a placeholder between every pair of items.
     if (separatorBuilder == null) {
       return ListView.builder(
         controller: _scrollController,
@@ -253,7 +256,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
   Widget _buildFooter(_ScrollInfinityFooterType footerType) {
     switch (footerType) {
       case _ScrollInfinityFooterType.error:
-        // The error footer is only selected while `_error` is set.
         return _buildRetryWidget(_error!);
       case _ScrollInfinityFooterType.retryLimitReached:
         return widget.retryLimitReached ??
@@ -297,8 +299,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
         _onScroll,
       );
 
-      // Switching to a caller-supplied controller retires the owned one;
-      // switching back to `null` lets the getter create a fresh one.
       if (widget.scrollController != null) {
         _ownedScrollController?.dispose();
         _ownedScrollController = null;
@@ -307,9 +307,6 @@ class _ScrollInfinityState<T> extends State<ScrollInfinity<T>>
       _scrollController.addListener(_onScroll);
     }
 
-    // `initialItems` is deliberately absent: it is a list instance that many
-    // callers rebuild inline, so comparing it here would reset the list on
-    // every rebuild. It is applied on init and on reset only.
     if (widget.maxItems != oldWidget.maxItems ||
         widget.interval != oldWidget.interval ||
         widget.initialPageIndex != oldWidget.initialPageIndex) {

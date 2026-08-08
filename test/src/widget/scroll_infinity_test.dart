@@ -1602,6 +1602,97 @@ void main() {
           expect(called, isFalse);
         },
       );
+
+      testWidgets(
+        'onEndOfList fires once when a short page ends the list',
+        (tester) async {
+          var endCount = 0;
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                onEndOfList: () => endCount++,
+                loadData: (page) => mockLoadData(page, totalItems: 25),
+                itemBuilder: (item, index) {
+                  return SizedBox(height: 100, child: Text(item));
+                },
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          // Pages 0 and 1 are full; only page 2 (5 of 10 items) ends it.
+          expect(endCount, 0);
+
+          await tester.drag(find.byType(ListView), const Offset(0, -3000));
+          await tester.pumpAndSettle();
+          await tester.drag(find.byType(ListView), const Offset(0, -3000));
+          await tester.pumpAndSettle();
+
+          expect(endCount, 1);
+
+          // Scrolling around the exhausted list must not fire it again.
+          await tester.drag(find.byType(ListView), const Offset(0, -3000));
+          await tester.pumpAndSettle();
+
+          expect(find.text('Item 24'), findsOneWidget);
+          expect(endCount, 1);
+        },
+      );
+
+      testWidgets(
+        'onEndOfList fires when the very first page is empty',
+        (tester) async {
+          var endCount = 0;
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                onEndOfList: () => endCount++,
+                loadData: (page) => mockLoadData(page, totalItems: 0),
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+
+          expect(endCount, 1);
+          expect(find.text('No items found.'), findsOneWidget);
+        },
+      );
+
+      testWidgets(
+        'onEndOfList fires again after a reset reaches the end',
+        (tester) async {
+          final controller = ScrollInfinityController();
+          var endCount = 0;
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                controller: controller,
+                onEndOfList: () => endCount++,
+                loadData: (page) => mockLoadData(page, totalItems: 3),
+                itemBuilder: (item, index) => Text(item),
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+          expect(endCount, 1);
+
+          controller.refresh();
+          await tester.pumpAndSettle();
+
+          // A reset starts a new pagination cycle, which ends again.
+          expect(endCount, 2);
+        },
+      );
     });
 
     /// Tests for driving a mounted [ScrollInfinity] via
@@ -1745,6 +1836,43 @@ void main() {
           await tester.pumpAndSettle();
 
           expect(requestedPages, [0]);
+        },
+      );
+
+      testWidgets(
+        'hasReachedEnd flips once the last page is loaded',
+        (tester) async {
+          final controller = ScrollInfinityController();
+
+          await tester.pumpWidget(
+            buildTestableWidget(
+              ScrollInfinity<String>(
+                maxItems: 10,
+                controller: controller,
+                loadData: (page) => mockLoadData(page, totalItems: 25),
+                itemBuilder: (item, index) {
+                  return SizedBox(height: 100, child: Text(item));
+                },
+              ),
+            ),
+          );
+
+          await tester.pumpAndSettle();
+          expect(controller.hasReachedEnd, isFalse);
+
+          await tester.drag(find.byType(ListView), const Offset(0, -3000));
+          await tester.pumpAndSettle();
+          await tester.drag(find.byType(ListView), const Offset(0, -3000));
+          await tester.pumpAndSettle();
+
+          expect(controller.hasReachedEnd, isTrue);
+
+          controller.refresh();
+          await tester.pump();
+
+          // A reset reopens pagination before the first page arrives.
+          expect(controller.hasReachedEnd, isFalse);
+          await tester.pumpAndSettle();
         },
       );
 

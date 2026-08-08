@@ -14,6 +14,9 @@ abstract class ScrollInfinityControllerState {
   /// Whether the last fetch attempt resulted in an error.
   bool get hasError;
 
+  /// Whether the last page has already been loaded.
+  bool get hasReachedEnd;
+
   /// Clears all items and restarts pagination from the initial page index.
   void refresh();
 
@@ -62,6 +65,14 @@ class ScrollInfinityController {
 
   /// Whether the last fetch attempt resulted in an error.
   bool get hasError => _state?.hasError ?? false;
+
+  /// Whether the last page has already been loaded, meaning no further
+  /// fetch will be attempted until the list is reset.
+  ///
+  /// Mirrors `ScrollInfinity.onEndOfList` for code that polls instead of
+  /// reacting to the callback. `false` while no [ScrollInfinity] is
+  /// attached.
+  bool get hasReachedEnd => _state?.hasReachedEnd ?? false;
 
   /// Clears all items and restarts pagination from
   /// `ScrollInfinity.initialPageIndex`.

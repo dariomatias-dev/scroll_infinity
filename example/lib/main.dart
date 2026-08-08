@@ -593,6 +593,10 @@ class _DisplayScreenState extends State<DisplayScreen> {
     dev.log('ScrollInfinity loaded ${items.length} items.', name: 'example');
   }
 
+  void _onEndOfList() {
+    dev.log('ScrollInfinity reached the end of the list.', name: 'example');
+  }
+
   List<Color> _generateInitialItems() {
     return List.generate(
       _config.maxItems,
@@ -642,6 +646,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
       scrollController: _scrollController,
       onError: _onError,
       onItemsLoaded: _onItemsLoaded,
+      onEndOfList: _onEndOfList,
       // Layout
       scrollDirection: _config.scrollDirection,
       reverse: _config.reverse,
